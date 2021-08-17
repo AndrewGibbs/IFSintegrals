@@ -1,0 +1,10 @@
+[deps]
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+GeometricalPredicates = "fd0ad045-b25c-564e-8f9c-8ef5c5f21267"
+Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[compat]
+julia = "1.3"
