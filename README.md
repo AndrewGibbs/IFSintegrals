@@ -1,7 +1,10 @@
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/AndrewGibbs/IFSintegrals/HEAD)
+
 ## IFSintegrals
 
-A toolbox for solving mathematical problems defined on attractors of iterated function systems (IFSs).
+A toolbox for solving problems defined on attractors of iterated function systems (IFSs).
 See `Cantor set example.ipynb` and `3D IFS test.ipynb` for examples.
+[Click here to load these examples in your browswer](https://mybinder.org/v2/gh/AndrewGibbs/IFSintegrals/9a9377940a437d0d952bfcf9632c053d3e7573c3) (without the need to install any software).
 
 The type `Similarity(r,d,A)` can be used to define a contracting similarity, with contraction r, translation d and rotation A.
 An IFS `S` can be represented as an array of these types, which can be used to construct an `Attractor(S)` of the IFS.
