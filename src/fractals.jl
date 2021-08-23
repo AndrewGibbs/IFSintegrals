@@ -53,24 +53,26 @@ function get_barycentre(sims::Array{Similarity},d::Real)
     return divisor \ vec_sum
 end
 
-function get_diameter(sims::Array{Similarity})
-    M = length(sims)
-    Hull = zeros(M,length(sims[1].δ))
-    for m = 1:M
-        Hull[m,:] = fixed_point(sims[m])
-    end
-    diam = 0
-    # get diameter of Hull
-    for m=1:M
-        for n=(m+1):M
-            R = dist(Hull[m,:],Hull[n,:])
-            if R>diam
-                diam = R
-            end
-        end
-    end
-    return diam
-end
+
+
+# function get_diameter(sims::Array{Similarity})
+#     M = length(sims)
+#     Hull = zeros(M,length(sims[1].δ))
+#     for m = 1:M
+#         Hull[m,:] = fixed_point(sims[m])
+#     end
+#     diam = 0
+#     # get diameter of Hull
+#     for m=1:M
+#         for n=(m+1):M
+#             R = dist(Hull[m,:],Hull[n,:])
+#             if R>diam
+#                 diam = R
+#             end
+#         end
+#     end
+#     return diam
+# end
 
 
 """
@@ -191,6 +193,16 @@ function SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Array{Int64})
     end
 end
 SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Int64) = SubAttractor(Γ, [index])
+
+function full_map(S::Array{Similarity},X::Array{<:Real,2})
+    N,_ = size(X)
+    M = length(S)
+    NxM = N*M
+    Y = zeros(γ.topological_dimension,NxM)
+    for m=1:M
+        X_[:,((m-1)*N+1):(m*N)] = sim_map(S[m], X)
+    end
+end
 
 # provides a sketch of an attractor in N topological dimensions
 function sketch_attractor(γ::Attractor; mem_const = 10000)

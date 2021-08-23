@@ -7,11 +7,12 @@ export Similarity, Attractor, SubAttractor, Fractal, sketch_attractor, CantorSet
         CantorDust, eval_green_single_integral_fixed_point, fixed_point,
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,
         BIO, DiscreteBIO, SingleLayer, Projection, single_layer_potential
-        
+        get_diameter, get_diam_long, h_dist
 include("fractals.jl")
 include("quadrature.jl")
 include("green_kernels.jl")
 include("BIOs.jl")
+include("diam_approx.jl")
 
 # routine below was copied from:
 # https://discourse.julialang.org/t/converting-a-matrix-into-an-array-of-arrays/17038
