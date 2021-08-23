@@ -1,5 +1,10 @@
 import LazySets: convex_hull, VPolygon, Singleton, element
 
+"""
+Most of the ideas in this section were adapted from results in
+http://www.cse.dmu.ac.uk/~hamzaoui/papers/ifs.pdf
+
+"""
 
 function get_diam_long(sims::Array{Similarity}; tol=1E-8)
     # get max Lipschitz constant of contraction
