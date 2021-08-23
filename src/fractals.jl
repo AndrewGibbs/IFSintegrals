@@ -194,14 +194,17 @@ function SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Array{Int64})
 end
 SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Int64) = SubAttractor(Γ, [index])
 
+full_map(S::Array{Similarity},x::Array{<:Real,1}) = full_map(S,reshape(x,length(x),1))
+
 function full_map(S::Array{Similarity},X::Array{<:Real,2})
-    N,_ = size(X)
+    d,N = size(X)
     M = length(S)
     NxM = N*M
-    Y = zeros(γ.topological_dimension,NxM)
+    Y = zeros(d,NxM)
     for m=1:M
-        X_[:,((m-1)*N+1):(m*N)] = sim_map(S[m], X)
+        Y[:,((m-1)*N+1):(m*N)] = sim_map(S[m], X)
     end
+    return Y
 end
 
 # provides a sketch of an attractor in N topological dimensions

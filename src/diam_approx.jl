@@ -14,26 +14,38 @@ function get_diam_long(sims::Array{Similarity}; tol=1E-8)
     X = get_fixed_points(sims)
     sX = full_map(sims,X)
 
+    X_slice = slicematrix(X')
+    sX_slice = slicematrix(sX')
     # now determine how many iterations we need to reach prescribed tolerance
-    num_its = Int(ceil(log((1-L)/(2h_dist(X,sX)))/log(L)))
+    num_its = Int(ceil(log(tol*(1-L)/(2h_dist(X_slice,sX_slice)))/log(L)))
+
+    #quite a bit of converting back and forth between nested arrays and matrices here
 
     # now apply the full IFS map iteratively, until we are within diam tolerance
-    Xₙ = convex_hull(sX)
+    Xₙ = convex_hull(sX_slice)
     for n=2:num_its
-        Xₙ = full_map(sims,Xₙ)
-        Xₙ = convex_hull(Xₙ)
+        X_ = hcat(Xₙ...)
+        SX_ = full_map(sims,X_)
+        SX_slice = slicematrix(SX_')
+        Xₙ = convex_hull(SX_slice)
     end
 
     # diameter of hull at nth iteration is 
-    return get_diam(Xₙ)
+    return get_diameter(hcat(Xₙ...))
 end
 
 function get_diameter(sims::Array{Similarity})
     X = get_fixed_points(sims)
-    Xhull = VPolygon(convex_hull(X))
+    X_slice = slicematrix(X')
+    Xhull = VPolygon(convex_hull(X_slice))
+
+
+    sX = full_map(sims,X)
+    sX_slice = slicematrix(sX')
+
     X_in_hull = true
-    for x in X
-        element(Singleton(full_map(sims,x))) ∈ Xhull ? true : X_in_hull = false
+    for y in sX_slice
+        element(Singleton(y)) ∈ Xhull ? true : X_in_hull = false
     end
     X_in_hull ? d=get_diameter(X) : d=get_diam_long(sims)
     return d
@@ -55,15 +67,15 @@ end
 
 function get_fixed_points(sims::Array{Similarity})
     M = length(sims)
-    FPs = zeros(M,length(sims[1].δ))
+    FPs = zeros(length(sims[1].δ),M)
     for m = 1:M
-        FPs[m,:] = fixed_point(sims[m])
+        FPs[:,m] = fixed_point(sims[m])
     end
     return FPs
 end
 
 """Computes the Hausdorff distance between two sets"""
-function h_dist(X::Array{Array{<:Real}},Y::Array{Array{<:Real}})
+function h_dist(X::Array{<:Array{<:Real}},Y::Array{<:Array{<:Real}})
     D = zeros(length(X),length(Y))
     x_count = 0
     for x in X
@@ -85,8 +97,8 @@ function h_dist(X::Array{Array{<:Real}},Y::Array{Array{<:Real}})
         end
     end
 
-    min_y_minindex = 0
-    min_y_mindist = 0.0
+    max_y_minindex = 0
+    max_y_mindist = 0.0
     for ny = 1:length(Y)
         yX_mindist, yX_mindex = findmin(D[:,ny])
         if yX_mindist > max_y_mindist
