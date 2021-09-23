@@ -192,3 +192,24 @@ function single_layer_potential(Γ::Fractal,k::Real,density::Projection,points::
 end
 # simplify for Laplace kernel case:
 single_layer_potential(Γ::Fractal,density::Projection,points::Array{<:Real,2}) = single_layer_potential(Γ,0.0,density,points)
+
+#have not tested far-field pattern yet:
+function far_field_pattern(Γ::Fractal,k::Real,density::Projection,points::Array{<:Real,2})
+    h = 0.1/k
+    num_points = size(points)[1]
+    vals = zeros(Complex{Float64},num_points)
+    # far-field kernel:
+    # K(θ::Float64, y::Array{Float64,1}) = exp.(-im*k*cos.(θ)*y)
+    K(θ::Float64, ψ::Float64, x_1::Array{Float64,1}, x_2::Array{Float64,1}) = exp.(-im*k*(cos(θ)*x_1.+sin(ψ)*x_2))
+    for m_count =1:length(density.Lₕ)
+        m = density.Lₕ[m_count]
+        Γₘ = SubAttractor(Γ,m)
+        y,w = barycentre_rule(Γₘ,h)
+        # now convert y to n+1 dimensions
+        for n = 1:num_points
+            vals[n] += w'*K(points[n,1],points[n,2],y[:,1],y[:,2])*density.coeffs[m_count]
+        end
+        m_count += 1
+    end
+    return vals
+end

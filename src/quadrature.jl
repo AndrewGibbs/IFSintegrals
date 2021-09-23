@@ -63,7 +63,7 @@ function subdivide_indices(Γ::Union{Attractor,SubAttractor},h::Real)
     if Γ.diameter >= h
         subdiv = true
         for m=1:M
-           push!(I,[m])
+            push!(I,[m])
             r[m] = Γ.IFS[m].r
         end
     else
