@@ -5,13 +5,8 @@ returns N weights w ∈ Rⁿ and nodes x ∈ Rᴺˣⁿ,
 for approximation of integrals defined on an IFS Γ
 """
 function barycentre_rule(Γ::Union{Attractor,SubAttractor},h::Real)
-    Lₕ = subdivide_indices(Γ,h)
-    # if Lₕ == [0] # this top condition may now be obsolete
-    #     x = zeros(Float64, 1, Γ.topological_dimension)
-    #     w = zeros(Float64, 1)
-    #     x[1,:] = Γ.barycentre
-    #     w = [Γ.measure]
-    # else
+    if !Γ.uniform
+        Lₕ = subdivide_indices(Γ,h)
         x = zeros(Float64, length(Lₕ), Γ.topological_dimension)
         w = zeros(Float64, length(Lₕ))
         for j =1:length(Lₕ)
@@ -19,7 +14,12 @@ function barycentre_rule(Γ::Union{Attractor,SubAttractor},h::Real)
             x[j,:] = γ.barycentre
             w[j] = γ.measure
         end
-    # end
+    else # uniform attractor, can do things a bit quicker
+        h = min(h,Γ.diameter)
+        ℓ = Int64(ceil(log(h/Γ.diameter)/log(Γ.IFS[1].r)))
+        x,w = barycentre_uniform(Γ::Union{Attractor,SubAttractor},ℓ)
+    end
+
     return x,w
 end
 
@@ -38,13 +38,6 @@ function barycentre_rule(Γ1::Union{Attractor,SubAttractor},Γ2::Union{Attractor
         X1 = Array{Float64}(undef, n1*n2, top_dims)
         X2 = Array{Float64}(undef, n1*n2, top_dims)
         W = Array{Float64}(undef, n1*n2)
-        # for j=0:(n1-1)
-        #     for i=0:(n2-1)
-        #         X1[j*n2 + i + 1,:] = x1[i + 1,:]
-        #         X2[j*n2 + i + 1,:] = x2[j + 1,:]
-        #         W[j*n2 + i + 1] = w1[i + 1]*w2[j + 1]
-        #     end
-        # end
         for i=0:(n1-1)
             for j=0:(n2-1)
                 X1[j*n1 + i + 1,:] = x1[i + 1,:]
@@ -53,6 +46,45 @@ function barycentre_rule(Γ1::Union{Attractor,SubAttractor},Γ2::Union{Attractor
             end
         end
     return X1, X2, W
+end
+
+function barycentre_uniform(Γ::Union{Attractor,SubAttractor},ℓ::Int64)
+    # initialise arrays
+    M = length(Γ.IFS)
+    z = zeros(Float64, ℓ+1, Γ.topological_dimension)
+    x = zeros(Float64, M^ℓ, Γ.topological_dimension)
+    w = Γ.measure*Γ.IFS[1].r^(Γ.Hausdorff_dimension*ℓ)*ones(Float64,M^ℓ)
+    count = 0
+
+    if isa(Γ,Attractor)
+        z[1,:] = Γ.barycentre
+    else
+        z[1,:] = Γ.attractor.barycentre
+    end
+
+    m_inds = ones(Int64,ℓ)
+
+    for m = 1:M^ℓ
+        for j=1:ℓ
+            if mod(count,M^(ℓ-j))==0
+                z[j+1,:] = sim_map(Γ.IFS[m_inds[j]], z[j,:])
+                m_inds[j] += 1
+                m_inds = mod.(m_inds .- 1,M) .+ 1
+            end
+        end
+        count += 1
+        x[count, :] = z[ℓ+1,:]
+    end
+    if isa(Γ,SubAttractor)
+        if Γ.index != [0]
+            X = x'
+            for m = Γ.index[end:-1:1]
+                X = sim_map(Γ.IFS[m], X)
+            end 
+            x = X'
+        end
+    end
+    return x, w
 end
 
 function subdivide_indices(Γ::Union{Attractor,SubAttractor},h::Real)
@@ -119,11 +151,21 @@ function eval_green_double_integral(Γ::Union{Attractor,SubAttractor}, t::Real, 
                 log_sum += Γ.measure^2*Γ.IFS[m].r^(2d)*log(Γ.IFS[m].r)
             end
             Γm = SubAttractor(Γ,[m])
-            for n=1:M
+
+            # can exploit symmetry of double sum if attractor is uniform
+            if true
+                uniform_const = 2
+                n_start = m+1
+            else
+                uniform_const = 1
+                n_start = 1
+            end
+
+            for n=n_start:M
                 Γn = SubAttractor(Γ,[n])
                 if m!=n
                     X1, X2, W = barycentre_rule(Γm,Γn,h)
-                    smooth_integrals += W'* Φₜ(t,X1,X2)
+                    smooth_integrals += uniform_const*W'* Φₜ(t,X1,X2)
                     Npts += length(W)
                 end
             end
@@ -166,7 +208,7 @@ function eval_green_single_integral_fixed_point(Γ::Union{Attractor,SubAttractor
             Γm = SubAttractor(Γ,[m])
             if m!=n
                 x, w = barycentre_rule(Γm,h)
-                smooth_integrals += w'* Φₜ(t,x,ηₙ)
+                smooth_integrals += w'* Φₜ(t,Matrix(x),ηₙ)
                 Npts += length(x)
             end
         end

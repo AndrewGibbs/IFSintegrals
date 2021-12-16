@@ -34,7 +34,6 @@ function get_diam_long(sims::Array{Similarity}; tol=1E-8)
         SX_slice = slicematrix(SX_')
         Xₙ = convex_hull(SX_slice)
     end
-
     # diameter of hull at nth iteration is 
     return get_diameter(hcat(Xₙ...))
 end
@@ -57,11 +56,11 @@ function get_diameter(sims::Array{Similarity})
 end
 
 function get_diameter(X::Array{<:Real,2})
-    M,_ = size(X)
+    _,M = size(X)
     diam = 0
     for m=1:M
         for n=(m+1):M
-            R = dist(X[m,:],X[n,:])
+            R = dist(X[:,m],X[:,n])
             if R>diam
                 diam = R
             end

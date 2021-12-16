@@ -1,5 +1,5 @@
 import Roots: find_zero, Bisection
-import LinearAlgebra: norm, I
+import LinearAlgebra: norm, I, UniformScaling
 
 abstract type ContractionMap
 end
@@ -10,16 +10,25 @@ Type Similarity(r,δ,A), with contraction r<1, translation δ ∈ Rⁿ and a rot
 struct Similarity <: ContractionMap
     r::Real # contraction
     δ::Array{<:Real,1} # translation
-    A::Array{<:Real,2} # rotation
+    A::Union{Array{<:Real,2},UniformScaling{Bool}} # rotation
     Similarity(r,δ,A) = r >= 1 || r<=0 ? error("Contraction factor must be ∈(0,1)") : new(r,δ,A)
-    Similarity(r,δ,A) = norm(A*A'-I) > 1E-8 ? error("Rotation matrix must be orthoganol") : new(r,δ,A)
+    Similarity(r,δ,A) = typeof(A)!=UniformScaling{Bool} ? (norm(A*A'-I) > 1E-8 ? error("Rotation matrix must be orthoganol") : new(r,δ,A)) : new(r,δ,A)
 end
 
-Similarity(r::Real, δ::Union{Real,Array{<:Real,1}}) = Similarity(r,δ,Matrix(1.0I,length(δ),length(δ)))
+# Similarity(r::Real, δ::Union{Real,Array{<:Real,1}}) = Similarity(r,δ,Matrix(1.0I,length(δ),length(δ)))
 
-Similarity(r::Real, δ::Real, A::Array{<:Real,2}) = Similarity(r,[δ],A)
+# Similarity(r::Real, δ::Real, A::Array{<:Real,2}) = Similarity(r,[δ],A)
 
-sim_map(s::Similarity, x::Array{<:Real}) = s.r*s.A*x .+ s.δ
+function Similarity(r::Real, δ::Array{<:Real,1}; θ=0::Real)
+    if θ == 0
+        return Similarity(r,δ,I)
+    else
+        A = [cos(θ) -sin(θ); sin(θ) cos(θ)]
+        return Similarity(r,δ,A)
+    end
+end
+
+sim_map(s::Similarity, x::Union{Array{<:Real},AbstractArray{<:Real,2}}) = s.r*s.A*x .+ s.δ
 
 fixed_point(s::Similarity) = (I-s.r*s.A) \ s.δ
 #s.δ/(1-s.r)
@@ -52,27 +61,6 @@ function get_barycentre(sims::Array{Similarity},d::Real)
     end
     return divisor \ vec_sum
 end
-
-
-
-# function get_diameter(sims::Array{Similarity})
-#     M = length(sims)
-#     Hull = zeros(M,length(sims[1].δ))
-#     for m = 1:M
-#         Hull[m,:] = fixed_point(sims[m])
-#     end
-#     diam = 0
-#     # get diameter of Hull
-#     for m=1:M
-#         for n=(m+1):M
-#             R = dist(Hull[m,:],Hull[n,:])
-#             if R>diam
-#                 diam = R
-#             end
-#         end
-#     end
-#     return diam
-# end
 
 
 """
@@ -139,6 +127,7 @@ struct SubAttractor <: Fractal
     barycentre::Array{<:Real}
     diameter::Real
     measure::Real
+    uniform::Bool
 end
 # outer constructor
 """
@@ -155,7 +144,7 @@ function SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Array{Int64})
         else
             return SubAttractor(Γ, Γ.IFS, [0], Γ.topological_dimension,
                             Γ.Hausdorff_dimension, Γ.barycentre,
-                            Γ.diameter, Γ.measure)
+                            Γ.diameter, Γ.measure, Γ.uniform)
         end
     else #non-trivial case
 
@@ -186,9 +175,9 @@ function SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Array{Int64})
         #quick fix if we're after a subattractor of a subattractor
         if typeof(Γ)==SubAttractor
             #index = vcat(index, Γ.index)
-            return SubAttractor(Γ.attractor, Γ.IFS, index, Γ.topological_dimension, Γ.Hausdorff_dimension, new_bary, new_diam, new_measure)
+            return SubAttractor(Γ.attractor, Γ.IFS, index, Γ.topological_dimension, Γ.Hausdorff_dimension, new_bary, new_diam, new_measure, Γ.uniform)
         else
-            return SubAttractor(Γ,           Γ.IFS, index, Γ.topological_dimension, Γ.Hausdorff_dimension, new_bary, new_diam, new_measure)
+            return SubAttractor(Γ,           Γ.IFS, index, Γ.topological_dimension, Γ.Hausdorff_dimension, new_bary, new_diam, new_measure, Γ.uniform)
         end
     end
 end
@@ -246,7 +235,7 @@ formed by taking the cartesian product of two middle-α Cantor sets.
 """
 function CantorDust(α = 1/3)
     r = (1 - α)/2
-    S = [Similarity(r,[0.0,0.0]),Similarity(r,[0.0,1-r]),Similarity(r,[1-r,0.0]),Similarity(r,[1-r,1-r])]
+    S = [Similarity(r,[0.0,0.0]),Similarity(r,[1-r,0.0]),Similarity(r,[0.0,1-r]),Similarity(r,[1-r,1-r])]
     return Attractor(S, 2, log(1/4)/log(r), true, [0.5,0.5], sqrt(2), 1.0)
 end
 
@@ -257,6 +246,44 @@ function Sierpinski()
     courage = Similarity(1/2,[0,1/6])
     wisdom = Similarity(1/2,sqrt(2)*[1/6,-1/6])
     power = Similarity(1/2,sqrt(2)*[-1/6,-1/6])
-    return Attractor([courage,wisdom,power], 2, log(3)/log(2), true, [0,(1-2*sqrt(2))/9], sqrt(2)*2/3, 1.0)
+    return Attractor([courage,wisdom,power], 2, log(3)/log(2), true, [0,(1-2*sqrt(2))/9], 1.0, 1.0)
 end
 #            Attractor(sims,top_dim,Hdim,uniform,get_barycentre(sims,Hdim),diameter,measure)
+
+function SquareFlake()
+    scale = 1
+    h = scale/4 # width of square subcomponent
+    ρ = 1/4
+    IFS = [ Similarity(ρ,[-3h/2,3h/2]), #1
+            Similarity(ρ,[-h/2,5h/2]), #2
+            Similarity(ρ,[-h/2,3h/2]), #3
+            Similarity(ρ,[3h/2,3h/2]), #4
+            Similarity(ρ,[-h/2,h/2]), #5
+            Similarity(ρ,[h/2,h/2]), #6
+            Similarity(ρ,[3h/2,h/2]), #7
+            Similarity(ρ,[5h/2,h/2]), #8
+            Similarity(ρ,[-5h/2,-h/2]), #9
+            Similarity(ρ,[-3h/2,-h/2]), #10
+            Similarity(ρ,[-h/2,-h/2]), #11
+            Similarity(ρ,[h/2,-h/2]), #12
+            Similarity(ρ,[-3h/2,-3h/2]), #13
+            Similarity(ρ,[h/2,-3h/2]), #14
+            Similarity(ρ,[3h/2,-3h/2]), #15
+            Similarity(ρ,[h/2,-5h/2]) #16
+            ]
+    R = get_diameter(IFS) # I'm sure this can be calculated by hand... but not today.
+    # also the 'measure' is not really 1 here. But it doesn't matter.
+    return Attractor(IFS, 2, 2, true, [0.0,0.0], R, 1.0)
+end
+
+function KochFlake()
+    IFS = [Similarity(sqrt(1/3),[0, 0];θ = pi/6),
+            Similarity(1/3,[1/sqrt(3),1/3]),
+            Similarity(1/3,[0,2/3]),
+            Similarity(1/3,[-1/sqrt(3),1/3]),
+            Similarity(1/3,[-1/sqrt(3),-1/3]),
+            Similarity(1/3,[0,-2/3]),
+            Similarity(1/3,[1/sqrt(3),-1/3])
+            ]
+    return Attractor(IFS, 2, 2, false, [0.0,0.0], 2*sqrt(3)/3, 1.0)
+end

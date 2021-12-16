@@ -47,8 +47,8 @@ function zero_kernel(X::Union{Array{<:Real,2},Array{<:Real,1}}, Y::Union{Array{<
     return zeros(Complex{Float64},N)
 end
 
-HelhmoltzGreen2D(k::Real,x::Union{Array{<:Real,2},Array{<:Real,1}}, y::Union{Array{<:Real,2},Array{<:Real,1}}) = im/4*besselh.(0,1,k*dist(x,y))
-function HelhmoltzGreen2D_Lipschitz_part(k::Real, X::Union{Array{<:Real,2},Array{<:Real,1}}, Y::Union{Array{<:Real,2},Array{<:Real,1}})
+HelhmoltzGreen2D(k::Number,x::Union{Array{<:Real,2},Array{<:Real,1}}, y::Union{Array{<:Real,2},Array{<:Real,1}}) = im/4*besselh.(0,1,k*dist(x,y))
+function HelhmoltzGreen2D_Lipschitz_part(k::Number, X::Union{Array{<:Real,2},Array{<:Real,1}}, Y::Union{Array{<:Real,2},Array{<:Real,1}})
     N = size(X)[1]
     I = zeros(Complex{Float64},N)
     for n=1:N
@@ -63,8 +63,8 @@ function HelhmoltzGreen2D_Lipschitz_part(k::Real, X::Union{Array{<:Real,2},Array
     return I
 end
 
-HelhmoltzGreen3D(k::Real,x::Union{Array{<:Real,2},Array{<:Real,1}},y::Union{Array{<:Real,2},Array{<:Real,1}}) = exp.(im*k*dist(x,y))./(4π*dist(x,y))
-function HelhmoltzGreen3D_Lipschitz_part(k::Real,X::Union{Array{<:Real,2},Array{<:Real,1}}, Y::Union{Array{<:Real,2},Array{<:Real,1}})
+HelhmoltzGreen3D(k::Number,x::Union{Array{<:Real,2},Array{<:Real,1}},y::Union{Array{<:Real,2},Array{<:Real,1}}) = exp.(im*k*dist(x,y))./(4π*dist(x,y))
+function HelhmoltzGreen3D_Lipschitz_part(k::Number,X::Union{Array{<:Real,2},Array{<:Real,1}}, Y::Union{Array{<:Real,2},Array{<:Real,1}})
     N = size(X)[1]
     I = zeros(Complex{Float64},N)
     for n=1:N
