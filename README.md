@@ -4,7 +4,7 @@
 
 A toolbox for solving problems defined on attractors of iterated function systems (IFSs).
 See 'Quadrature example.ipynb', `BEM Cantor set example.ipynb` and `BEM 3D example.ipynb` for examples.
-[Click here to load these examples in your browswer](https://mybinder.org/v2/gh/AndrewGibbs/IFSintegrals/9a9377940a437d0d952bfcf9632c053d3e7573c3) (without the need to install any software).
+[Click here to load these examples in your browswer](https://mybinder.org/v2/gh/AndrewGibbs/IFSintegrals/HEAD) (without the need to install any software).
 
 I would strongly reccomend playing with the notebook files to understand what the code can do. But here is a brief explanation of the main routines.
 The type `Similarity(r,d,A)` can be used to define a contracting similarity, with contraction r, translation d and rotation A.
