@@ -33,19 +33,35 @@ struct DiscreteBIO
 end
 
 #constructor:
-function DiscreteBIO(K::BIO, h_BEM::Real, h_quad::Real; Cosc = 2π)
+function DiscreteBIO(K::BIO, h_BEM::Real, h_quad::Real; Cosc = 2π, vary_quad=true, repeat_blocks=true)
     Γ = K.domain
     Lₕ = subdivide_indices(K.domain,h_BEM)
     N = length(Lₕ)
+    M = length(Γ.IFS)
     #initialise Galerkin matrix:
     Galerkin_matrix = zeros(Complex{Float64},N,N)
+    # create blank matrix of flags, describing if the matrix entry has been filled
+    BEM_filled = zeros(Bool,N,N)
     m_count = 0
 
 
-    # save time computing repeated diagonal values if Γ is a uniform attactor
-    if Γ.uniform
-        m = Lₕ[1]
-        diag_val = singular_elliptic_double_integral(K, h_quad, m; Cosc=Cosc)
+    # # save time computing repeated diagonal values if Γ is a uniform attactor
+    # if Γ.uniform
+    #     m = Lₕ[1]
+    #     diag_val = singular_elliptic_double_integral(K, h_quad, m; Cosc=Cosc)
+    # end
+
+    if vary_quad
+        h_quad_adjust = get_quad_scales(K::BIO,Lₕ::Array{Array{Int64,1},1})
+    else
+        h_quad_adjust = ones(length(Lₕ),length(Lₕ))
+    end
+
+    if Γ.uniform & repeat_blocks
+        ℓ = length(Lₕ[1])
+        diag_block_sizes = M.^(0:(ℓ-1))
+    else
+        diag_block_sizes = []
     end
 
     @showprogress 1 "Constructing BEM system " for m_count=1:length(Lₕ)#m in Lₕ
@@ -58,23 +74,36 @@ function DiscreteBIO(K::BIO, h_BEM::Real, h_quad::Real; Cosc = 2π)
         K.self_adjoint ? n_count_start = m_count : n_count_start = 1
 
         for n_count = n_count_start:length(Lₕ)#n in Lₕ
-            # n_count += 1
-            n = Lₕ[n_count]
-            Γₙ = SubAttractor(Γ,n)
-            x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad)
-            if n==m
-                if Γ.uniform
-                    Galerkin_matrix[m_count,n_count] = diag_val
+            if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
+                # n_count += 1
+                n = Lₕ[n_count]
+                Γₙ = SubAttractor(Γ,n)
+                x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad*h_quad_adjust[m_count,n_count])
+                if n==m
+                    # if Γ.uniform
+                    #     Galerkin_matrix[m_count,n_count] = diag_val
+                    # else
+                        Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad,n;Cosc=Cosc)
+                    # end
                 else
-                    Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad,n;Cosc=Cosc)
+                    Galerkin_matrix[m_count,n_count] = sum(w.*K.kernel(x,y))
                 end
-            else
-                Galerkin_matrix[m_count,n_count] = sum(w.*K.kernel(x,y))
-            end
 
-            # if matrix is symmetric, expoit this to save time
-            if K.self_adjoint && n!=m
-                Galerkin_matrix[n_count,m_count] = Galerkin_matrix[m_count,n_count]
+                # if matrix is symmetric, expoit this to save time
+                if K.self_adjoint && n!=m
+                    Galerkin_matrix[n_count,m_count] = Galerkin_matrix[m_count,n_count]
+                end
+            end
+        end
+
+        # now repeat entries along block diagonal, if at the end of a diagonal block, and uniform
+        if in(m_count,diag_block_sizes)
+            block_power = indexin(m_count,diag_block_sizes)[1]
+            block_size = M^(block_power-1)
+            for j=2:M
+                block_range = ((j-1)*block_size+1):(j*block_size)
+                Galerkin_matrix[block_range,block_range] = Galerkin_matrix[1:block_size,1:block_size]
+                BEM_filled[block_range,block_range] .= 1
             end
         end
     end
@@ -312,4 +341,43 @@ function -(f::Projection,g::Projection)
     else
         return Projection(ϕ.domain,ϕ.Lₕ,ϕ.coeffs-g.coeffs)
     end
+end
+
+# The next couple of functions are designed to use less quadrature points in the BEM elements
+# where this won't affect the accuracy.
+
+F_nomeasure(r::Real, k::Number, n::Int64) = (1+(abs(k)*r)^(n/2+1))/r^(n+1)
+
+function get_quad_scales(K::BIO,Lₕ::Array{Array{Int64,1},1})
+    Γ = K.domain
+    # compute upper and lower bounds for the F in my notes, which is stated above.
+    F_upper = ones(length(Lₕ),length(Lₕ))
+    F_lower = ones(length(Lₕ),length(Lₕ))
+    for m_count = 1:length(Lₕ)
+        Γₘ = SubAttractor(Γ,Lₕ[m_count])
+        for n_count = m_count:length(Lₕ)
+            Γₙ = SubAttractor(Γ,Lₕ[n_count])
+            if n_count!=m_count
+                dist_upper = dist(Γₙ.barycentre,Γₘ.barycentre)
+                dist_lower = max(dist_upper - Γₙ.diameter - Γₘ.diameter,0)
+                measure_weight = Γₙ.measure*Γₘ.measure
+                # noting that F_nomeasure is monotonic decreasing in r, can bound as follows:
+                if dist_lower>0
+                    F_upper[m_count,n_count] = measure_weight*F_nomeasure(dist_lower, K.wavenumber, K.domain.topological_dimension)
+                else
+                    F_upper[m_count,n_count]= Inf
+                end
+                 F_lower[m_count,n_count] = measure_weight*F_nomeasure(dist_upper, K.wavenumber, K.domain.topological_dimension)
+            else
+                F_upper[m_count,n_count] = Inf
+            end
+            
+            # now by symmetry
+            F_upper[n_count,m_count] = F_upper[m_count,n_count]
+            F_lower[n_count,m_count] = F_lower[m_count,n_count]
+        end
+    end
+    # now can get a lower bound estimate on the quantity from my notes:
+    quad_scales = max.(sqrt.(maximum(F_lower)./F_upper),1)
+    return quad_scales
 end
