@@ -1,3 +1,8 @@
+name = "IFSintegrals"
+uuid = "2e7d41c8-7523-11ec-3fc2-377bcf57d765"
+authors = ["andrew <andrew.gibbs@ucl.ac.uk>"]
+version = "0.1.0"
+
 [deps]
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
