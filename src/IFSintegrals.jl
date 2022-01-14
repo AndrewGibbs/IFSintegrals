@@ -1,4 +1,4 @@
-module QuadIFS
+module IFSintegrals
 
 using Base: Float64
 export Similarity, Attractor, SubAttractor, Fractal, sketch_attractor, CantorSet,
