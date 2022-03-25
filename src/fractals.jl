@@ -72,7 +72,7 @@ Constructor requires only an IFS, which is of type Array{Similarity}, and diamet
 All other essential properties can be deduced from this, including barycentre
 and dimension, which are approximated numerically.
 """
-struct Attractor{N,M} <: Fractal
+struct Attractor{M,N} <: Fractal
     IFS::Vector{Similarity{N}}
     topological_dimension::Int64
     Hausdorff_dimension::Real
@@ -137,27 +137,27 @@ function Attractor(sims::Vector{Similarity{N}}; diameter::Real=0.0, measure::Rea
         diameter = get_diameter(sims)
     end
 
+    M = length(sims)
     if weights == [0]
-        M = length(sims)
         weights = zeros(Float64,M)
         for m=1:M
-            weights[m] = sims[m].r^Hdim
+            weights[m] = measure*sims[m].r^Hdim
         end
     end
     Sweights = SVector{M}(weights)
 
-    return Attractor{top_dim,M}(sims, top_dim, Hdim, uniform, Sbary, diameter, measure, Sweights)
+    return Attractor{M,top_dim}(sims, top_dim, Hdim, uniform, Sbary, diameter, measure, Sweights)
 
 end
 
 # subcomponent of attractor, as a subclass of fractal
-struct SubAttractor <: Fractal
-    attractor::Attractor
-    IFS::Array{Similarity}
-    index::Array{Int64}
+struct SubAttractor{M,N} <: Fractal
+    attractor::Attractor{M,N}
+    # IFS::Array{Similarity} # could be removed
+    index::Vector{Int64}
     topological_dimension::Int64 # could be removed
     Hausdorff_dimension::Real # could be removed
-    barycentre::Array{<:Real}
+    barycentre::SVector{N,<:Real}
     diameter::Real
     measure::Real
     uniform::Bool
@@ -168,7 +168,7 @@ Representation of a subcomponent of a fractal Γ, using standard vector index no
 If Γ is a subattractor, then the vector indices are concatenated to produce a new subatractor,
 which stores the original attractor.
 """
-function SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Array{Int64})
+function SubAttractor(Γ::Union{Attractor{M,N},SubAttractor{M,N}}, index::Vector{Int64}) where {M,N}
 
     #quick condition for trivial case:
     if index == [0]
@@ -181,13 +181,14 @@ function SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Array{Int64})
         end
     else #non-trivial case
 
-        # get new measure and diameter:
-        R = 1
-        for m=index
-            R *= Γ.IFS[m].r
+        # get new measure and diameter. First initialise:
+        new_diam = Γ.diameter
+        new_measure = Γ.measure
+        # now adjust the diameter and measure for the smaller scale:
+        for m = index
+            new_diam *= Γ.IFS[m].r
+            new_measure *= Γ.weights[m]
         end
-        new_diam = R * Γ.diameter
-        new_measure = R^(Γ.Hausdorff_dimension) * Γ.measure
 
         # get new vector index and barycentre:
         if typeof(Γ)==SubAttractor
@@ -204,16 +205,18 @@ function SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Array{Int64})
         for m=index[end:-1:1]
             new_bary = sim_map(Γ.IFS[m], new_bary)
         end
+        Snew_bary = SVector{N}(new_bary)
 
         #quick fix if we're after a subattractor of a subattractor
         if typeof(Γ)==SubAttractor
             #index = vcat(index, Γ.index)
-            return SubAttractor(Γ.attractor, Γ.IFS, index, Γ.topological_dimension, Γ.Hausdorff_dimension, new_bary, new_diam, new_measure, Γ.uniform)
+            return SubAttractor{M,N}(Γ.attractor, index, Γ.topological_dimension, Γ.Hausdorff_dimension, Snew_bary, new_diam, new_measure, Γ.uniform)
         else
-            return SubAttractor(Γ,           Γ.IFS, index, Γ.topological_dimension, Γ.Hausdorff_dimension, new_bary, new_diam, new_measure, Γ.uniform)
+            return SubAttractor{M,N}(Γ,           index, Γ.topological_dimension, Γ.Hausdorff_dimension, Snew_bary, new_diam, new_measure, Γ.uniform)
         end
     end
 end
+
 SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Int64) = SubAttractor(Γ, [index])
 
 full_map(S::Array{Similarity{N}},x::Array{<:Real,1}) where N = full_map(S,reshape(x,length(x),1)) 
