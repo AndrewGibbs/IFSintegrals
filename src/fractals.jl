@@ -95,8 +95,8 @@ any rotations.
 
 function Attractor(sims::Vector{Similarity{N}}; diameter::Real=0.0, measure::Real=1.0, weights::Vector{<:Real}=[0]) where N# outer constructor for attractor type
     count = 1
-    top_dims = zeros(length(sims))
-    contractions = zeros(length(sims))
+    top_dims = zeros(Int64,length(sims))
+    contractions = zeros(Float64,length(sims))
     for s in sims
         if s.r>=1
             error("Contraction factor must be <1")
@@ -130,6 +130,7 @@ function Attractor(sims::Vector{Similarity{N}}; diameter::Real=0.0, measure::Rea
 
     #Barycentre
     bary = get_barycentre(sims,Hdim)
+    Sbary = SVector{N}(bary)
 
     #Diameter
     if diameter == 0.0
@@ -143,8 +144,9 @@ function Attractor(sims::Vector{Similarity{N}}; diameter::Real=0.0, measure::Rea
             weights[m] = sims[m].r^Hdim
         end
     end
+    Sweights = SVector{M}(weights)
 
-    return Attractor{top_dim,M}(sims, top_dim, Hdim, uniform, bary, diameter, measure, weights)
+    return Attractor{top_dim,M}(sims, top_dim, Hdim, uniform, Sbary, diameter, measure, Sweights)
 
 end
 
