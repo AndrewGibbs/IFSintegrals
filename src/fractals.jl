@@ -1,5 +1,6 @@
 import Roots: find_zero, Bisection
 import LinearAlgebra: norm, I, UniformScaling
+import StaticArrays: SVector, SMatrix
 
 abstract type ContractionMap
 end
@@ -7,30 +8,30 @@ end
 """
 Type Similarity(r,δ,A), with contraction r<1, translation δ ∈ Rⁿ and a rotation matrix A ∈ Rⁿˣⁿ.
 """
-struct Similarity <: ContractionMap
+struct Similarity{N} <: ContractionMap
     r::Real # contraction
-    δ::Array{<:Real,1} # translation
-    A::Union{Array{<:Real,2},UniformScaling{Bool}} # rotation
-    Similarity(r,δ,A) = r >= 1 || r<=0 ? error("Contraction factor must be ∈(0,1)") : new(r,δ,A)
-    Similarity(r,δ,A) = typeof(A)!=UniformScaling{Bool} ? (norm(A*A'-I) > 1E-8 ? error("Rotation matrix must be orthoganol") : new(r,δ,A)) : new(r,δ,A)
+    δ::SVector{N,<:Real} # translation
+    A::Union{SMatrix{N,N,<:Real},UniformScaling{Bool}} # rotation
 end
 
-# Similarity(r::Real, δ::Union{Real,Array{<:Real,1}}) = Similarity(r,δ,Matrix(1.0I,length(δ),length(δ)))
 
-# Similarity(r::Real, δ::Real, A::Array{<:Real,2}) = Similarity(r,[δ],A)
-
-function Similarity(r::Real, δ::Array{<:Real,1}; θ=0::Real)
+function Similarity(r::Real, δ::Vector{<:Real}, θ=0::Real)
+    ndims = length(δ)
     if θ == 0
-        return Similarity(r,δ,I)
+        A = I
     else
-        A = [cos(θ) -sin(θ); sin(θ) cos(θ)]
-        return Similarity(r,δ,A)
+        A = SMatrix{ndims,ndims}([cos(θ) -sin(θ); sin(θ) cos(θ)])
     end
+    static_δ = SVector{ndims}(δ)
+    return Similarity{ndims}(r,static_δ,A)
 end
 
-sim_map(s::Similarity, x::Union{Array{<:Real},AbstractArray{<:Real,2}}) = s.r*s.A*x .+ s.δ
+# convert real values to vectors when appropriate
+Similarity(r::Real, δ::Real, θ=0::Real) = Similarity(r, [δ], θ)
 
-fixed_point(s::Similarity) = (I-s.r*s.A) \ s.δ
+sim_map(s::Similarity{N}, x::Union{AbstractVector{<:Real}}) where N = Vector(s.r*s.A*x .+ s.δ)
+
+fixed_point(s::Similarity{N}) where N = (I-s.r*s.A) \ s.δ
 #s.δ/(1-s.r)
 
 # there is possibility of defining affine contractions later.
@@ -51,10 +52,10 @@ function get_dimension_from_contractions(R, uniform, top_dim)
     return d
 end
 
-function get_barycentre(sims::Array{Similarity},d::Real)
-    N = length(sims[1].δ)
+function get_barycentre(sims::Array{Similarity{N}},d::Real) where N
+    M = length(sims[1].δ)
     divisor = I
-    vec_sum = zeros(N)
+    vec_sum = zeros(M)
     for s in sims
         divisor -= s.r^(d+1)*s.A
         vec_sum += s.r^d*s.δ
@@ -71,14 +72,15 @@ Constructor requires only an IFS, which is of type Array{Similarity}, and diamet
 All other essential properties can be deduced from this, including barycentre
 and dimension, which are approximated numerically.
 """
-struct Attractor <: Fractal
-    IFS::Array{Similarity}
+struct Attractor{N,M} <: Fractal
+    IFS::Vector{Similarity{N}}
     topological_dimension::Int64
     Hausdorff_dimension::Real
     uniform::Bool
-    barycentre::Array{<:Real}
+    barycentre::SVector{N,<:Real}
     diameter::Real
     measure::Real
+    weights::SVector{M,<:Float64}
 end
 
 # outer constructor, when diameter isn't given:
@@ -89,9 +91,9 @@ construct an example where this is false yet, but I haven't considered
 any rotations.
 """
 
-Attractor(sims::Array{Similarity}; measure::Real=1.0) = Attractor(sims, get_diameter(sims); measure=measure)
+# Attractor(sims::Array{Similarity}; measure::Real=1.0) = Attractor(sims, get_diameter(sims); measure=measure)
 
-function Attractor(sims::Array{Similarity}, diameter::Real; measure::Real=1.0) # outer constructor for attractor type
+function Attractor(sims::Vector{Similarity{N}}; diameter::Real=0.0, measure::Real=1.0, weights::Vector{<:Real}=[0]) where N# outer constructor for attractor type
     count = 1
     top_dims = zeros(length(sims))
     contractions = zeros(length(sims))
@@ -105,16 +107,45 @@ function Attractor(sims::Array{Similarity}, diameter::Real; measure::Real=1.0) #
     end
     if maximum(top_dims) != minimum(top_dims)
         error("Contractions are of different topological dimension")
-    else
-        top_dim = maximum(top_dims)
-        if maximum(contractions) != minimum(contractions)
-            uniform = false
-        else
-            uniform = true
-        end
-        Hdim = get_dimension_from_contractions(contractions,uniform,top_dim)
-        return Attractor(sims,top_dim,Hdim,uniform,get_barycentre(sims,Hdim),diameter,measure)
     end
+
+    if weights != [0]
+        if length(weights)!=length(sims)
+            error("Weights vector must be the same length as similarities vector")
+        end
+    end
+
+    # Now construct the properties needed for manipulations which will follow.
+
+    # Topological dimension
+    top_dim = maximum(top_dims)
+    if maximum(contractions) != minimum(contractions)
+        uniform = false
+    else
+        uniform = true
+    end
+
+    #Hausdorff dimension
+    Hdim = get_dimension_from_contractions(contractions,uniform,top_dim)
+
+    #Barycentre
+    bary = get_barycentre(sims,Hdim)
+
+    #Diameter
+    if diameter == 0.0
+        diameter = get_diameter(sims)
+    end
+
+    if weights == [0]
+        M = length(sims)
+        weights = zeros(Float64,M)
+        for m=1:M
+            weights[m] = sims[m].r^Hdim
+        end
+    end
+
+    return Attractor{top_dim,M}(sims, top_dim, Hdim, uniform, bary, diameter, measure, weights)
+
 end
 
 # subcomponent of attractor, as a subclass of fractal
@@ -183,10 +214,10 @@ function SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Array{Int64})
 end
 SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Int64) = SubAttractor(Γ, [index])
 
-full_map(S::Array{Similarity},x::Array{<:Real,1}) = full_map(S,reshape(x,length(x),1))
+full_map(S::Array{Similarity{N}},x::Array{<:Real,1}) where N = full_map(S,reshape(x,length(x),1)) 
 
-function full_map(S::Array{Similarity},X::Array{<:Real,2})
-    d,N = size(X)
+function full_map(S::Array{Similarity{N}},X::Array{<:Real,2}) where N
+    d,_ = size(X)
     M = length(S)
     NxM = N*M
     Y = zeros(d,NxM)

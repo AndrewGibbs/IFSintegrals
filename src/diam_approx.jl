@@ -6,7 +6,7 @@ http://www.cse.dmu.ac.uk/~hamzaoui/papers/ifs.pdf
 
 """
 
-function get_diam_long(sims::Array{Similarity}; tol=1E-8)
+function get_diam_long(sims::Array{Similarity{N}}; tol=1E-8) where N
     # get max Lipschitz constant of contraction
     L = 0
     for s in sims
@@ -38,11 +38,10 @@ function get_diam_long(sims::Array{Similarity}; tol=1E-8)
     return get_diameter(hcat(Xₙ...))
 end
 
-function get_diameter(sims::Array{Similarity})
+function get_diameter(sims::Array{Similarity{N}}) where N
     X = get_fixed_points(sims)
     X_slice = slicematrix(X')
     Xhull = VPolygon(convex_hull(X_slice))
-
 
     sX = full_map(sims,X)
     sX_slice = slicematrix(sX')
@@ -69,7 +68,7 @@ function get_diameter(X::Array{<:Real,2})
     return diam
 end
 
-function get_fixed_points(sims::Array{Similarity})
+function get_fixed_points(sims::Array{Similarity{N}}) where N
     M = length(sims)
     FPs = zeros(length(sims[1].δ),M)
     for m = 1:M
