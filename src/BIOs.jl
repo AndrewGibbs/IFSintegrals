@@ -191,7 +191,7 @@ function singular_elliptic_double_integral(K::BIO,h_quad::Real,index::Array{Int6
     end
 end
 
-function singular_elliptic_double_integral(Γ::Attractor,k::Number,h_quad::Real; Cosc = 2π, data=false)
+function singular_elliptic_double_integral(Γ::Union{Attractor,SubAttractor},k::Number,h_quad::Real; Cosc = 2π, data=false)
     K = SingleLayer(Γ, k)
     singular_elliptic_double_integral(K, h_quad; Cosc = Cosc, data=data)
 end
