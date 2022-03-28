@@ -19,47 +19,62 @@ function get_diam_long(sims::Array{Similarity{N}}; tol=1E-8) where N
     X = get_fixed_points(sims)
     sX = full_map(sims,X)
 
-    X_slice = slicematrix(X')
-    sX_slice = slicematrix(sX')
     # now determine how many iterations we need to reach prescribed tolerance
-    num_its = Int(ceil(log(tol*(1-L)/(2h_dist(X_slice,sX_slice)))/log(L)))
+    num_its = Int(ceil(log(tol*(1-L)/(2h_dist(X,sX)))/log(L)))
 
     #quite a bit of converting back and forth between nested arrays and matrices here
 
     # now apply the full IFS map iteratively, until we are within diam tolerance
-    Xₙ = convex_hull(sX_slice)
-    for n=2:num_its
-        X_ = hcat(Xₙ...)
-        SX_ = full_map(sims,X_)
-        SX_slice = slicematrix(SX_')
-        Xₙ = convex_hull(SX_slice)
+    Xₙ = convex_hull(sX)
+    for _=2:num_its
+        SXₙ = full_map(sims,Xₙ)
+        Xₙ = convex_hull(SXₙ)
     end
     # diameter of hull at nth iteration is 
-    return get_diameter(hcat(Xₙ...))
+    return get_diameter(Xₙ)
 end
 
 function get_diameter(sims::Array{Similarity{N}}) where N
-    X = get_fixed_points(sims)
-    X_slice = slicematrix(X')
-    Xhull = VPolygon(convex_hull(X_slice))
+    FPs = get_fixed_points(sims)
 
-    sX = full_map(sims,X)
-    sX_slice = slicematrix(sX')
+    if N == 1
+        D = get_diameter(FPs)
+    else
+        Xhull = VPolygon(convex_hull(FPs))
 
-    X_in_hull = true
-    for y in sX_slice
-        element(Singleton(y)) ∈ Xhull ? true : X_in_hull = false
+        s_of_fixed_points = full_map(sims,FPs)
+
+        X_in_hull = true
+        for y in s_of_fixed_points
+            element(Singleton(y)) ∈ Xhull ? true : X_in_hull = false
+        end
+        X_in_hull ? D=get_diameter(s_of_fixed_points) : D=get_diam_long(sims)
     end
-    X_in_hull ? d=get_diameter(X) : d=get_diam_long(sims)
-    return d
+    return D
 end
 
-function get_diameter(X::Array{<:Real,2})
-    _,M = size(X)
+# function get_diameter(X::Array{<:Real,2})
+#     _,M = size(X)
+#     diam = 0
+#     for m=1:M
+#         for n=(m+1):M
+#             R = dist(X[:,m],X[:,n])
+#             if R>diam
+#                 diam = R
+#             end
+#         end
+#     end
+#     return diam
+# end
+
+function get_diameter(X::Vector{Vector{Float64}})
+    M = length(X)
+    # N = length(X[1])
+
     diam = 0
     for m=1:M
         for n=(m+1):M
-            R = dist(X[:,m],X[:,n])
+            R = dist(X[m],X[n])
             if R>diam
                 diam = R
             end
@@ -70,15 +85,16 @@ end
 
 function get_fixed_points(sims::Array{Similarity{N}}) where N
     M = length(sims)
-    FPs = zeros(length(sims[1].δ),M)
+    # define vector of vectors via list comprehension 
+    FPs = [Vector{Float64}(undef, N) for _ = 1:M]
     for m = 1:M
-        FPs[:,m] = fixed_point(sims[m])
+        FPs[m] = fixed_point(sims[m])
     end
     return FPs
 end
 
 """Computes the Hausdorff distance between two sets"""
-function h_dist(X::Array{<:Array{<:Real}},Y::Array{<:Array{<:Real}})
+function h_dist(X::Vector{<:Vector{<:Real}},Y::Vector{<:Vector{<:Real}})
     D = zeros(length(X),length(Y))
     x_count = 0
     for x in X

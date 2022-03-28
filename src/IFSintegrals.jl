@@ -8,7 +8,7 @@ export Similarity, Attractor, SubAttractor, Fractal, sketch_attractor, CantorSet
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,
         BIO, DiscreteBIO, SingleLayer, Projection,
         single_layer_potential, far_field_pattern,
-        embed
+        embed, get_diameter
 include("fractals.jl")
 include("quadrature.jl")
 include("green_kernels.jl")

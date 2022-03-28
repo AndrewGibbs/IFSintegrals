@@ -87,14 +87,14 @@ function barycentre_uniform(Γ::Union{Attractor,SubAttractor},ℓ::Int64)
     return x, w
 end
 
-function subdivide_indices(Γ::Union{Attractor,SubAttractor},h::Real)
-    I = []
+function subdivide_indices(Γ::Union{Attractor,SubAttractor}, h::Real; int_type::DataType=UInt8)
+    I = Vector{int_type}[]
     M = length(Γ.IFS)
     r = zeros(M)
 
     if Γ.diameter >= h
         subdiv = true
-        for m=1:M
+        for m=int_type.(1:M)
             push!(I,[m])
             r[m] = Γ.IFS[m].r
         end
@@ -104,7 +104,7 @@ function subdivide_indices(Γ::Union{Attractor,SubAttractor},h::Real)
 
     while subdiv
         subdiv = false
-        split_vecs = []
+        split_vecs = Int64[]
         for j = 1:length(I)
            if Γ.diameter*prod(r[I[j]]) >= h
                 subdiv = true
@@ -112,7 +112,7 @@ function subdivide_indices(Γ::Union{Attractor,SubAttractor},h::Real)
             end
         end
         if subdiv
-            new_vecs = []
+            new_vecs = Vector{int_type}[]
             for j in split_vecs
                 for m = 1:M
                     push!(new_vecs,vcat(I[j],[m]))
@@ -125,9 +125,9 @@ function subdivide_indices(Γ::Union{Attractor,SubAttractor},h::Real)
     #quick bodge - this convention means we can keep the same type
         # and it's (more) consistent with the paper
     if isempty(I)
-        I = [[0]]
+        I = [[int_type(0)]]
     end
-    return convert(Array{Array{Int64,1},1},I)
+    return I#convert(Array{Array{Int64,1},1},I)
 end
 
 """
