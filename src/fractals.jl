@@ -41,8 +41,8 @@ abstract type Fractal
 end
 
 # a couple of useful functions:
-function get_dimension_from_contractions(R, uniform, top_dim)
-    if uniform
+function get_dimension_from_contractions(R, homogeneous, top_dim)
+    if homogeneous
         d = log(1/length(R))/log(R[1])
     else
         # approximate Hausdorff dimension:
@@ -52,13 +52,24 @@ function get_dimension_from_contractions(R, uniform, top_dim)
     return d
 end
 
-function get_barycentre(sims::Array{Similarity{N}},d::Real) where N
-    M = length(sims[1].δ)
+# function get_barycentre(sims::Array{Similarity{N}},d::Real) where N
+#     M = length(sims[1].δ)
+#     divisor = I
+#     vec_sum = zeros(M)
+#     for s in sims
+#         divisor -= s.r^(d+1)*s.A
+#         vec_sum += s.r^d*s.δ
+#     end
+#     return divisor \ vec_sum
+# end
+
+function get_barycentre(sims::Array{Similarity{N}}, weights::Vector{<:Real}) where N
+    M = length(sims)
     divisor = I
-    vec_sum = zeros(M)
-    for s in sims
-        divisor -= s.r^(d+1)*s.A
-        vec_sum += s.r^d*s.δ
+    vec_sum = zeros(N)
+    for n=1:M
+        divisor -= sims[n].r*weights[n]*sims[n].A
+        vec_sum += weights[n]*sims[n].δ
     end
     return divisor \ vec_sum
 end
@@ -76,7 +87,8 @@ struct Attractor{M,N,T<:Real} <: Fractal
     IFS::Vector{Similarity{N}}
     topological_dimension::Int64
     Hausdorff_dimension::T
-    uniform::Bool
+    Hausdorff_weights::Bool
+    homogeneous::Bool
     barycentre::SVector{N,T}
     diameter::T
     measure::T
@@ -105,7 +117,7 @@ function Attractor(sims::Vector{Similarity{N}}; diameter::T=0.0, measure::T=1.0,
         contractions[count] = s.r
         count += 1
     end
-    if maximum(top_dims) != minimum(top_dims)
+    if !constant_vector(top_dims)
         error("Contractions are of different topological dimension")
     end
 
@@ -119,17 +131,17 @@ function Attractor(sims::Vector{Similarity{N}}; diameter::T=0.0, measure::T=1.0,
 
     # Topological dimension
     top_dim = maximum(top_dims)
-    if maximum(contractions) != minimum(contractions)
-        uniform = false
+    if constant_vector(contractions)
+        homogeneous = true
     else
-        uniform = true
+        homogeneous = false
     end
 
     #Hausdorff dimension
-    Hdim = get_dimension_from_contractions(contractions,uniform,top_dim)
+    Hdim = get_dimension_from_contractions(contractions,homogeneous,top_dim)
 
     #Barycentre
-    bary = get_barycentre(sims,Hdim)
+    bary = get_barycentre(sims,weights)
     Sbary = SVector{top_dim}(bary)
 
     #Diameter
@@ -146,7 +158,9 @@ function Attractor(sims::Vector{Similarity{N}}; diameter::T=0.0, measure::T=1.0,
     end
     Sweights = SVector{M}(weights)
 
-    return Attractor{M,top_dim,T}(sims, top_dim, Hdim, uniform, Sbary, diameter, measure, Sweights)
+    Hausdorff_weights = are_weights_Hausdorff(weights, sims, Hdim)
+
+    return Attractor{M,top_dim,T}(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary, diameter, measure, Sweights)
 
 end
 
@@ -155,12 +169,11 @@ struct SubAttractor{M,N,T<:Real} <: Fractal
     attractor::Attractor{M,N}
     # IFS::Array{Similarity} # could be removed
     index::Vector{UInt8}
-    topological_dimension::Int64 # could be removed
-    Hausdorff_dimension::T # could be removed
+    # topological_dimension::Int64 # could be removed
+    # Hausdorff_dimension::T # could be removed
     barycentre::SVector{N,T}
     diameter::T
     measure::T
-    uniform::Bool
 end
 # outer constructor
 """
@@ -175,9 +188,7 @@ function SubAttractor(Γ::Union{Attractor{M,N,T},SubAttractor{M,N,T}}, index::Ve
         if typeof(Γ)==SubAttractor
             return Γ
         else
-            return SubAttractor(Γ, Γ.IFS, [UInt8(0)], Γ.topological_dimension,
-                            Γ.Hausdorff_dimension, Γ.barycentre,
-                            Γ.diameter, Γ.measure, Γ.uniform)
+            return SubAttractor(Γ, [UInt8(0)], Γ.barycentre, Γ.diameter, Γ.measure, Γ.homogeneous)
         end
     else #non-trivial case
 
@@ -210,16 +221,28 @@ function SubAttractor(Γ::Union{Attractor{M,N,T},SubAttractor{M,N,T}}, index::Ve
         #quick fix if we're after a subattractor of a subattractor
         if typeof(Γ)==SubAttractor
             #index = vcat(index, Γ.index)
-            return SubAttractor{M,N,T}(Γ.attractor, index, Γ.topological_dimension, Γ.Hausdorff_dimension, Snew_bary, new_diam, new_measure, Γ.uniform)
+            return SubAttractor{M,N,T}(Γ.attractor, index, Snew_bary, new_diam, new_measure)
         else
-            return SubAttractor{M,N,T}(Γ,           index, Γ.topological_dimension, Γ.Hausdorff_dimension, Snew_bary, new_diam, new_measure, Γ.uniform)
+            return SubAttractor{M,N,T}(Γ,           index, Snew_bary, new_diam, new_measure)
         end
     end
 end
 
 SubAttractor(Γ::Union{Attractor,SubAttractor}, index::Int64) = SubAttractor(Γ, [index])
 
-full_map(S::Array{Similarity{N}},x::Array{<:Real,1}) where N = full_map(S,reshape(x,length(x),1)) 
+full_map(S::Array{Similarity{N}},x::Array{<:Real,1}) where N = full_map(S,reshape(x,length(x),1))
+
+function are_weights_Hausdorff(w::Vector{Float64},S::Vector{Similarity{N}},d::Number) where N
+    thresh = 1E-12
+    x = true
+    for n=1:length(w)
+        if abs(w[n]-S[n].r^d) > thresh
+            x = false
+            break
+        end
+    end
+    return x
+end
 
 function full_map(S::Vector{Similarity{N}},X::Vector{Vector{Float64}}) where N
     d = length(X)
@@ -260,34 +283,49 @@ end
 The middle-α Cantor set (default is α=1/3),
 formed by removing the middle α of the unit interval, and repeating on each sub interval.
 """
-function CantorSet(α = 1/3)
-    r = (1 - α)/2
-    S = [Similarity(r,[0.0]),Similarity(r,[1-r])]
-    return Attractor(S,1,log(1/2)/log(r),true,[1/2],1.0,1.0)
+
+# quick function which computes the barycentre, if it's not the default one with equal weights
+function default_bary(S::Vector{Similarity{N}}, d::Number, weights::Vector{Float64}, Hausdorff_measure_bary::Vector{Float64}) where N
+    if are_weights_Hausdorff(weights,S,d)
+        bary = Hausdorff_measure_bary
+    else
+        bary = get_barycentre(S,weights)
+    end
+    return bary
+end
+
+function CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
+    S = [Similarity(contraction,[0.0]),Similarity(contraction,[1-contraction])]
+    d = log(1/2)/log(contraction)
+    bary = default_bary(S,d,weights,[1/2])
+    return Attractor{2,1,Float64}(S,1,d,true,are_weights_Hausdorff(weights,S,d),bary,1.0,1.0,weights)
 end
 
 """
 The middle-α Cantor dust (default is α=1/3),
 formed by taking the cartesian product of two middle-α Cantor sets.
 """
-function CantorDust(α = 1/3)
-    r = (1 - α)/2
-    S = [Similarity(r,[0.0,0.0]),Similarity(r,[1-r,0.0]),Similarity(r,[0.0,1-r]),Similarity(r,[1-r,1-r])]
-    return Attractor(S, 2, log(1/4)/log(r), true, [0.5,0.5], sqrt(2), 1.0)
+function CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
+    S = [Similarity(contraction,[0.0,0.0]),Similarity(contraction,[1-contraction,0.0]),Similarity(contraction,[0.0,1-contraction]),Similarity(contraction,[1-contraction,1-contraction])]
+    bary = default_bary(S,d,weights,[0.5,0.5])
+    return Attractor{4,2,Float64}(S, 2, log(1/4)/log(contraction), true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0,weights)
 end
 
 """
 The Sierpinski triangle, as an attractor of an iterated function system.
 """
-function Sierpinski()
+function Sierpinski(;weights=[1/3, 1/3, 1/3])
     courage = Similarity(1/2,[0,1/6])
     wisdom = Similarity(1/2,sqrt(2)*[1/6,-1/6])
     power = Similarity(1/2,sqrt(2)*[-1/6,-1/6])
-    return Attractor([courage,wisdom,power], 2, log(3)/log(2), true, [0,(1-2*sqrt(2))/9], 1.0, 1.0)
+    S = [courage,wisdom,power]
+    d = log(3)/log(2)
+    bary = default_bary(S,d,weights,[0,(1-2*sqrt(2))/9])
+    return Attractor{3,2,Float64}(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights)
 end
 #            Attractor(sims,top_dim,Hdim,uniform,get_barycentre(sims,Hdim),diameter,measure)
 
-function SquareFlake()
+function SquareFlake(;weights=ones(16)./16)
     scale = 1
     h = scale/4 # width of square subcomponent
     ρ = 1/4
@@ -310,11 +348,12 @@ function SquareFlake()
             ]
     R = get_diameter(IFS) # I'm sure this can be calculated by hand... but not today.
     # also the 'measure' is not really 1 here. But it doesn't matter.
-    return Attractor(IFS, 2, 2, true, [0.0,0.0], R, 1.0)
+    bary = default_bary(IFS,2.0,weights,[0.0,0.0])
+    return Attractor{16,2,Float64}(IFS, 2, 2.0, true, are_weights_Hausdorff(weights,IFS,2), [0.0,0.0], R, 1.0, weights)
 end
 
-function KochFlake()
-    IFS = [Similarity(sqrt(1/3),[0, 0];θ = pi/6),
+function KochFlake(weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
+    IFS = [Similarity(sqrt(1/3),[0, 0], pi/6),
             Similarity(1/3,[1/sqrt(3),1/3]),
             Similarity(1/3,[0,2/3]),
             Similarity(1/3,[-1/sqrt(3),1/3]),
@@ -322,5 +361,6 @@ function KochFlake()
             Similarity(1/3,[0,-2/3]),
             Similarity(1/3,[1/sqrt(3),-1/3])
             ]
-    return Attractor(IFS, 2, 2, false, [0.0,0.0], 2*sqrt(3)/3, 1.0)
+    bary = default_bary(IFS,2.0,weights,[0.0,0.0])
+    return Attractor{7,2,Float64}(IFS, 2, 2.0, false, are_weights_Hausdorff(weights,IFS,2), bary, 2*sqrt(3)/3, 1.0, weights)
 end

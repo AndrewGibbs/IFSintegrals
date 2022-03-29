@@ -8,7 +8,7 @@ export Similarity, Attractor, SubAttractor, Fractal, sketch_attractor, CantorSet
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,
         BIO, DiscreteBIO, SingleLayer, Projection,
         single_layer_potential, far_field_pattern,
-        embed, get_diameter
+        embed, get_diameter, chaos_quad
 include("fractals.jl")
 include("quadrature.jl")
 include("green_kernels.jl")
@@ -25,6 +25,11 @@ function slicematrix(A::AbstractMatrix{T}) where T
             B[i] .= A[i, :]
         end
         return B
-    end
+end
+
+function constant_vector(v::Vector)
+    minimum(v)==maximum(v) ? x= true : x= false
+    return x
+end
 
 end
