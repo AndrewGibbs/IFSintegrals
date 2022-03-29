@@ -4,8 +4,30 @@
 returns N weights w ∈ Rⁿ and nodes x ∈ Rᴺˣⁿ,
 for approximation of integrals defined on an IFS Γ
 """
+# function barycentre_rule(Γ::Union{Attractor,SubAttractor},h::Real)
+#     if Γ.homogeneous && Γ.Hausdorff_weights
+#         h = min(h,Γ.diameter)
+#         ℓ = Int64(ceil(log(h/Γ.diameter)/log(Γ.IFS[1].r)))
+#         x,w = barycentre_uniform(Γ::Union{Attractor,SubAttractor},ℓ)
+#     else # uniform attractor, can do things a bit quicker
+#         Lₕ = subdivide_indices(Γ,h)
+#         x = zeros(Float64, length(Lₕ), Γ.topological_dimension)
+#         w = zeros(Float64, length(Lₕ))
+#         for j =1:length(Lₕ)
+#             γ = SubAttractor(Γ,Lₕ[j])
+#             x[j,:] = γ.barycentre
+#             w[j] = γ.measure
+#         end
+#     end
+
+#     return x,w
+# end
 function barycentre_rule(Γ::Union{Attractor,SubAttractor},h::Real)
-    if !Γ.uniform
+    if Γ.homogeneous && Γ.Hausdorff_weights
+        h = min(h,Γ.diameter)
+        ℓ = Int64(ceil(log(h/Γ.diameter)/log(Γ.IFS[1].r)))
+        x,w = barycentre_uniform(Γ::Union{Attractor,SubAttractor},ℓ)
+    else # uniform attractor, can do things a bit quicker
         Lₕ = subdivide_indices(Γ,h)
         x = zeros(Float64, length(Lₕ), Γ.topological_dimension)
         w = zeros(Float64, length(Lₕ))
@@ -14,10 +36,6 @@ function barycentre_rule(Γ::Union{Attractor,SubAttractor},h::Real)
             x[j,:] = γ.barycentre
             w[j] = γ.measure
         end
-    else # uniform attractor, can do things a bit quicker
-        h = min(h,Γ.diameter)
-        ℓ = Int64(ceil(log(h/Γ.diameter)/log(Γ.IFS[1].r)))
-        x,w = barycentre_uniform(Γ::Union{Attractor,SubAttractor},ℓ)
     end
 
     return x,w
@@ -226,4 +244,31 @@ function eval_green_single_integral_fixed_point(Γ::Union{Attractor,SubAttractor
         end
     end
 
+end
+
+function chaos_quad(Γ::Union{Attractor,SubAttractor},N::Int64,x₀::Vector{Float64})
+    x = [Vector{Float64}(undef, length(x₀)) for _ = 1:N]
+    x[1] = x₀
+    for n=2:N
+        x[n] = chaos_step(Γ,x[n-1])
+    end
+    return x, ones(N)./N
+end
+
+function chaos_quad(Γ::Union{Attractor,SubAttractor},N::Int64,x₀::Float64)
+    if Γ.topological_dimension>1
+        error("Initial guess must match dimension of ambient space")
+    end
+    X,w = chaos_quad(Γ,N,[x₀])
+    x = zeros(N)
+    for n=1:N
+        x[n] = X[n][1]
+    end
+    return x,w
+end
+
+function chaos_step(Γ::Union{Attractor,SubAttractor},x::Vector{Float64})
+    # randomly choose a map
+    τ = minimum((1:length(Γ.weights))[rand().<cumsum(Γ.weights)])
+    return sim_map(Γ.IFS[τ],x)
 end
