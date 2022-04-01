@@ -8,28 +8,52 @@ end
 """
 Type Similarity(r,δ,A), with contraction r<1, translation δ ∈ Rⁿ and a rotation matrix A ∈ Rⁿˣⁿ.
 """
-struct Similarity{N} <: ContractionMap
-    r::Real # contraction
-    δ::SVector{N,<:Real} # translation
-    A::Union{SMatrix{N,N,<:Real},UniformScaling{Bool}} # rotation
+struct Similarity{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    r::Float64 # contraction
+    δ::V # translation
+    A::M # rotation
+    rA::M # contraction * rotation
 end
 
 
-function Similarity(r::Real, δ::Vector{<:Real}, θ=0::Real)
-    ndims = length(δ)
-    if θ == 0
-        A = I
+function Similarity(r::Real, δ::Union{Vector{<:Real},Real}, θ=0::Real)
+    # θ = Float64(θ)
+    r = Float64(r)
+    #build translation
+    if isa(δ,Real)
+        ndims = 1
+        static_δ = Float64(δ)
+    else
+        ndims = length(δ)
+        static_δ = SVector{ndims}(δ)
+    end
+    #build rotation
+    if ndims ==1
+        A = 1.0
+    elseif θ == 0
+        A = SMatrix{2,2,Float64}(I(2))
     else
         A = SMatrix{ndims,ndims}([cos(θ) -sin(θ); sin(θ) cos(θ)])
     end
-    static_δ = SVector{ndims}(δ)
-    return Similarity{ndims}(r,static_δ,A)
+    return Similarity(r,static_δ,A,r*A)
 end
 
-# convert real values to vectors when appropriate
-Similarity(r::Real, δ::Real, θ=0::Real) = Similarity(r, [δ], θ)
+# # convert real values to vectors when appropriate
+# Similarity(r::Real, δ::Real, θ=0::Real) = Similarity(r, [δ], θ)
 
-sim_map(s::Similarity{N}, x::Union{AbstractVector{<:Real}}) where N = Vector(s.r*s.A*x .+ s.δ)
+#fast method, for N>2 and M=N^2 (although I can't work out how to restrict in this way)
+# sim_map(s::Similarity{SVector{N,Float64},SMatrix{N,N,Float64,M}}, x::SVector{N,Float64}) where {N,M} = s.rA*x + s.δ
+
+#fast method for N>2 without rotation
+# sim_map(s::Similarity{SVector{N,Float64},UniformScaling{<:Real}}, x::SVector{N,Float64}) where N = s.r*x + s.δ
+
+#fast method, for N=1
+# sim_map(s::Similarity{Float64,Float64}, x::Float64) = s.r*x + s.δ
+
+#abstract method, shouldn't really get used
+sim_map(s::Similarity, x::Union{Real,AbstractVector{<:Real}}) = s.rA*x .+ s.δ
+
+# sim_map(s::Similarity{1}, x::Float64) = s.r*x .+ s.δ[1]
 
 fixed_point(s::Similarity{N}) where N = (I-s.r*s.A) \ s.δ
 #s.δ/(1-s.r)
@@ -83,16 +107,16 @@ Constructor requires only an IFS, which is of type Array{Similarity}, and diamet
 All other essential properties can be deduced from this, including barycentre
 and dimension, which are approximated numerically.
 """
-struct Attractor{M,N,T<:Real} <: Fractal
+struct Attractor{M,N} <: Fractal
     IFS::Vector{Similarity{N}}
     topological_dimension::Int64
-    Hausdorff_dimension::T
+    Hausdorff_dimension::Float64
     Hausdorff_weights::Bool
     homogeneous::Bool
-    barycentre::SVector{N,T}
-    diameter::T
-    measure::T
-    weights::SVector{M,T}
+    barycentre::SVector{N,Float64}
+    diameter::Float64
+    measure::Float64
+    weights::SVector{M,Float64}
 end
 
 # outer constructor, when diameter isn't given:
@@ -105,7 +129,7 @@ any rotations.
 
 # Attractor(sims::Array{Similarity}; measure::Real=1.0) = Attractor(sims, get_diameter(sims); measure=measure)
 
-function Attractor(sims::Vector{Similarity{N}}; diameter::T=0.0, measure::T=1.0, weights::Vector{<:T}=[0]) where {N,T<:Real}# outer constructor for attractor type
+function Attractor(sims::Vector{Similarity{N}}; diameter::Real=0.0, measure::Real=1.0, weights::Vector{<:Real}=[0]) where N# outer constructor for attractor type
     count = 1
     top_dims = zeros(Int64,length(sims))
     contractions = zeros(Float64,length(sims))
@@ -142,10 +166,10 @@ function Attractor(sims::Vector{Similarity{N}}; diameter::T=0.0, measure::T=1.0,
 
     #Barycentre
     bary = get_barycentre(sims,weights)
-    Sbary = SVector{top_dim}(bary)
+    Sbary = SVector{top_dim,Float64}(bary)
 
     #Diameter
-    if diameter == 0.0
+    if diameter <= 0.0
         diameter = get_diameter(sims)
     end
 
@@ -156,24 +180,24 @@ function Attractor(sims::Vector{Similarity{N}}; diameter::T=0.0, measure::T=1.0,
             weights[m] = measure*sims[m].r^Hdim
         end
     end
-    Sweights = SVector{M}(weights)
+    Sweights = SVector{M,Float64}(weights)
 
     Hausdorff_weights = are_weights_Hausdorff(weights, sims, Hdim)
 
-    return Attractor{M,top_dim,T}(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary, diameter, measure, Sweights)
+    return Attractor{M,top_dim}(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary, Float64(diameter), Float64(measure), Sweights)
 
 end
 
 # subcomponent of attractor, as a subclass of fractal
-struct SubAttractor{M,N,T<:Real} <: Fractal
+struct SubAttractor{M,N} <: Fractal
     attractor::Attractor{M,N}
     # IFS::Array{Similarity} # could be removed
     index::Vector{UInt8}
     # topological_dimension::Int64 # could be removed
     # Hausdorff_dimension::T # could be removed
-    barycentre::SVector{N,T}
-    diameter::T
-    measure::T
+    barycentre::SVector{N,Float64}
+    diameter::Float64
+    measure::Float64
 end
 # outer constructor
 """
@@ -181,7 +205,7 @@ Representation of a subcomponent of a fractal Γ, using standard vector index no
 If Γ is a subattractor, then the vector indices are concatenated to produce a new subatractor,
 which stores the original attractor.
 """
-function SubAttractor(Γ::Union{Attractor{M,N,T},SubAttractor{M,N,T}}, index::Vector{UInt8}) where {M,N,T<:Real}
+function SubAttractor(Γ::Union{Attractor{M,N},SubAttractor{M,N}}, index::Vector{UInt8}) where {M,N}
 
     #quick condition for trivial case:
     if index == [0]
@@ -216,14 +240,14 @@ function SubAttractor(Γ::Union{Attractor{M,N,T},SubAttractor{M,N,T}}, index::Ve
         for m=index[end:-1:1]
             new_bary = sim_map(Γ.IFS[m], new_bary)
         end
-        Snew_bary = SVector{N}(new_bary)
+        Snew_bary = SVector{N,Float64}(new_bary)
 
         #quick fix if we're after a subattractor of a subattractor
         if typeof(Γ)==SubAttractor
             #index = vcat(index, Γ.index)
-            return SubAttractor{M,N,T}(Γ.attractor, index, Snew_bary, new_diam, new_measure)
+            return SubAttractor{M,N}(Γ.attractor, index, Snew_bary, new_diam, new_measure)
         else
-            return SubAttractor{M,N,T}(Γ,           index, Snew_bary, new_diam, new_measure)
+            return SubAttractor{M,N}(Γ,           index, Snew_bary, new_diam, new_measure)
         end
     end
 end
@@ -298,7 +322,7 @@ function CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
     S = [Similarity(contraction,[0.0]),Similarity(contraction,[1-contraction])]
     d = log(1/2)/log(contraction)
     bary = default_bary(S,d,weights,[1/2])
-    return Attractor{2,1,Float64}(S,1,d,true,are_weights_Hausdorff(weights,S,d),bary,1.0,1.0,weights)
+    return Attractor{2,1}(S,1,d,true,are_weights_Hausdorff(weights,S,d),bary,1.0,1.0,weights)
 end
 
 """
@@ -307,8 +331,22 @@ formed by taking the cartesian product of two middle-α Cantor sets.
 """
 function CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
     S = [Similarity(contraction,[0.0,0.0]),Similarity(contraction,[1-contraction,0.0]),Similarity(contraction,[0.0,1-contraction]),Similarity(contraction,[1-contraction,1-contraction])]
+    d = log(1/4)/log(contraction)
     bary = default_bary(S,d,weights,[0.5,0.5])
-    return Attractor{4,2,Float64}(S, 2, log(1/4)/log(contraction), true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0,weights)
+    return Attractor{4,2}(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0,weights)
+end
+
+function CantorN(N::Integer; contraction = 1/3)
+    M = 2^N
+    S = Similarity[]
+    for m=1:M
+        m_binary = digits(m-1,base=2,pad=N)
+        push!(S,Similarity(contraction,m_binary.*(1-contraction)))
+    end
+    d = log(1/M)/log(contraction)
+    weights = ones(M)./M
+    bary =  0.5.*ones(N)
+    return Attractor{M,N}(S, 2, d, true, true, bary, sqrt(N), 1.0, weights)
 end
 
 """
@@ -321,7 +359,7 @@ function Sierpinski(;weights=[1/3, 1/3, 1/3])
     S = [courage,wisdom,power]
     d = log(3)/log(2)
     bary = default_bary(S,d,weights,[0,(1-2*sqrt(2))/9])
-    return Attractor{3,2,Float64}(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights)
+    return Attractor{3,2}(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights)
 end
 #            Attractor(sims,top_dim,Hdim,uniform,get_barycentre(sims,Hdim),diameter,measure)
 
@@ -349,7 +387,7 @@ function SquareFlake(;weights=ones(16)./16)
     R = get_diameter(IFS) # I'm sure this can be calculated by hand... but not today.
     # also the 'measure' is not really 1 here. But it doesn't matter.
     bary = default_bary(IFS,2.0,weights,[0.0,0.0])
-    return Attractor{16,2,Float64}(IFS, 2, 2.0, true, are_weights_Hausdorff(weights,IFS,2), [0.0,0.0], R, 1.0, weights)
+    return Attractor{16,2}(IFS, 2, 2.0, true, are_weights_Hausdorff(weights,IFS,2), [0.0,0.0], R, 1.0, weights)
 end
 
 function KochFlake(weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
@@ -362,5 +400,5 @@ function KochFlake(weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
             Similarity(1/3,[1/sqrt(3),-1/3])
             ]
     bary = default_bary(IFS,2.0,weights,[0.0,0.0])
-    return Attractor{7,2,Float64}(IFS, 2, 2.0, false, are_weights_Hausdorff(weights,IFS,2), bary, 2*sqrt(3)/3, 1.0, weights)
+    return Attractor{7,2}(IFS, 2, 2.0, false, are_weights_Hausdorff(weights,IFS,2), bary, 2*sqrt(3)/3, 1.0, weights)
 end

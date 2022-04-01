@@ -2,13 +2,13 @@ module IFSintegrals
 
 using Base: Float64
 export Similarity, Attractor, SubAttractor, Fractal, sketch_attractor, CantorSet,
-        Sierpinski, SquareFlake, KochFlake, sim_map, full_map,
+        Sierpinski, SquareFlake, KochFlake, CantorN, sim_map, full_map,
         barycentre_rule, subdivide_indices, eval_green_double_integral,
         CantorDust, eval_green_single_integral_fixed_point, fixed_point,
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,
         BIO, DiscreteBIO, SingleLayer, Projection,
         single_layer_potential, far_field_pattern,
-        embed, get_diameter, chaos_quad
+        embed, get_diameter, chaos_quad, barycentre_uniform
 include("fractals.jl")
 include("quadrature.jl")
 include("green_kernels.jl")

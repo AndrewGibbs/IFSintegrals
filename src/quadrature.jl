@@ -4,36 +4,27 @@
 returns N weights w ∈ Rⁿ and nodes x ∈ Rᴺˣⁿ,
 for approximation of integrals defined on an IFS Γ
 """
-# function barycentre_rule(Γ::Union{Attractor,SubAttractor},h::Real)
-#     if Γ.homogeneous && Γ.Hausdorff_weights
-#         h = min(h,Γ.diameter)
-#         ℓ = Int64(ceil(log(h/Γ.diameter)/log(Γ.IFS[1].r)))
-#         x,w = barycentre_uniform(Γ::Union{Attractor,SubAttractor},ℓ)
-#     else # uniform attractor, can do things a bit quicker
-#         Lₕ = subdivide_indices(Γ,h)
-#         x = zeros(Float64, length(Lₕ), Γ.topological_dimension)
-#         w = zeros(Float64, length(Lₕ))
-#         for j =1:length(Lₕ)
-#             γ = SubAttractor(Γ,Lₕ[j])
-#             x[j,:] = γ.barycentre
-#             w[j] = γ.measure
-#         end
-#     end
 
-#     return x,w
-# end
-function barycentre_rule(Γ::Union{Attractor,SubAttractor},h::Real)
-    if Γ.homogeneous && Γ.Hausdorff_weights
+function barycentre_rule(Γ::Union{Attractor{M,N},SubAttractor{M,N}},h::Real) where {M,N}
+    if Γ.homogeneous && Γ.Hausdorff_weights # uniform attractor, can do things a bit quicker
         h = min(h,Γ.diameter)
         ℓ = Int64(ceil(log(h/Γ.diameter)/log(Γ.IFS[1].r)))
-        x,w = barycentre_uniform(Γ::Union{Attractor,SubAttractor},ℓ)
-    else # uniform attractor, can do things a bit quicker
+        x,w = barycentre_uniform(Γ,ℓ)
+    else 
         Lₕ = subdivide_indices(Γ,h)
-        x = zeros(Float64, length(Lₕ), Γ.topological_dimension)
+        if N==1
+            x = zeros(Float64, length(Lₕ))
+        else
+            x = [zeros(Float64, N) for _=1:length(Lₕ)]
+        end
         w = zeros(Float64, length(Lₕ))
         for j =1:length(Lₕ)
             γ = SubAttractor(Γ,Lₕ[j])
-            x[j,:] = γ.barycentre
+            if N==1
+                x[j] = γ.barycentre[1]
+            else
+                x[j] = γ.barycentre
+            end
             w[j] = γ.measure
         end
     end
@@ -66,11 +57,10 @@ function barycentre_rule(Γ1::Union{Attractor,SubAttractor},Γ2::Union{Attractor
     return X1, X2, W
 end
 
-function barycentre_uniform(Γ::Union{Attractor,SubAttractor},ℓ::Int64)
+function barycentre_uniform(Γ::Union{Attractor{M,N},SubAttractor{M,N}},ℓ::Int64) where {M,N}
     # initialise arrays
-    M = length(Γ.IFS)
-    z = zeros(Float64, ℓ+1, Γ.topological_dimension)
-    x = zeros(Float64, M^ℓ, Γ.topological_dimension)
+    z = zeros(Float64, ℓ+1, N)
+    x = zeros(Float64, M^ℓ, N)
     w = Γ.measure*Γ.IFS[1].r^(Γ.Hausdorff_dimension*ℓ)*ones(Float64,M^ℓ)
     count = 0
 
@@ -95,14 +85,17 @@ function barycentre_uniform(Γ::Union{Attractor,SubAttractor},ℓ::Int64)
     end
     if isa(Γ,SubAttractor)
         if Γ.index != [0]
-            X = x'
             for m = Γ.index[end:-1:1]
-                X = sim_map(Γ.IFS[m], X)
+                x = sim_map(Γ.IFS[m], x)
             end 
-            x = X'
+            # X = slicematrix(x)
         end
     end
-    return x, w
+    if N==1
+        return vec(x), w
+    else
+        return slicematrix(x), w
+    end
 end
 
 function subdivide_indices(Γ::Union{Attractor,SubAttractor}, h::Real; int_type::DataType=UInt8)
