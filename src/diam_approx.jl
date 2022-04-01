@@ -6,7 +6,7 @@ http://www.cse.dmu.ac.uk/~hamzaoui/papers/ifs.pdf
 
 """
 
-function get_diam_long(sims::Array{Similarity{N}}; tol=1E-8) where N
+function get_diam_long(sims::Array{Similarity{V,M}}; tol=1E-8) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     # get max Lipschitz constant of contraction
     L = 0
     for s in sims
@@ -34,10 +34,10 @@ function get_diam_long(sims::Array{Similarity{N}}; tol=1E-8) where N
     return get_diameter(Xₙ)
 end
 
-function get_diameter(sims::Array{Similarity{N}}) where N
+function get_diameter(sims::Vector{Similarity{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     FPs = get_fixed_points(sims)
 
-    if N == 1
+    if V<:Real
         D = get_diameter(FPs)
     else
         Xhull = VPolygon(convex_hull(FPs))
@@ -52,20 +52,6 @@ function get_diameter(sims::Array{Similarity{N}}) where N
     end
     return D
 end
-
-# function get_diameter(X::Array{<:Real,2})
-#     _,M = size(X)
-#     diam = 0
-#     for m=1:M
-#         for n=(m+1):M
-#             R = dist(X[:,m],X[:,n])
-#             if R>diam
-#                 diam = R
-#             end
-#         end
-#     end
-#     return diam
-# end
 
 function get_diameter(X::Vector{Vector{Float64}})
     M = length(X)
@@ -83,8 +69,9 @@ function get_diameter(X::Vector{Vector{Float64}})
     return diam
 end
 
-function get_fixed_points(sims::Array{Similarity{N}}) where N
+function get_fixed_points(sims::Array{Similarity{V,M_}}) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     M = length(sims)
+    N = length(sims[1].δ)
     # define vector of vectors via list comprehension 
     FPs = [Vector{Float64}(undef, N) for _ = 1:M]
     for m = 1:M

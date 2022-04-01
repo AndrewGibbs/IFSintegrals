@@ -1,19 +1,26 @@
 module IFSintegrals
 
 using Base: Float64
+using ProgressMeter
+import Base: -, \
+import Roots: find_zero, Bisection
+import LinearAlgebra: norm, I, UniformScaling
+import StaticArrays: SVector, SMatrix
 export Similarity, Attractor, SubAttractor, Fractal, sketch_attractor, CantorSet,
         Sierpinski, SquareFlake, KochFlake, CantorN, sim_map, full_map,
         barycentre_rule, subdivide_indices, eval_green_double_integral,
         CantorDust, eval_green_single_integral_fixed_point, fixed_point,
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,
-        BIO, DiscreteBIO, SingleLayer, Projection,
+        BIO, DiscreteBIO, SingleLayer,
         single_layer_potential, far_field_pattern,
-        embed, get_diameter, chaos_quad, barycentre_uniform
+        chaos_quad, barycentre_uniform
+include("similarities.jl")
 include("fractals.jl")
 include("quadrature.jl")
 include("green_kernels.jl")
 include("BIOs.jl")
 include("diam_approx.jl")
+include("presets.jl")
 
 # routine below was copied from:
 # https://discourse.julialang.org/t/converting-a-matrix-into-an-array-of-arrays/17038

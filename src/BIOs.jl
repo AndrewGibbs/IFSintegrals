@@ -1,9 +1,9 @@
-import Base: -
-import Base: \ # to be overloaded with discrete operators
-using ProgressMeter
+# import Base: -
+# import Base: \ # to be overloaded with discrete operators
+# using ProgressMeter
 
 struct BIO
-    domain::Fractal
+    domain::SelfSimilarFractal
     kernel::Function #function
     Lipschitz_part_of_kernel::Function #function
     singularity_strength::Real
@@ -13,7 +13,7 @@ struct BIO
 end
 
 #constructor for zero wavenumber case
-BIO(domain::Fractal,kernel::Function,Lipschitz_part_of_kernel::Function,singularity_strength::Real,
+BIO(domain::SelfSimilarFractal,kernel::Function,Lipschitz_part_of_kernel::Function,singularity_strength::Real,
 singularity_scale::Complex{<:Real},self_adjoint::Bool)=BIO(domain,kernel,Lipschitz_part_of_kernel,
 singularity_strength,singularity_scale,self_adjoint,0.0)
 
@@ -126,18 +126,18 @@ function \(K::DiscreteBIO, f::Function)
 end
 
 struct Projection # onto the coefficient space of piecewise constants on the fractal
-    domain::Fractal
+    domain::SelfSimilarFractal
     Lₕ::Array{Array{Int64,1},1} # subindices list
     coeffs::Array{<:Complex{<:Real},1}
 end
 
 """
-    SingleLayer(Γ::Fractal, k::Real=0.0)
+    SingleLayer(Γ::SelfSimilarFractal, k::Real=0.0)
 
 represents the single layer boundary integral operator, Sϕ(x) = ∫_Γ Φ(x,y) ϕ(x) dHᵈ(y),
 where Φ is the fundamental solution for the underlying PDE.
 """
-function SingleLayer(Γ::Fractal, k::Number=0.0)
+function SingleLayer(Γ::SelfSimilarFractal, k::Number=0.0)
     if Γ.topological_dimension == 1
         if k==0.0 #2D Laplace case
             K = BIO(Γ, #fractal domain
@@ -248,7 +248,7 @@ function singular_elliptic_double_integral_basic(K::BIO,h::Real,index::Array{Int
     end
 end
 
-function single_layer_potential(Γ::Fractal,k::Real,density::Projection,points::Array{<:Real,2};h=0.1/k)
+function single_layer_potential(Γ::SelfSimilarFractal,k::Real,density::Projection,points::Array{<:Real,2};h=0.1/k)
     num_points = size(points)[1]
     vals = zeros(Complex{Float64},num_points)
     # kernel is the same as the single layer BIO, so use that:
@@ -267,10 +267,10 @@ function single_layer_potential(Γ::Fractal,k::Real,density::Projection,points::
     return vals
 end
 # simplify for Laplace kernel case:
-single_layer_potential(Γ::Fractal,density::Projection,points::Array{<:Real,2}) = single_layer_potential(Γ,0.0,density,points)
+single_layer_potential(Γ::SelfSimilarFractal,density::Projection,points::Array{<:Real,2}) = single_layer_potential(Γ,0.0,density,points)
 
 #have not tested far-field pattern yet:
-function far_field_pattern(Γ::Fractal,k::Real,density::Projection,points::Array{<:Real,2};h=0.1/k)
+function far_field_pattern(Γ::SelfSimilarFractal,k::Real,density::Projection,points::Array{<:Real,2};h=0.1/k)
     num_points = size(points)[1]
     vals = zeros(Complex{Float64},num_points)
     # far-field kernel:
@@ -287,7 +287,7 @@ function far_field_pattern(Γ::Fractal,k::Real,density::Projection,points::Array
     return vals
 end
 
-function far_field_pattern(Γ::Fractal,k::Real,density::Projection,points::Array{<:Real,1};h=0.1/k)
+function far_field_pattern(Γ::SelfSimilarFractal,k::Real,density::Projection,points::Array{<:Real,1};h=0.1/k)
     num_points = length(points)
     vals = zeros(Complex{Float64},num_points)
     # far-field kernel:
