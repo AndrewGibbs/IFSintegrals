@@ -140,7 +140,7 @@ end
 struct SubAttractor{V,M} <: SelfSimilarFractal{V,M}
     attractor::Attractor
     # IFS::Array{Similarity} # could be removed ?
-    index::Vector{UInt64}
+    index::Vector{Int64}
     # topological_dimension::Int64 # could be removed
     # Hausdorff_dimension::T # could be removed
     barycentre::V
@@ -153,7 +153,7 @@ Representation of a subcomponent of a fractal Γ, using standard vector index no
 If Γ is a subattractor, then the vector indices are concatenated to produce a new subatractor,
 which stores the original attractor.
 """
-function SubAttractor(Γ::Attractor{V,M}, index::Vector{<:Unsigned}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function SubAttractor(Γ::Attractor{V,M}, index::Vector{<:Integer}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     #quick condition for trivial case:
     if index == [0]
         return SubAttractor(Γ, [0], Γ.barycentre, Γ.diameter, Γ.measure)
@@ -179,7 +179,7 @@ function SubAttractor(Γ::Attractor{V,M}, index::Vector{<:Unsigned}) where {V<:U
     end
 end
 
-function SubAttractor(Γ::SubAttractor{V,M}, index::Vector{<:Unsigned}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function SubAttractor(Γ::SubAttractor{V,M}, index::Vector{<:Integer}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
         #quick condition for trivial case:
         if index == [0]
             return Γ
@@ -209,7 +209,7 @@ function SubAttractor(Γ::SubAttractor{V,M}, index::Vector{<:Unsigned}) where {V
         end
     end
 
-SubAttractor(Γ::SelfSimilarFractal, index::Unsigned) = SubAttractor(Γ, [index])
+SubAttractor(Γ::SelfSimilarFractal, index::Integer) = SubAttractor(Γ, [index])
 
 # now define attractors of popular fractals
 """

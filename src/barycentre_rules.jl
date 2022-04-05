@@ -7,7 +7,7 @@ struct partition_data_indexed{T<:Union{Real,AbstractVector}} <: partition_data{T
     barycentre::T
     weight::Float64
     diameter::Float64
-    index::Vector{UInt64}
+    index::Vector{Int64}
 end
 
 struct partition_data_unindexed{T<:Union{Real,AbstractVector}} <: partition_data{T}
@@ -22,16 +22,16 @@ zero(::Type{partition_data_unindexed{T}}) where {T<:Union{Real,AbstractVector}} 
 
 function subdivide_indexed(M::Integer,S::Vector{Similarity{T,M_}},weights::Vector{Float64}, X::partition_data_indexed{T}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     Y = zeros(partition_data_indexed{T},M)
-    for (m,sₘ) in enumerate(S)
-        Y[m] = partition_data_indexed{T}(sim_map(sₘ,X.barycentre), X.weight*weights[m], X.diameter*sₘ.r, [X.index...,UInt(m)])
+    for m=1:M
+        Y[m] = partition_data_indexed{T}(sim_map(S[m],X.barycentre), X.weight*weights[m], X.diameter*S[m].r, [X.index...,m])
     end
     return Y[1], Y[2:end]
 end
 
 function subdivide_unindexed(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::partition_data{T}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     Y = zeros(partition_data_unindexed{T},M)
-    for (m,sₘ) in enumerate(S)
-        Y[m] = partition_data_unindexed{T}(sim_map(sₘ,X.barycentre), X.weight*weights[m], X.diameter*sₘ.r)
+    for m=1:M
+        Y[m] = partition_data_unindexed{T}(sim_map(S[m],X.barycentre), X.weight*weights[m], X.diameter*S[m].r)
     end
     return Y[1], Y[2:end]
 end
@@ -71,11 +71,11 @@ function create_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{
     return X[1:total_count]
 end
 
-function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Real, M_<:Real}
     X = create_partition(γ, M, S, weights, h)
     N = length(X)
     w = zeros(N)
-    zero_node = zero(γ.barycentre)
+    zero_node = zero(T)
     x = [zero_node for _=1:N]
     for n=1:N
         x[n] = X[n].barycentre
@@ -84,7 +84,20 @@ function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vecto
     return x, w
 end
 
+function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:AbstractVector, M_<:Union{Real,AbstractMatrix}}
+    X = create_partition(γ, M, S, weights, h)
+    N = length(X)
+    w = zeros(N)
+    zero_node = zeros(Float64,length(γ.barycentre))
+    x = [zero_node for _=1:N]
+    for n=1:N
+        x[n] = Vector{Float64}(X[n].barycentre)
+        w[n] = X[n].weight
+    end
+    return x, w
+end
+
 barycentre_rule(Γ::Attractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.weights, h)
 
-barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.Attractor.IFS), Γ.Attractor.IFS, Γ.Attractor.weights, h)
+barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.attractor.IFS), Γ.attractor.IFS, Γ.attractor.weights, h)
 

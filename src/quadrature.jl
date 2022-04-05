@@ -100,7 +100,7 @@ end
 #     end
 # end
 
-function subdivide_indices(Γ::SelfSimilarFractal, h::Real; int_type::DataType=UInt64)
+function subdivide_indices(Γ::SelfSimilarFractal, h::Real; int_type::DataType=Int64)
     I = Vector{int_type}[]
     M = length(Γ.IFS)
     r = zeros(M)
