@@ -1,5 +1,5 @@
 # quick function which computes the barycentre, if it's not the default one with equal weights
-function default_bary(S::Vector{Similarity{V,M}}, d::Number, weights::Vector{Float64}, Hausdorff_measure_bary::Vector{Float64}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function default_bary(S::Vector{Similarity{V,M}}, d::Number, weights::Vector{Float64}, Hausdorff_measure_bary::Union{Real,AbstractVector}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     if are_weights_Hausdorff(weights,S,d)
         bary = V(Hausdorff_measure_bary)
     else
@@ -9,9 +9,9 @@ function default_bary(S::Vector{Similarity{V,M}}, d::Number, weights::Vector{Flo
 end
 
 function CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
-    S = [Similarity(contraction,[0.0]),Similarity(contraction,[1-contraction])]
+    S = [Similarity(contraction,0.0),Similarity(contraction,1-contraction)]
     d = log(1/2)/log(contraction)
-    bary = default_bary(S,d,weights,[1/2])
+    bary = default_bary(S,d,weights,1/2)
     return Attractor(S,1,d,true,are_weights_Hausdorff(weights,S,d),bary,1.0,1.0,weights)
 end
 

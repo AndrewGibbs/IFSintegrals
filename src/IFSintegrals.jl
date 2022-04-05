@@ -17,6 +17,7 @@ export Similarity, Attractor, SubAttractor, Fractal, sketch_attractor, CantorSet
 include("similarities.jl")
 include("fractals.jl")
 include("quadrature.jl")
+include("barycentre_rules.jl")
 include("green_kernels.jl")
 include("BIOs.jl")
 include("diam_approx.jl")

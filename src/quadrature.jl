@@ -4,33 +4,33 @@
 returns N weights w ∈ Rⁿ and nodes x ∈ Rᴺˣⁿ,
 for approximation of integrals defined on an IFS Γ
 """
-function barycentre_rule(Γ::SelfSimilarFractal,h::Real) #where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
-    if Γ.homogeneous && Γ.Hausdorff_weights # uniform attractor, can do things a bit quicker
-        h = min(h,Γ.diameter)
-        ℓ = Int64(ceil(log(h/Γ.diameter)/log(Γ.IFS[1].r)))
-        x,w = barycentre_uniform(Γ,ℓ)
-    else
-        N = length(Γ.barycentre)
-        Lₕ = subdivide_indices(Γ,h)
-        if N==1
-            x = zeros(Float64, length(Lₕ))
-        else
-            x = [zeros(Float64, N) for _=1:length(Lₕ)]
-        end
-        w = zeros(Float64, length(Lₕ))
-        for j =1:length(Lₕ)
-            γ = SubAttractor(Γ,Lₕ[j])
-            if N==1
-                x[j] = γ.barycentre[1]
-            else
-                x[j] = γ.barycentre
-            end
-            w[j] = γ.measure
-        end
-    end
+# function barycentre_rule(Γ::SelfSimilarFractal,h::Real) #where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+#     if Γ.homogeneous && Γ.Hausdorff_weights # uniform attractor, can do things a bit quicker
+#         h = min(h,Γ.diameter)
+#         ℓ = Int64(ceil(log(h/Γ.diameter)/log(Γ.IFS[1].r)))
+#         x,w = barycentre_uniform(Γ,ℓ)
+#     else
+#         N = length(Γ.barycentre)
+#         Lₕ = subdivide_indices(Γ,h)
+#         if N==1
+#             x = zeros(Float64, length(Lₕ))
+#         else
+#             x = [zeros(Float64, N) for _=1:length(Lₕ)]
+#         end
+#         w = zeros(Float64, length(Lₕ))
+#         for j =1:length(Lₕ)
+#             γ = SubAttractor(Γ,Lₕ[j])
+#             if N==1
+#                 x[j] = γ.barycentre[1]
+#             else
+#                 x[j] = γ.barycentre
+#             end
+#             w[j] = γ.measure
+#         end
+#     end
 
-    return x,w
-end
+#     return x,w
+# end
 
 """
     x,y,w = barycentre_rule(Γ₁::Union{Attractor,SubAttractor},Γ₂::Union{Attractor,SubAttractor},h::Real)
@@ -57,48 +57,48 @@ function barycentre_rule(Γ1::Union{Attractor,SubAttractor},Γ2::Union{Attractor
     return X1, X2, W
 end
 
-function barycentre_uniform(Γ::SelfSimilarFractal,ℓ::Int64)
-    # initialise arrays
-    N = length(Γ.barycentre)
-    M = length(Γ.IFS)
-    z = zeros(Float64, ℓ+1, N)
-    x = zeros(Float64, M^ℓ, N)
-    w = Γ.measure*Γ.IFS[1].r^(Γ.Hausdorff_dimension*ℓ)*ones(Float64,M^ℓ)
-    count = 0
+# function barycentre_uniform(Γ::SelfSimilarFractal,ℓ::Int64)
+#     # initialise arrays
+#     N = length(Γ.barycentre)
+#     M = length(Γ.IFS)
+#     z = zeros(Float64, ℓ+1, N)
+#     x = zeros(Float64, M^ℓ, N)
+#     w = Γ.measure*Γ.IFS[1].r^(Γ.Hausdorff_dimension*ℓ)*ones(Float64,M^ℓ)
+#     count = 0
 
-    if isa(Γ,Attractor)
-        z[1,:] = Γ.barycentre
-    else
-        z[1,:] = Γ.attractor.barycentre
-    end
+#     if isa(Γ,Attractor)
+#         z[1,:] = Γ.barycentre
+#     else
+#         z[1,:] = Γ.attractor.barycentre
+#     end
 
-    m_inds = ones(Int64,ℓ)
+#     m_inds = ones(Int64,ℓ)
 
-    for m = 1:M^ℓ
-        for j=1:ℓ
-            if mod(count,M^(ℓ-j))==0
-                z[j+1,:] = sim_map(Γ.IFS[m_inds[j]], z[j,:])
-                m_inds[j] += 1
-                m_inds = mod.(m_inds .- 1,M) .+ 1
-            end
-        end
-        count += 1
-        x[count, :] = z[ℓ+1,:]
-    end
-    if isa(Γ,SubAttractor)
-        if Γ.index != [0]
-            for m = Γ.index[end:-1:1]
-                x = sim_map(Γ.IFS[m], x)
-            end 
-            # X = slicematrix(x)
-        end
-    end
-    if N==1
-        return vec(x), w
-    else
-        return slicematrix(x), w
-    end
-end
+#     for m = 1:M^ℓ
+#         for j=1:ℓ
+#             if mod(count,M^(ℓ-j))==0
+#                 z[j+1,:] = sim_map(Γ.IFS[m_inds[j]], z[j,:])
+#                 m_inds[j] += 1
+#                 m_inds = mod.(m_inds .- 1,M) .+ 1
+#             end
+#         end
+#         count += 1
+#         x[count, :] = z[ℓ+1,:]
+#     end
+#     if isa(Γ,SubAttractor)
+#         if Γ.index != [0]
+#             for m = Γ.index[end:-1:1]
+#                 x = sim_map(Γ.IFS[m], x)
+#             end 
+#             # X = slicematrix(x)
+#         end
+#     end
+#     if N==1
+#         return vec(x), w
+#     else
+#         return slicematrix(x), w
+#     end
+# end
 
 function subdivide_indices(Γ::SelfSimilarFractal, h::Real; int_type::DataType=UInt64)
     I = Vector{int_type}[]

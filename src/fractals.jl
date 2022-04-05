@@ -18,7 +18,11 @@ function get_barycentre(sims::Array{Similarity{V,M_}}, weights::Vector{<:Real}) 
     M = length(sims)
     N = length(sims[1].δ)
     divisor = I
-    vec_sum = zeros(N)
+    if V<:Real
+        vec_sum = 0.0
+    else
+        vec_sum = zeros(typeof(sims[1].δ),N)
+    end
     for n=1:M
         divisor -= sims[n].r*weights[n]*sims[n].A
         vec_sum += weights[n]*sims[n].δ
@@ -139,7 +143,7 @@ struct SubAttractor{V,M} <: SelfSimilarFractal{V,M}
     index::Vector{UInt64}
     # topological_dimension::Int64 # could be removed
     # Hausdorff_dimension::T # could be removed
-    barycentre::Vector{Float64}
+    barycentre::V
     diameter::Float64
     measure::Float64
 end

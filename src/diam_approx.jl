@@ -53,6 +53,8 @@ function get_diameter(sims::Vector{Similarity{V,M}}) where {V<:Union{Real,Abstra
     return D
 end
 
+get_diameter(X::Vector{<:Real}) = abs(maximum(X)-minimum(X))
+
 function get_diameter(X::Vector{Vector{Float64}})
     M = length(X)
     # N = length(X[1])
@@ -69,7 +71,17 @@ function get_diameter(X::Vector{Vector{Float64}})
     return diam
 end
 
-function get_fixed_points(sims::Array{Similarity{V,M_}}) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+function get_fixed_points(sims::Array{Similarity{V,M_}}) where {V<:Real, M_<:Union{Real,AbstractMatrix}}
+    M = length(sims)
+    # define vector of vectors via list comprehension 
+    FPs = [zero(V) for _ = 1:M]
+    for m = 1:M
+        FPs[m] = fixed_point(sims[m])
+    end
+    return FPs
+end
+
+function get_fixed_points(sims::Array{Similarity{V,M_}}) where {V<:AbstractVector, M_<:Union{Real,AbstractMatrix}}
     M = length(sims)
     N = length(sims[1].δ)
     # define vector of vectors via list comprehension 
