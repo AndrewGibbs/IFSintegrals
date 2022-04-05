@@ -71,33 +71,45 @@ function create_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{
     return X[1:total_count]
 end
 
-function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Real, M_<:Real}
-    X = create_partition(γ, M, S, weights, h)
-    N = length(X)
-    w = zeros(N)
-    zero_node = zero(T)
-    x = [zero_node for _=1:N]
-    for n=1:N
-        x[n] = X[n].barycentre
-        w[n] = X[n].weight
+function subdivide_indices(Γ::SelfSimilarFractal, h::Real; int_type::DataType=Int64)
+    I = Vector{int_type}[]
+    M = length(Γ.IFS)
+    r = zeros(M)
+
+    if Γ.diameter >= h
+        subdiv = true
+        for m=int_type.(1:M)
+            push!(I,[m])
+            r[m] = Γ.IFS[m].r
+        end
+    else
+        subdiv = false
     end
-    return x, w
-end
 
-function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:AbstractVector, M_<:Union{Real,AbstractMatrix}}
-    X = create_partition(γ, M, S, weights, h)
-    N = length(X)
-    w = zeros(N)
-    zero_node = zeros(Float64,length(γ.barycentre))
-    x = [zero_node for _=1:N]
-    for n=1:N
-        x[n] = Vector{Float64}(X[n].barycentre)
-        w[n] = X[n].weight
+    while subdiv
+        subdiv = false
+        split_vecs = Int64[]
+        for j = 1:length(I)
+           if Γ.diameter*prod(r[I[j]]) >= h
+                subdiv = true
+                push!(split_vecs,j)
+            end
+        end
+        if subdiv
+            new_vecs = Vector{int_type}[]
+            for j in split_vecs
+                for m = 1:M
+                    push!(new_vecs,vcat(I[j],[m]))
+                end
+            end
+            deleteat!(I,split_vecs)
+            I = vcat(I,new_vecs)
+        end
     end
-    return x, w
+    #quick bodge - this convention means we can keep the same type
+        # and it's (more) consistent with the paper
+    if isempty(I)
+        I = [[int_type(0)]]
+    end
+    return I#convert(Array{Array{Int64,1},1},I)
 end
-
-barycentre_rule(Γ::Attractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.weights, h)
-
-barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.attractor.IFS), Γ.attractor.IFS, Γ.attractor.weights, h)
-

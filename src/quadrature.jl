@@ -1,36 +1,38 @@
+function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Real, M_<:Real}
+    X = create_partition(γ, M, S, weights, h)
+    N = length(X)
+    w = zeros(N)
+    zero_node = zero(T)
+    x = [zero_node for _=1:N]
+    for n=1:N
+        x[n] = X[n].barycentre
+        w[n] = X[n].weight
+    end
+    return x, w
+end
+
+function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:AbstractVector, M_<:Union{Real,AbstractMatrix}}
+    X = create_partition(γ, M, S, weights, h)
+    N = length(X)
+    w = zeros(N)
+    zero_node = zeros(Float64,length(γ.barycentre))
+    x = [zero_node for _=1:N]
+    for n=1:N
+        x[n] = Vector{Float64}(X[n].barycentre)
+        w[n] = X[n].weight
+    end
+    return x, w
+end
+
 """
     x,w = barycentre_rule(Γ::Union{Attractor,SubAttractor},h::Real) 
 
 returns N weights w ∈ Rⁿ and nodes x ∈ Rᴺˣⁿ,
 for approximation of integrals defined on an IFS Γ
 """
-# function barycentre_rule(Γ::SelfSimilarFractal,h::Real) #where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
-#     if Γ.homogeneous && Γ.Hausdorff_weights # uniform attractor, can do things a bit quicker
-#         h = min(h,Γ.diameter)
-#         ℓ = Int64(ceil(log(h/Γ.diameter)/log(Γ.IFS[1].r)))
-#         x,w = barycentre_uniform(Γ,ℓ)
-#     else
-#         N = length(Γ.barycentre)
-#         Lₕ = subdivide_indices(Γ,h)
-#         if N==1
-#             x = zeros(Float64, length(Lₕ))
-#         else
-#             x = [zeros(Float64, N) for _=1:length(Lₕ)]
-#         end
-#         w = zeros(Float64, length(Lₕ))
-#         for j =1:length(Lₕ)
-#             γ = SubAttractor(Γ,Lₕ[j])
-#             if N==1
-#                 x[j] = γ.barycentre[1]
-#             else
-#                 x[j] = γ.barycentre
-#             end
-#             w[j] = γ.measure
-#         end
-#     end
+barycentre_rule(Γ::Attractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.weights, h)
+barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.attractor.IFS), Γ.attractor.IFS, Γ.attractor.weights, h)
 
-#     return x,w
-# end
 
 """
     x,y,w = barycentre_rule(Γ₁::Union{Attractor,SubAttractor},Γ₂::Union{Attractor,SubAttractor},h::Real)
@@ -38,109 +40,23 @@ for approximation of integrals defined on an IFS Γ
 returns N weights w ∈ Rⁿ and nodes x,y ∈ Rᴺˣⁿ,
 for approximation of double integrals over Γ₁,Γ₂.
 """
-function barycentre_rule(Γ1::Union{Attractor,SubAttractor},Γ2::Union{Attractor,SubAttractor},h::Real)
+function barycentre_rule(Γ1::SelfSimilarFractal,Γ2::SelfSimilarFractal,h::Real)
         top_dims = Γ1.topological_dimension
         x1, w1 = barycentre_rule(Γ1,h)
-        n1 = Int64(length(x1)/top_dims)
+        n1 = length(w1)
         x2, w2 = barycentre_rule(Γ2,h)
-        n2 = Int64(length(x2)/top_dims)
-        X1 = Array{Float64}(undef, n1*n2, top_dims)
-        X2 = Array{Float64}(undef, n1*n2, top_dims)
-        W = Array{Float64}(undef, n1*n2)
+        n2 = length(w2)
+        X1 = [zero(x1[1]) for _=1:n1*n2]
+        X2 = [zero(x2[1]) for _=1:n1*n2]
+        W = zeros(Float64, n1*n2)
         for i=0:(n1-1)
             for j=0:(n2-1)
-                X1[j*n1 + i + 1,:] = x1[i + 1,:]
-                X2[j*n1 + i + 1,:] = x2[j + 1,:]
+                X1[j*n1 + i + 1] = x1[i + 1]
+                X2[j*n1 + i + 1] = x2[j + 1]
                 W[j*n1 + i + 1] = w1[i + 1]*w2[j + 1]
             end
         end
     return X1, X2, W
-end
-
-# function barycentre_uniform(Γ::SelfSimilarFractal,ℓ::Int64)
-#     # initialise arrays
-#     N = length(Γ.barycentre)
-#     M = length(Γ.IFS)
-#     z = zeros(Float64, ℓ+1, N)
-#     x = zeros(Float64, M^ℓ, N)
-#     w = Γ.measure*Γ.IFS[1].r^(Γ.Hausdorff_dimension*ℓ)*ones(Float64,M^ℓ)
-#     count = 0
-
-#     if isa(Γ,Attractor)
-#         z[1,:] = Γ.barycentre
-#     else
-#         z[1,:] = Γ.attractor.barycentre
-#     end
-
-#     m_inds = ones(Int64,ℓ)
-
-#     for m = 1:M^ℓ
-#         for j=1:ℓ
-#             if mod(count,M^(ℓ-j))==0
-#                 z[j+1,:] = sim_map(Γ.IFS[m_inds[j]], z[j,:])
-#                 m_inds[j] += 1
-#                 m_inds = mod.(m_inds .- 1,M) .+ 1
-#             end
-#         end
-#         count += 1
-#         x[count, :] = z[ℓ+1,:]
-#     end
-#     if isa(Γ,SubAttractor)
-#         if Γ.index != [0]
-#             for m = Γ.index[end:-1:1]
-#                 x = sim_map(Γ.IFS[m], x)
-#             end 
-#             # X = slicematrix(x)
-#         end
-#     end
-#     if N==1
-#         return vec(x), w
-#     else
-#         return slicematrix(x), w
-#     end
-# end
-
-function subdivide_indices(Γ::SelfSimilarFractal, h::Real; int_type::DataType=Int64)
-    I = Vector{int_type}[]
-    M = length(Γ.IFS)
-    r = zeros(M)
-
-    if Γ.diameter >= h
-        subdiv = true
-        for m=int_type.(1:M)
-            push!(I,[m])
-            r[m] = Γ.IFS[m].r
-        end
-    else
-        subdiv = false
-    end
-
-    while subdiv
-        subdiv = false
-        split_vecs = Int64[]
-        for j = 1:length(I)
-           if Γ.diameter*prod(r[I[j]]) >= h
-                subdiv = true
-                push!(split_vecs,j)
-            end
-        end
-        if subdiv
-            new_vecs = Vector{int_type}[]
-            for j in split_vecs
-                for m = 1:M
-                    push!(new_vecs,vcat(I[j],[m]))
-                end
-            end
-            deleteat!(I,split_vecs)
-            I = vcat(I,new_vecs)
-        end
-    end
-    #quick bodge - this convention means we can keep the same type
-        # and it's (more) consistent with the paper
-    if isempty(I)
-        I = [[int_type(0)]]
-    end
-    return I#convert(Array{Array{Int64,1},1},I)
 end
 
 """
