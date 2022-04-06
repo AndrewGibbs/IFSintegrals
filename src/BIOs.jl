@@ -9,13 +9,14 @@ struct BIO
     singularity_strength::Real
     singularity_scale::Complex{<:Real}
     self_adjoint::Bool
+    coercive:: Bool
     wavenumber::Number
 end
 
 #constructor for zero wavenumber case
 BIO(domain::SelfSimilarFractal,kernel::Function,Lipschitz_part_of_kernel::Function,singularity_strength::Real,
-singularity_scale::Complex{<:Real},self_adjoint::Bool)=BIO(domain,kernel,Lipschitz_part_of_kernel,
-singularity_strength,singularity_scale,self_adjoint,0.0)
+singularity_scale::Complex{<:Real},self_adjoint::Bool,coercive::Bool)=BIO(domain,kernel,Lipschitz_part_of_kernel,
+singularity_strength,singularity_scale,self_adjoint,coercive,0.0)
 
 """
     DiscreteBIO(BIO::BIO, h_BEM::Real, h_quad::Real)
@@ -26,10 +27,10 @@ h_quad denotes the discretisation parameter for the integrals in the stiffness m
 """
 struct DiscreteBIO
     BIO::BIO
-    h_BEM::Real
-    h_quad::Real
-    Lₕ::Array{Array{Int64,1},1} # subindices list
-    Galerkin_matrix::Array{<:Complex{<:Real},2} # not sure how to parametrise this as subtype of Array{<:Complex{<:Real},2}
+    h_BEM::Float64
+    h_quad::Float64
+    Lₕ::Vector{Vector{Int64}} # subindices list
+    Galerkin_matrix::Matrix{<:Complex{<:Float64}} # not sure how to parametrise this as subtype of Array{<:Complex{<:Real},2}
 end
 
 #constructor:
@@ -44,20 +45,13 @@ function DiscreteBIO(K::BIO, h_BEM::Real, h_quad::Real; Cosc = 2π, vary_quad=tr
     BEM_filled = zeros(Bool,N,N)
     m_count = 0
 
-
-    # # save time computing repeated diagonal values if Γ is a uniform attactor
-    # if Γ.uniform
-    #     m = Lₕ[1]
-    #     diag_val = singular_elliptic_double_integral(K, h_quad, m; Cosc=Cosc)
-    # end
-
     if vary_quad
-        h_quad_adjust = get_quad_scales(K::BIO,Lₕ::Array{Array{Int64,1},1})
+        h_quad_adjust = get_quad_scales(K,Lₕ)
     else
         h_quad_adjust = ones(length(Lₕ),length(Lₕ))
     end
 
-    if Γ.uniform & repeat_blocks
+    if Γ.homogeneous & repeat_blocks
         ℓ = length(Lₕ[1])
         diag_block_sizes = M.^(0:(ℓ-1))
     else
@@ -65,28 +59,21 @@ function DiscreteBIO(K::BIO, h_BEM::Real, h_quad::Real; Cosc = 2π, vary_quad=tr
     end
 
     @showprogress 1 "Constructing BEM system " for m_count=1:length(Lₕ)#m in Lₕ
-        # m_count+=1
         m = Lₕ[m_count]
         Γₘ = SubAttractor(Γ,m)
-        # n_count = 0
 
         # if matrix is symmetric, will only need to compute ≈ half entries
         K.self_adjoint ? n_count_start = m_count : n_count_start = 1
 
         for n_count = n_count_start:length(Lₕ)#n in Lₕ
             if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
-                # n_count += 1
                 n = Lₕ[n_count]
                 Γₙ = SubAttractor(Γ,n)
                 x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad*h_quad_adjust[m_count,n_count])
                 if n==m
-                    # if Γ.uniform
-                    #     Galerkin_matrix[m_count,n_count] = diag_val
-                    # else
-                        Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad,n;Cosc=Cosc)
-                    # end
+                    Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad,n;Cosc=Cosc)
                 else
-                    Galerkin_matrix[m_count,n_count] = sum(w.*K.kernel(x,y))
+                    Galerkin_matrix[m_count,n_count] = w'*K.kernel.(x,y)
                 end
 
                 # if matrix is symmetric, expoit this to save time
@@ -96,7 +83,7 @@ function DiscreteBIO(K::BIO, h_BEM::Real, h_quad::Real; Cosc = 2π, vary_quad=tr
             end
         end
 
-        # now repeat entries along block diagonal, if at the end of a diagonal block, and uniform
+        # now repeat entries along block diagonal, if at the end of a diagonal block, and homogeneous
         if in(m_count,diag_block_sizes)
             block_power = indexin(m_count,diag_block_sizes)[1]
             block_size = M^(block_power-1)
@@ -108,27 +95,6 @@ function DiscreteBIO(K::BIO, h_BEM::Real, h_quad::Real; Cosc = 2π, vary_quad=tr
         end
     end
     DiscreteBIO(K, h_BEM, h_quad, Lₕ, Galerkin_matrix)
-end
-
-function \(K::DiscreteBIO, f::Function)
-    Γ = K.BIO.domain
-    F = zeros(Complex{Float64},length(K.Lₕ))
-    n_count = 0
-    for n in K.Lₕ
-        n_count += 1
-        Γₙ = SubAttractor(Γ, n)
-        x,w = barycentre_rule(Γₙ, K.h_quad)
-        X = slicematrix(x)
-        F[n_count] = sum(w.*f.(X))
-    end
-    coeffs = K.Galerkin_matrix \ F
-    return Projection(K.BIO.domain, K.Lₕ, coeffs)
-end
-
-struct Projection # onto the coefficient space of piecewise constants on the fractal
-    domain::SelfSimilarFractal
-    Lₕ::Array{Array{Int64,1},1} # subindices list
-    coeffs::Array{<:Complex{<:Real},1}
 end
 
 """
@@ -146,6 +112,7 @@ function SingleLayer(Γ::SelfSimilarFractal, k::Number=0.0)
             0.0, # strength of singularity, corresponding to log singularity
             -1/(2π), # scaling of singularity
             true, #self-adjoint
+            true, #coercive
             k #wavenumber
             )
         else #2D Helmholtz case        
@@ -155,6 +122,7 @@ function SingleLayer(Γ::SelfSimilarFractal, k::Number=0.0)
             0.0, # strength of singularity, corresponding to log singularity
             -1/(2π), # scaling of singularity
             true, #self-adjoint
+            true, #coercive
             k #wavenumber
             )
         end
@@ -166,6 +134,7 @@ function SingleLayer(Γ::SelfSimilarFractal, k::Number=0.0)
             1.0, # strength of singularity, corresponding to 1/|x-y|
             1/(4π), # scaling of singularity
             true, #self-adjoint
+            true, #coercive
             k #wavenumber
             )
         else #3D Helmholtz case        
@@ -175,6 +144,7 @@ function SingleLayer(Γ::SelfSimilarFractal, k::Number=0.0)
             1.0, # strength of singularity, corresponding to 1/|x-y|
             1/(4π), # scaling of singularity
             true, #self-adjoint
+            true, #coercive
             k #wavenumber
             )
         end
@@ -183,20 +153,20 @@ function SingleLayer(Γ::SelfSimilarFractal, k::Number=0.0)
     end
 end
 
-function singular_elliptic_double_integral(K::BIO,h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π, data=false)
+function singular_elliptic_double_integral(K::BIO, h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
     if real(K.wavenumber)*K.domain.diameter > Cosc
-        return singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index; Cosc = Cosc, data=data)
+        return singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index; Cosc = Cosc)
     else
-        return singular_elliptic_double_integral_basic(K::BIO,h_quad::Real,index; data=data)
+        return singular_elliptic_double_integral_basic(K::BIO,h_quad::Real,index)
     end
 end
 
-function singular_elliptic_double_integral(Γ::Union{Attractor,SubAttractor},k::Number,h_quad::Real; Cosc = 2π, data=false)
+function singular_elliptic_double_integral(Γ::Union{Attractor,SubAttractor},k::Number,h_quad::Real; Cosc = 2π)
     K = SingleLayer(Γ, k)
-    singular_elliptic_double_integral(K, h_quad; Cosc = Cosc, data=data)
+    singular_elliptic_double_integral(K, h_quad; Cosc = Cosc)
 end
 
-function singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π, data=false)
+function singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
     # following the procedure in the paper, to avoid errors in far-field.
     # notation agrees with quadrature paper here, rather than BEM paper.
     Γ = SubAttractor(K.domain,index)
@@ -213,32 +183,22 @@ function singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index::Array
             x,y,w = barycentre_rule(Γₙ,Γₘ,h)
             Npts += length(w) # these points will get used at 
             if m == n # diagonal quadrature element
-                if data
-                    I_, Npts_ = eval_green_double_integral(Γₘ,K.singularity_strength,h; data=true)
-                    I += K.singularity_scale*I_
-                    Npts+=Npts_
-                else
-                    I += K.singularity_scale*eval_green_double_integral(Γₘ,K.singularity_strength,h; data=false)
-                end
+                I += K.singularity_scale*eval_green_double_integral(Γₘ,K.singularity_strength,h)
                 I += sum(w.*K.Lipschitz_part_of_kernel(x,y))
             else
                 I += sum(w.*K.kernel(x,y))
             end
         end
     end
-    if data
-        return I, Npts
-    else
-        return I
-    end
+    return I
 end
 
-function singular_elliptic_double_integral_basic(K::BIO,h::Real,index::Array{Int64}=[0]; data=false)
+function singular_elliptic_double_integral_basic(K::BIO,h::Real,index::Array{Int64}=[0])
     Γ = SubAttractor(K.domain,index)
     x,y,w = barycentre_rule(Γ,Γ,h)
     if data
         Npts = length(w)
-        I_, Npts_ = eval_green_double_integral(Γ,K.singularity_strength,h; data=true)
+        I_, Npts_ = eval_green_double_integral(Γ,K.singularity_strength,h)
         Npts += Npts_
         I = K.singularity_scale*I_ + sum(w.*K.Lipschitz_part_of_kernel(x,y))
         return I, Npts
@@ -248,117 +208,22 @@ function singular_elliptic_double_integral_basic(K::BIO,h::Real,index::Array{Int
     end
 end
 
-function single_layer_potential(Γ::SelfSimilarFractal,k::Real,density::Projection,points::Array{<:Real,2};h=0.1/k)
-    num_points = size(points)[1]
-    vals = zeros(Complex{Float64},num_points)
-    # kernel is the same as the single layer BIO, so use that:
-    S = SingleLayer(Γ, k)
-    Φ = S.kernel
-    for m_count = 1:length(density.Lₕ)
-        m = density.Lₕ[m_count]
-        Γₘ = SubAttractor(Γ,m)
-        y,w = barycentre_rule(Γₘ,h)
-        # now convert y to n+1 dimensions
-        Y = [y zeros(length(w))]
-        for n = 1:num_points
-            vals[n] += w'*Φ(Y,points[n,:])*density.coeffs[m_count]
-        end
-    end
-    return vals
-end
-# simplify for Laplace kernel case:
-single_layer_potential(Γ::SelfSimilarFractal,density::Projection,points::Array{<:Real,2}) = single_layer_potential(Γ,0.0,density,points)
-
-#have not tested far-field pattern yet:
-function far_field_pattern(Γ::SelfSimilarFractal,k::Real,density::Projection,points::Array{<:Real,2};h=0.1/k)
-    num_points = size(points)[1]
-    vals = zeros(Complex{Float64},num_points)
-    # far-field kernel:
-    K(θ::Float64, ψ::Float64, x_1::Array{<:Real,1}, x_2::Array{<:Real,1}) = exp.(-im*k*(cos(θ)*x_1.+sin(ψ)*x_2))
-    for m_count =1:length(density.Lₕ)
-        m = density.Lₕ[m_count]
-        Γₘ = SubAttractor(Γ,m)
-        y,w = barycentre_rule(Γₘ,h)
-        # now convert y to n+1 dimensions
-        for n = 1:num_points
-            vals[n] += w'*K(points[n,1],points[n,2],y[:,1],y[:,2])*density.coeffs[m_count]
-        end
-    end
-    return vals
-end
-
-function far_field_pattern(Γ::SelfSimilarFractal,k::Real,density::Projection,points::Array{<:Real,1};h=0.1/k)
-    num_points = length(points)
-    vals = zeros(Complex{Float64},num_points)
-    # far-field kernel:
-    K(θ::Float64, x::Array{Float64,1}) = exp.(-im*k*(cos(θ)*x))
-    for m_count =1:length(density.Lₕ)
-        m = density.Lₕ[m_count]
-        Γₘ = SubAttractor(Γ,m)
-        y,w = barycentre_rule(Γₘ,h)
-        # now convert y to n+1 dimensions
-        for n = 1:num_points
-            vals[n] += w'*K(points[n],y)*density.coeffs[m_count]
-        end
-    end
-    return vals
-end
-
-# now some functions related to projections, and embeddings
-
-function embed(f,g)
-    #    make sure f is embedded into g
-    if length(f.coeffs)>length(g.coeffs)
-        F=f
-        G=g
-        f=G
-        g=F
-    end
-    
-    f_dim = length(f.coeffs)
-    g_dim = length(g.coeffs)
-    new_coeffs = zeros(Complex{Float64},g_dim)
-    m_count = 1
-    for m in g.Lₕ
-        # find the vector in f
-        n_count = 0
-        for n in f.Lₕ
-            n_count +=1
-            if n == m[1:length(n)]
-                new_coeffs[m_count] = f.coeffs[n_count]
-                m_count+=1
-                break
-            end
-        end
-    end
-    return Projection(f.domain,g.Lₕ,new_coeffs)
-end
-
-function -(f::Projection,g::Projection)
-    ϕ = embed(f,g)
-    if length(f.coeffs)>length(g.coeffs)
-        return Projection(ϕ.domain,ϕ.Lₕ,f.coeffs-ϕ.coeffs)
-    else
-        return Projection(ϕ.domain,ϕ.Lₕ,ϕ.coeffs-g.coeffs)
-    end
-end
-
 # The next couple of functions are designed to use less quadrature points in the BEM elements
 # where this won't affect the accuracy.
 
 F_nomeasure(r::Real, k::Number, n::Int64) = (1+(abs(k)*r)^(n/2+1))/r^(n+1)
 
-function get_quad_scales(K::BIO,Lₕ::Array{Array{Int64,1},1})
+function get_quad_scales(K::BIO,Lₕ::Vector{Vector{Int64}})
     Γ = K.domain
     # compute upper and lower bounds for the F in my notes, which is stated above.
-    F_upper = ones(length(Lₕ),length(Lₕ))
-    F_lower = ones(length(Lₕ),length(Lₕ))
+    F_upper = ones(Float64,length(Lₕ),length(Lₕ))
+    F_lower = ones(Float64,length(Lₕ),length(Lₕ))
     for m_count = 1:length(Lₕ)
         Γₘ = SubAttractor(Γ,Lₕ[m_count])
         for n_count = m_count:length(Lₕ)
             Γₙ = SubAttractor(Γ,Lₕ[n_count])
             if n_count!=m_count
-                dist_upper = dist(Γₙ.barycentre,Γₘ.barycentre)
+                dist_upper = norm(Γₙ.barycentre-Γₘ.barycentre)
                 dist_lower = max(dist_upper - Γₙ.diameter - Γₘ.diameter,0)
                 measure_weight = Γₙ.measure*Γₘ.measure
                 # noting that F_nomeasure is monotonic decreasing in r, can bound as follows:

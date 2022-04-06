@@ -16,12 +16,11 @@ end
 
 function get_barycentre(sims::Array{Similarity{V,M_}}, weights::Vector{<:Real}) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     M = length(sims)
-    N = length(sims[1].δ)
     divisor = I
     if V<:Real
         vec_sum = 0.0
     else
-        vec_sum = zeros(typeof(sims[1].δ),N)
+        vec_sum = zero(sims[1].δ)
     end
     for n=1:M
         divisor -= sims[n].r*weights[n]*sims[n].A
@@ -190,8 +189,8 @@ function SubAttractor(Γ::SubAttractor{V,M}, index::Vector{<:Integer}) where {V<
             new_measure = Γ.measure
             # now adjust the diameter and measure for the smaller scale:
             for m = index
-                new_diam *= Γ.IFS[m].r
-                new_measure *= Γ.weights[m]
+                new_diam *= Γ.attractor.IFS[m].r
+                new_measure *= Γ.attractor.weights[m]
             end
     
             # get new vector index and barycentre:
@@ -200,9 +199,10 @@ function SubAttractor(Γ::SubAttractor{V,M}, index::Vector{<:Integer}) where {V<
             end
     
             #start as old barycentre and map
+            # COULD BE IMPROVED, RE-APPLYING MAPS WHICH HAVE BEEN USED BEFORE
             new_bary = Γ.attractor.barycentre
             for m=index[end:-1:1]
-                new_bary = sim_map(Γ.IFS[m], new_bary)
+                new_bary = sim_map(Γ.attractor.IFS[m], new_bary)
             end
     
             return SubAttractor{V,M}(Γ.attractor, index, new_bary, new_diam, new_measure)
@@ -218,23 +218,11 @@ formed by removing the middle α of the unit interval, and repeating on each sub
 """
 
 # provides a sketch of an attractor in N topological dimensions
-function sketch_attractor(γ::Attractor; mem_const = 10000)
-    N = 10
-    X = rand(γ.topological_dimension,N)
-    M = length(γ.IFS)
-    num_its = floor(log(mem_const/(γ.topological_dimension*N))/log(M))
-    #println(num_its)
-    S = γ.IFS
-    count = 0
-    for count = 1:num_its
-        NxM = N*M
-        X_ = zeros(γ.topological_dimension,NxM)
-        s_count = 0
-        for m=1:M
-            X_[:,((m-1)*N+1):(m*N)] = sim_map(S[m], X)
-        end
-        X = X_
-        N = NxM
+function sketch_attractor(Γ::Attractor; mem_const = 10000, start_count = 10)
+    X = slicematrix(rand(start_count,Γ.topological_dimension))
+    num_its = floor(log(mem_const/(Γ.topological_dimension*start_count))/log(length(Γ.IFS)))
+    for _ = 1:num_its
+        X = full_map(Γ.IFS, X)
     end
     return X
 end

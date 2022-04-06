@@ -62,7 +62,7 @@ function get_diameter(X::Vector{Vector{Float64}})
     diam = 0
     for m=1:M
         for n=(m+1):M
-            R = dist(X[m],X[n])
+            R = norm(X[m]-X[n])
             if R>diam
                 diam = R
             end

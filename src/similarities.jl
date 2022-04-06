@@ -28,7 +28,7 @@ function Similarity(r::Real, δ::Union{Vector{<:Real},Real}, θ=0::Real)
     return Similarity(r,static_δ,A,r*A)
 end
 
-sim_map(s::Similarity, x::Union{Real,AbstractVector{<:Real}}) = s.rA*x .+ s.δ
+sim_map(s::Similarity, x::Union{Real,AbstractVector{<:Real}}) = s.rA*x + s.δ
 
 function full_map(S::Vector{Similarity{V,M_}},X::Vector{Vector{Float64}}) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     d = length(X)

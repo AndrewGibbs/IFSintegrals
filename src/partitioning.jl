@@ -43,7 +43,7 @@ subdivide(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::
 function get_max_power(S::Vector{Similarity{T,M_}}, diameter::Float64, h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     r_max = 0.0
     for s in S r_max=max(r_max,s.r) end
-    return ceil(Int64,log(h/diameter)/log(r_max))
+    return max(ceil(Int64,log(h/diameter)/log(r_max)),0)
 end
 
 function create_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
@@ -73,14 +73,19 @@ end
 
 function subdivide_indices(Γ::SelfSimilarFractal, h::Real; int_type::DataType=Int64)
     I = Vector{int_type}[]
-    M = length(Γ.IFS)
+    if isa(Γ,Attractor)
+        IFS = Γ.IFS
+    else
+        IFS = Γ.attractor.IFS
+    end
+    M = length(IFS)
     r = zeros(M)
 
     if Γ.diameter >= h
         subdiv = true
         for m=int_type.(1:M)
             push!(I,[m])
-            r[m] = Γ.IFS[m].r
+            r[m] = IFS[m].r
         end
     else
         subdiv = false
