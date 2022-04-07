@@ -31,13 +31,15 @@ function slice(c1::Vector{Float64},c2::Vector{Float64},z::Float64,Nx::Int64,Ny::
     ymax = max(c1[2],c2[2])
     xh = (xmax - xmin)/(Nx-1)
     yh = (ymax - ymin)/(Ny-1)
-    x = [j for j=-xmin:xh:xmax]
-    y = [j for j=-ymin:yh:ymax]
-    M = matrix_of_vectors(Nx,Ny)
+    x = [j for j=xmin:xh:xmax]
+    y = [j for j=ymin:yh:ymax]
+    Nx = length(x)
+    Ny = length(y)
+    M = matrix_of_vectors(Ny,Nx)
     for nx=1:Nx
         for ny=1:Ny
-            M[nx,ny] = [x[nx],y[Ny-ny+1],z]
+            M[ny,nx] = [x[nx],y[ny],z]
         end
     end
-    return M
+    return M,x,y
 end

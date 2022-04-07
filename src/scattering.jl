@@ -1,17 +1,23 @@
-function single_layer_potential(Γ::SelfSimilarFractal,k::Real,density::Projection,x::Vector{Float64}; h::Float64=0.1/k)
-    # kernel is the same as the single layer BIO, so use that:
-    Φₓ(Y::Vector{Float64}) = SingleLayer(Γ, k).kernel(x,[Y...,0.0])
-    # have embedded n-dimensional y in n+1 dimensional Y
-    val = 0.0
-    for m_count = 1:length(density.Lₕ)
-        m = density.Lₕ[m_count]
-        Γₘ = SubAttractor(Γ,m)
-        y,w = barycentre_rule(Γₘ,h)
-        # now convert y to n+1 dimensions
-        val += (w'*Φₓ.(y))*density.coeffs[m_count]
+function single_layer_potential(k::Real,density::IFSintegrals.Projection,h::Float64=0.1/k)
+    W = Complex{Float64}[]
+    Y = Vector{Float64}[]
+
+    for m_count = 1:length(density.mesh)
+        y,w = barycentre_rule(density.mesh[m_count],h)
+        Y = vcat(Y,y)
+        W = vcat(W,w*density.coeffs[m_count])
     end
-    return val
+    function R(x_::Vector{Float64})
+        R_ = zeros(Float64,length(Y::Vector{Vector{Float64}}))
+        for n=1:length((Y::Vector{Vector{Float64}}))
+            R_[n] = norm([x_[1]-(Y::Vector{Vector{Float64}})[n][1],x_[2]-(Y::Vector{Vector{Float64}})[n][2],x_[3]])
+        end
+        return R_
+    end
+    Sϕ(x::Vector{Float64}) = (W::Vector{Complex{Float64}})'*(exp.(im*k*R(x))./(4π*(R(x))))
+    return Sϕ
 end
+
 # simplify for Laplace kernel case:
 single_layer_potential(Γ::SelfSimilarFractal,density::Projection,points::Array{<:Real,2}) = single_layer_potential(Γ,0.0,density,points)
 

@@ -1,26 +1,25 @@
 struct Projection{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} # onto the coefficient space of piecewise constants on the fractal
     domain::SelfSimilarFractal{V,M}
-    Lₕ::Vector{Vector{Int64}} # subindices list
-    # mesh::Vector{SubAttractor{V,M}}
+    #Lₕ::Vector{Vector{Int64}} # subindices list
+    mesh::Vector{SubAttractor{V,M}}
     coeffs::Vector{<:Complex{<:Float64}}
 end
 
-function project(Γ::SelfSimilarFractal,Lₕ::Vector{Vector{Int64}},f::Function,h_quad::Float64)
-    F = zeros(Complex{Float64},length(Lₕ))
+function project(mesh::Vector{SubAttractor{V,M}}, f::Function, h_quad::Float64) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    F = zeros(Complex{Float64},length(mesh))
     n_count = 0
-    for n in Lₕ
+    for Γₙ in mesh
         n_count += 1
-        Γₙ = SubAttractor(Γ, n) # has already been computed elsewhere
         x,w = barycentre_rule(Γₙ, h_quad)
         F[n_count] = w'*f.(x)
     end
-    return Projection(Γ,Lₕ,F)
+    return Projection(mesh[1].attractor,mesh,F)
 end
 
 function \(K::DiscreteBIO, f::Function)
-    fₕ = project(K.BIO.domain, K.Lₕ, f, K.h_quad)
+    fₕ = project(K.mesh, f, K.h_quad)
     coeffs = K.Galerkin_matrix \ fₕ.coeffs
-    return Projection(K.BIO.domain, K.Lₕ, coeffs)
+    return Projection(K.BIO.domain, K.mesh, coeffs)
 end
 
 function \(K::DiscreteBIO, fₕ::Projection)
@@ -36,12 +35,12 @@ function \(K::DiscreteBIO, fₕ::Projection)
     else
         coeffs = K.Galerkin_matrix \ fₕ.coeffs
     end
-    return Projection(K.BIO.domain, K.Lₕ, coeffs)
+    return Projection(K.BIO.domain, K.mesh, coeffs)
 end
 
 # now some functions related to projections, and embeddings
 
-function embed(f,g)
+function embed(f::Projection,g::Projection)
     #    make sure f is embedded into g
     if length(f.coeffs)>length(g.coeffs)
         F=f
@@ -54,10 +53,12 @@ function embed(f,g)
     g_dim = length(g.coeffs)
     new_coeffs = zeros(Complex{Float64},g_dim)
     m_count = 1
-    for m in g.Lₕ
+    for mesh_el in g.mesh
+        m = mesh_el.index
         # find the vector in f
         n_count = 0
-        for n in f.Lₕ
+        for nesh_el in f.mesh
+            n = mesh_el.index
             n_count +=1
             if n == m[1:length(n)]
                 new_coeffs[m_count] = f.coeffs[n_count]
@@ -66,14 +67,14 @@ function embed(f,g)
             end
         end
     end
-    return Projection(f.domain,g.Lₕ,new_coeffs)
+    return Projection(f.domain,g.mesh,new_coeffs)
 end
 
 function -(f::Projection,g::Projection)
     ϕ = embed(f,g)
     if length(f.coeffs)>length(g.coeffs)
-        return Projection(ϕ.domain,ϕ.Lₕ,f.coeffs-ϕ.coeffs)
+        return Projection(ϕ.domain,ϕ.mesh,f.coeffs-ϕ.coeffs)
     else
-        return Projection(ϕ.domain,ϕ.Lₕ,ϕ.coeffs-g.coeffs)
+        return Projection(ϕ.domain,ϕ.mesh,ϕ.coeffs-g.coeffs)
     end
 end

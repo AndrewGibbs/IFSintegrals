@@ -101,7 +101,7 @@ function h_dist(X::Vector{<:Vector{<:Real}},Y::Vector{<:Vector{<:Real}})
         y_count = 0
         for y in Y
             y_count += 1
-            D[x_count,y_count] = dist(x,y)
+            D[x_count,y_count] = norm(x-y)
         end
     end
 

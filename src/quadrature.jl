@@ -1,25 +1,35 @@
 function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Real, M_<:Real}
-    X = create_partition(γ, M, S, weights, h)
-    N = length(X)
-    w = zeros(N)
-    zero_node = zero(T)
-    x = [zero_node for _=1:N]
-    for n=1:N
-        x[n] = X[n].barycentre
-        w[n] = X[n].weight
+    if h<γ.diameter
+        X = create_partition(γ, M, S, weights, h)
+        N = length(X)
+        w = zeros(N)
+        zero_node = zero(T)
+        x = [zero_node for _=1:N]
+        for n=1:N
+            x[n] = X[n].barycentre
+            w[n] = X[n].weight
+        end
+    else
+        x = Vector{Float64}(γ.barycentre)
+        w = [γ.weight]
     end
     return x, w
 end
 
 function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:AbstractVector, M_<:Union{Real,AbstractMatrix}}
-    X = create_partition(γ, M, S, weights, h)
-    N = length(X)
-    w = zeros(N)
-    zero_node = zeros(Float64,length(γ.barycentre))
-    x = [zero_node for _=1:N]
-    for n=1:N
-        x[n] = Vector{Float64}(X[n].barycentre)
-        w[n] = X[n].weight
+    if h<γ.diameter
+        X = create_partition(γ, M, S, weights, h)
+        N = length(X)
+        w = zeros(N)
+        zero_node = zeros(Float64,length(γ.barycentre))
+        x = [zero_node for _=1:N]
+        for n=1:N
+            x[n] = Vector{Float64}(X[n].barycentre)
+            w[n] = X[n].weight
+        end
+    else
+        x = [Vector{Float64}(γ.barycentre)]
+        w = [γ.weight]
     end
     return x, w
 end
@@ -31,19 +41,11 @@ returns N weights w ∈ Rⁿ and nodes x ∈ Rᴺˣⁿ,
 for approximation of integrals defined on an IFS Γ
 """
 function barycentre_rule(Γ::Attractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
-    if h < Γ.diameter
-        return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.weights, h)
-    else
-        return [Γ.barycentre],[Γ.measure]
-    end
+    return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.weights, h)
 end
 
-function barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
-    if h < Γ.diameter  
-        return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.attractor.IFS), Γ.attractor.IFS, Γ.attractor.weights, h)
-    else
-        return [Γ.barycentre],[Γ.measure]
-    end
+function barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} 
+    return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.attractor.IFS), Γ.attractor.IFS, Γ.attractor.weights, h)
 end
 
 """
