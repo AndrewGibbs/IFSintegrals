@@ -2,7 +2,8 @@ module IFSintegrals
 
 using Base: Float64
 using ProgressMeter
-import Base: -, \
+import Plots: scatter!
+import Base: -, \, getindex
 import Roots: find_zero, Bisection
 import LinearAlgebra: norm, I, UniformScaling
 import StaticArrays: SVector, SMatrix
@@ -14,7 +15,7 @@ export Similarity, Attractor, SubAttractor, Fractal, sketch_attractor, CantorSet
         BIO, DiscreteBIO, SingleLayer,
         single_layer_potential, far_field_pattern,
         chaos_quad, barycentre_uniform,
-        slice, box
+        slice, box, draw
 include("similarities.jl")
 include("fractals.jl")
 include("partitioning.jl")

@@ -35,7 +35,7 @@ struct DiscreteBIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
 end
 
 #constructor:
-function DiscreteBIO(K::BIO, h_BEM::Real, h_quad::Real; Cosc = 2π, vary_quad=true, repeat_blocks=true)
+function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()), h_quad::Real=h_BEM, Cosc = 2π, vary_quad=true, repeat_blocks=true)
     Γ = K.domain
     Lₕ = subdivide_indices(K.domain,h_BEM)
     N = length(Lₕ)
@@ -86,7 +86,7 @@ function DiscreteBIO(K::BIO, h_BEM::Real, h_quad::Real; Cosc = 2π, vary_quad=tr
         end
 
         # now repeat entries along block diagonal, if at the end of a diagonal block, and homogeneous
-        if in(m_count,diag_block_sizes)
+        if in(m_count,diag_block_sizes) && N>1
             block_power = indexin(m_count,diag_block_sizes)[1]
             block_size = M^(block_power-1)
             for j=2:M
@@ -156,7 +156,7 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
 end
 
 function singular_elliptic_double_integral(K::BIO, h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
-    if real(K.wavenumber)*K.domain.diameter > Cosc
+    if real(K.wavenumber)*SubAttractor(K.domain,index).diameter > Cosc
         return singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index; Cosc = Cosc)
     else
         return singular_elliptic_double_integral_basic(K::BIO,h_quad::Real,index)
@@ -165,7 +165,7 @@ end
 
 function singular_elliptic_double_integral(Γ::Union{Attractor,SubAttractor},k::Number,h_quad::Real; Cosc = 2π)
     K = SingleLayer(Γ, k)
-    singular_elliptic_double_integral(K, h_quad; Cosc = Cosc)
+    return singular_elliptic_double_integral(K, h_quad; Cosc = Cosc)
 end
 
 function singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
@@ -186,9 +186,9 @@ function singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index::Array
             Npts += length(w) # these points will get used at 
             if m == n # diagonal quadrature element
                 I += K.singularity_scale*eval_green_double_integral(Γₘ,K.singularity_strength,h)
-                I += sum(w.*K.Lipschitz_part_of_kernel(x,y))
+                I += w'*K.Lipschitz_part_of_kernel.(x,y)
             else
-                I += sum(w.*K.kernel(x,y))
+                I += w'*K.kernel.(x,y)
             end
         end
     end
@@ -198,7 +198,7 @@ end
 function singular_elliptic_double_integral_basic(K::BIO,h::Real,index::Array{Int64}=[0])
     Γ = SubAttractor(K.domain,index)
     x,y,w = barycentre_rule(Γ,Γ,h)
-    I = K.singularity_scale*eval_green_double_integral(Γ,K.singularity_strength,h) + sum(w.*K.Lipschitz_part_of_kernel(x,y))
+    I = K.singularity_scale*eval_green_double_integral(Γ,K.singularity_strength,h) + w'*K.Lipschitz_part_of_kernel.(x,y)
     return I
 end
 

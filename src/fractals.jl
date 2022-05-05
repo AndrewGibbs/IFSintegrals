@@ -9,7 +9,8 @@ function get_dimension_from_contractions(R, homogeneous, top_dim)
     else
         # approximate Hausdorff dimension:
         f(d) = sum(R.^d) - 1
-        d = find_zero(f, (0,top_dim), Bisection())
+        d = find_zero(f, (0,top_dim*(1+eps())), Bisection())
+        # have added +ϵ here, to ensure that endpoints of search are of opposite sign when d=n
     end
     return d
 end
@@ -138,7 +139,7 @@ end
 # subcomponent of attractor, as a subclass of fractal
 struct SubAttractor{V,M} <: SelfSimilarFractal{V,M}
     attractor::Attractor
-    # IFS::Array{Similarity} # could be removed ?
+    IFS::Vector{Similarity{V,M}} # could be removed ?
     index::Vector{Int64}
     # topological_dimension::Int64 # could be removed
     # Hausdorff_dimension::T # could be removed
@@ -155,7 +156,7 @@ which stores the original attractor.
 function SubAttractor(Γ::Attractor{V,M}, index::Vector{<:Integer}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     #quick condition for trivial case:
     if index == [0]
-        return SubAttractor(Γ, [0], Γ.barycentre, Γ.diameter, Γ.measure)
+        return SubAttractor{V,M}(Γ, Γ.IFS, [0], Γ.barycentre, Γ.diameter, Γ.measure)
     else #non-trivial case
 
         # get new measure and diameter. First initialise:
@@ -167,13 +168,20 @@ function SubAttractor(Γ::Attractor{V,M}, index::Vector{<:Integer}) where {V<:Un
             new_measure *= Γ.weights[m]
         end
 
-        #start as old barycentre and map
-        new_bary = Γ.barycentre
-        for m=index[end:-1:1]
-            new_bary = sim_map(Γ.IFS[m], new_bary)
+        new_IFS = Γ.IFS
+        for m = index[end:-1:1]
+            new_IFS = sim_map(Γ.IFS[m], new_IFS)
         end
+        new_bary = get_barycentre(new_IFS, Γ.weights)
 
-        return SubAttractor{V,M}(Γ,           index, new_bary, new_diam, new_measure)
+        # I think the below code is wrong... and I've been getting away with it somehow...
+        # #start at old barycentre and map
+        # new_bary = Γ.barycentre
+        # for m=index[end:-1:1]
+        #     new_bary = sim_map(Γ.IFS[m], new_bary)
+        # end
+
+        return SubAttractor{V,M}(Γ,new_IFS,   index, new_bary, new_diam, new_measure)
         
     end
 end
@@ -193,23 +201,29 @@ function SubAttractor(Γ::SubAttractor{V,M}, index::Vector{<:Integer}) where {V<
                 new_measure *= Γ.attractor.weights[m]
             end
     
+            #start as old barycentre and map
+            # COULD BE IMPROVED, RE-APPLYING MAPS WHICH HAVE BEEN USED BEFORE
+            new_IFS = Γ.IFS
+            for m = index[end:-1:1]
+                new_IFS = sim_map(Γ.IFS[m], new_IFS)
+            end
+            new_bary = get_barycentre(new_IFS, Γ.attractor.weights)
+
+
             # get new vector index and barycentre:
             if Γ.index != [0] # excluding trivial case
                 index = vcat(Γ.index,index)
             end
     
-            #start as old barycentre and map
-            # COULD BE IMPROVED, RE-APPLYING MAPS WHICH HAVE BEEN USED BEFORE
-            new_bary = Γ.attractor.barycentre
-            for m=index[end:-1:1]
-                new_bary = sim_map(Γ.attractor.IFS[m], new_bary)
-            end
     
-            return SubAttractor{V,M}(Γ.attractor, index, new_bary, new_diam, new_measure)
+            return SubAttractor{V,M}(Γ.attractor,new_IFS, index, new_bary, new_diam, new_measure)
         end
     end
 
 SubAttractor(Γ::SelfSimilarFractal, index::Integer) = SubAttractor(Γ, [index])
+
+# overload the indexing function, so we can get neat vector subscripts
+getindex(Γ::SelfSimilarFractal, inds...) = SubAttractor(Γ,[i for i in inds])
 
 # now define attractors of popular fractals
 """
@@ -218,9 +232,14 @@ formed by removing the middle α of the unit interval, and repeating on each sub
 """
 
 # provides a sketch of an attractor in N topological dimensions
-function sketch_attractor(Γ::Attractor; mem_const = 10000, start_count = 10)
-    X = slicematrix(rand(start_count,Γ.topological_dimension))
-    num_its = floor(log(mem_const/(Γ.topological_dimension*start_count))/log(length(Γ.IFS)))
+function sketch_attractor(Γ::SelfSimilarFractal; mem_const = 10000, start_count = 10)
+    if isa(Γ,Attractor)
+        N = Γ.topological_dimension
+    elseif isa(Γ,SubAttractor)
+        N = Γ.attractor.topological_dimension
+    end
+    X = slicematrix(rand(start_count,N))
+    num_its = floor(log(mem_const/(N*start_count))/log(length(Γ.IFS)))
     for _ = 1:num_its
         X = full_map(Γ.IFS, X)
     end

@@ -47,7 +47,7 @@ function get_max_power(S::Vector{Similarity{T,M_}}, diameter::Float64, h::Float6
 end
 
 function create_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
-    max_size = M^get_max_power(S,γ.diameter, h)
+    max_size = M^get_max_power(S,γ.diameter*(1+eps()), h)
     X = zeros(typeof(γ),max_size)
     X[1] = γ
     total_count = Int64(1)

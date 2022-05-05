@@ -58,7 +58,7 @@ function embed(f::Projection,g::Projection)
         # find the vector in f
         n_count = 0
         for nesh_el in f.mesh
-            n = mesh_el.index
+            n = nesh_el.index
             n_count +=1
             if n == m[1:length(n)]
                 new_coeffs[m_count] = f.coeffs[n_count]

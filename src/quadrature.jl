@@ -10,7 +10,7 @@ function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vecto
             w[n] = X[n].weight
         end
     else
-        x = Vector{Float64}(γ.barycentre)
+        x = [γ.barycentre]
         w = [γ.weight]
     end
     return x, w
@@ -45,7 +45,7 @@ function barycentre_rule(Γ::Attractor{T,M_},h::Float64) where {T<:Union{Real,Ab
 end
 
 function barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} 
-    return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.attractor.IFS), Γ.attractor.IFS, Γ.attractor.weights, h)
+    return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.attractor.weights, h)
 end
 
 """

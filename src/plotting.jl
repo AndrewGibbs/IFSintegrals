@@ -43,3 +43,13 @@ function slice(c1::Vector{Float64},c2::Vector{Float64},z::Float64,Nx::Int64,Ny::
     end
     return M,x,y
 end
+
+function draw(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+    X = sketch_attractor(Γ)
+    scatter([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+end
+
+function draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+    X = sketch_attractor(Γ)
+    scatter!([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+end

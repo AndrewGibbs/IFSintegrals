@@ -77,10 +77,10 @@ function SquareFlake(;weights=ones(16)./16)
     R = get_diameter(IFS) # I'm sure this can be calculated by hand... but not today.
     # also the 'measure' is not really 1 here. But it doesn't matter.
     bary = default_bary(IFS,2.0,weights,[0.0,0.0])
-    return Attractor(IFS, 2, 2.0, true, are_weights_Hausdorff(weights,IFS,2), [0.0,0.0], R, 1.0, weights)
+    return Attractor(IFS, 2, 2.0, true, are_weights_Hausdorff(weights,IFS,2), bary, R, 1.0, weights)
 end
 
-function KochFlake(weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
+function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     IFS = [Similarity(sqrt(1/3),[0, 0], pi/6),
             Similarity(1/3,[1/sqrt(3),1/3]),
             Similarity(1/3,[0,2/3]),

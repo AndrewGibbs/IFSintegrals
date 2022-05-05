@@ -1,4 +1,4 @@
-using IFSintegrals
+using IFSintegrals, LinearAlgebra
 
 # don't change these parameters - these are specific to the benchmarks below
 h = 0.05
@@ -17,8 +17,8 @@ threshold = 1E-14
 function test1(Γ,h)
     y, w = barycentre_rule(Γ,h)
 
-    f(x) = sin.(sqrt.(x[:,1].^2+x[:,2].^2)) # define integrand
-    Ih = (w'*f(y))[1]
+    f(x) = sin.(norm.(x)) # define integrand
+    Ih = (w'*f(y))
     I_bm = 0.5593353808456712
     if abs(Ih-I_bm)>threshold
         return false
@@ -28,12 +28,12 @@ function test1(Γ,h)
 end
 
 function test2(h)
-    Γ₁ = CantorSet(1/3)
-    Γ₂ = CantorSet(1/4)
-    f(x,y) = sin.(abs.(x)).*cos.(abs.(y))
+    Γ₁ = CantorSet(contraction = 1/3)
+    Γ₂ = CantorSet(contraction = 3/8)
+    f(x,y) = (sin.(abs.(x)).*cos.(abs.(y)))
 
     x,y,w = barycentre_rule(Γ₁,Γ₂,h)
-    Ih = (w'*f(x,y))[1]
+    Ih = (w'*f(x,y))
     I_bm = 0.3727428300015248
     if abs(Ih-I_bm)>threshold
         return false
@@ -55,6 +55,17 @@ function test3(Γ,h)
 end
 
 function test4(Γ,h)
+    t = 1.0
+    Ih = eval_green_double_integral(Γ, t, h)
+    I_bm = 4.738268418342183
+    if abs(Ih-I_bm)>threshold
+        return false
+    else
+        return true
+    end
+end
+
+function test5(Γ,h)
     k = 1.96
     Ih = singular_elliptic_double_integral(Γ, k, h)
     I_bm = 0.3206113688339223 + 0.13651121576163053im
@@ -69,3 +80,4 @@ println(test1(Γ,h))
 println(test2(h))
 println(test3(Γ,h))
 println(test4(Γ,h))
+println(test5(Γ,h))
