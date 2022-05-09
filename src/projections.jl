@@ -78,3 +78,10 @@ function -(f::Projection,g::Projection)
         return Projection(ϕ.domain,ϕ.mesh,ϕ.coeffs-g.coeffs)
     end
 end
+
+function get_H_minus_half_norm_function(Γ::SelfSimilarFractal, h_BEM::Real; h_quad::Real=h_BEM, h_quad_diag::Real = h_quad,  vary_quad::Bool = true)
+    Sᵢ = SingleLayer(Γ,im)
+    Gᵢ = DiscreteBIO(Sᵢ; h_BEM = h_BEM, h_quad = h_quad, h_quad_diag = h_quad_diag, vary_quad = vary_quad).Galerkin_matrix
+    norm(ϕ::Projection) = sqrt((2*abs(ϕ.coeffs'*Gᵢ*ϕ.coeffs)))
+    return norm
+end

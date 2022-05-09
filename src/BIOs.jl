@@ -35,7 +35,7 @@ struct DiscreteBIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
 end
 
 #constructor:
-function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()), h_quad::Real=h_BEM, Cosc = 2π, vary_quad=true, repeat_blocks=true)
+function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()), h_quad::Real=h_BEM, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf), vary_quad::Bool = true, repeat_blocks::Bool =true)
     Γ = K.domain
     Lₕ = subdivide_indices(K.domain,h_BEM)
     N = length(Lₕ)
@@ -73,7 +73,7 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
                 Γₙ = mesh[n_count]
                 x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad*h_quad_adjust[m_count,n_count])
                 if n==m
-                    Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad,n;Cosc=Cosc)
+                    Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad_diag,n;Cosc=Cosc)
                 else
                     Galerkin_matrix[m_count,n_count] = w'*K.kernel.(x,y)
                 end
