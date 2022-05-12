@@ -85,3 +85,8 @@ function get_H_minus_half_norm_function(Γ::SelfSimilarFractal, h_BEM::Real; h_q
     norm(ϕ::Projection) = sqrt((2*abs(ϕ.coeffs'*Gᵢ*ϕ.coeffs)))
     return norm
 end
+
+function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64})
+    norm(ϕ::Projection) = sqrt((2*abs(ϕ.coeffs'*Gᵢ*ϕ.coeffs)))
+    return norm
+end

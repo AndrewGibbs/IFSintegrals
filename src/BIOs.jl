@@ -53,7 +53,7 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
         h_quad_adjust = ones(Float64, length(Lₕ),length(Lₕ))
     end
 
-    if Γ.homogeneous & repeat_blocks
+    if Γ.homogeneous & repeat_blocks & N>1
         ℓ = length(Lₕ[1])
         diag_block_sizes = M.^(0:(ℓ-1))
     else
