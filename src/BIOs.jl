@@ -41,8 +41,7 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
     N = length(Lₕ)
     mesh = [SubAttractor(Γ,Lₕ[n]) for n=1:N]
     M = length(Γ.IFS)
-    #initialise Galerkin matrix:
-    Galerkin_matrix = zeros(Complex{Float64},N,N)
+
     # create blank matrix of flags, describing if the matrix entry has been filled
     BEM_filled = zeros(Bool,N,N)
     m_count = 0
@@ -50,15 +49,18 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
     if vary_quad
         h_quad_adjust = get_quad_scales(K,Lₕ)
     else
-        h_quad_adjust = ones(Float64, length(Lₕ),length(Lₕ))
+        h_quad_adjust = ones(Float16, length(Lₕ),length(Lₕ))
     end
 
-    if Γ.homogeneous & repeat_blocks & N>1
+    if Γ.homogeneous && repeat_blocks && N>1
         ℓ = length(Lₕ[1])
         diag_block_sizes = M.^(0:(ℓ-1))
     else
-        diag_block_sizes = []
+         diag_block_sizes = []
     end
+
+    #initialise Galerkin matrix:
+    Galerkin_matrix = zeros(Complex{Float64},N,N)
 
     @showprogress 1 "Constructing BEM system " for m_count=1:N#m in Lₕ
         m = Lₕ[m_count]
@@ -67,7 +69,7 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
         # if matrix is symmetric, will only need to compute ≈ half entries
         K.self_adjoint ? n_count_start = m_count : n_count_start = 1
 
-        for n_count = n_count_start:length(Lₕ)#n in Lₕ
+        for n_count = n_count_start:N#n in Lₕ
             if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
                 n = Lₕ[n_count]
                 Γₙ = mesh[n_count]
@@ -237,6 +239,7 @@ function get_quad_scales(K::BIO,Lₕ::Vector{Vector{Int64}})
         end
     end
     # now can get a lower bound estimate on the quantity from my notes:
-    quad_scales = max.(sqrt.(maximum(F_lower)./F_upper),1)
+    quad_scales = Float16.(floor.(max.(sqrt.(maximum(F_lower)./F_upper),1),sigdigits = 4))
+    # have made a change which rounds down to nearest Float16, to save space
     return quad_scales
 end

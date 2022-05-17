@@ -2,7 +2,7 @@ module IFSintegrals
 
 using Base: Float64
 using ProgressMeter
-import Plots: scatter!
+import Plots: scatter!, scatter
 import Base: -, \, getindex
 import Roots: find_zero, Bisection
 import LinearAlgebra: norm, I, UniformScaling
