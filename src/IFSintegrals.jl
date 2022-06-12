@@ -15,7 +15,8 @@ export Similarity, Attractor, SubAttractor, Fractal, sketch_attractor, CantorSet
         BIO, DiscreteBIO, SingleLayer,
         single_layer_potential, far_field_pattern,
         chaos_quad, barycentre_uniform,
-        slice, box, draw, get_H_minus_half_norm_function, get_H_minus_half_norm_function_from_matrix
+        slice, box, draw, draw!,
+        get_H_minus_half_norm_function, get_H_minus_half_norm_function_from_matrix
 include("similarities.jl")
 include("fractals.jl")
 include("partitioning.jl")
