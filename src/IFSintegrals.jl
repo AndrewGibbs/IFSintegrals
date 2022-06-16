@@ -7,14 +7,14 @@ import Base: -, \, getindex
 import Roots: find_zero, Bisection
 import LinearAlgebra: norm, I, UniformScaling
 import StaticArrays: SVector, SMatrix
-export Similarity, Attractor, SubAttractor, Fractal, sketch_attractor, CantorSet,
+export Similarity, Attractor, SubAttractor, SelfSimilarFractal, sketch_attractor, CantorSet,
         Sierpinski, SquareFlake, KochFlake, CantorN, sim_map, full_map,
         barycentre_rule, subdivide_indices, eval_green_double_integral,
         CantorDust, eval_green_single_integral_fixed_point, fixed_point,
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,
         BIO, DiscreteBIO, SingleLayer,
         single_layer_potential, far_field_pattern,
-        chaos_quad, barycentre_uniform,
+        chaos_quad, barycentre_uniform, long_bary,
         slice, box, draw, draw!,
         get_H_minus_half_norm_function, get_H_minus_half_norm_function_from_matrix
 include("similarities.jl")

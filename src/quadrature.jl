@@ -72,6 +72,24 @@ function barycentre_rule(Γ1::SelfSimilarFractal,Γ2::SelfSimilarFractal,h::Floa
     return repeat(x1,inner=n2), repeat(x2,outer=n1), repeat(w1,inner=n2).*repeat(w2,outer=n1)
 end
 
+function long_bary(Γ::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<:Union{Real,AbstractVector}, U<:Union{Real,AbstractMatrix}}
+    # note that the input Γ may be an attractor or a subcomponent of an attractor
+    I = 0.0 # value of integral which will be added to cumulatively
+    N = 0
+    M = length(Γ.IFS)
+    if Γ.diameter>h
+        for m=1:M
+            I_,N_ = long_bary(Γ[m],f,h) # Here Γ[m] represents the m'th subcomponent of Γ, m=1,...,M#
+            N += N_
+            I += I_
+        end
+    else
+        I = f(Γ.barycentre)*Γ.measure # one point quadrature at the finest level
+        N = 1
+    end
+    return I, N
+end
+
 function chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64,x₀::AbstractVector) where {V<:AbstractVector, M<:Union{Real,AbstractMatrix}}
     x = [Vector{Float64}(undef, length(x₀)) for _ = 1:N]
     x[1] = x₀
@@ -81,16 +99,13 @@ function chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64,x₀::AbstractVector) w
     return x, ones(N)./N
 end
 
-function chaos_quad(Γ::SelfSimilarFractal,N::Int64,x₀::Float64)
-    if Γ.topological_dimension>1
-        error("Initial guess must match dimension of ambient space")
+function chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64,x₀::Float64) where {V<:Real, M<:Real}
+    x = zeros(V,N)
+    x[1] = x₀
+    for n=2:N
+        x[n] = chaos_step(Γ,x[n-1])
     end
-    X,w = chaos_quad(Γ,N,[x₀])
-    x = zeros(N)
-    for n=1:N
-        x[n] = X[n][1]
-    end
-    return x,w
+    return x, ones(N)./N
 end
 
 function chaos_step(Γ::SelfSimilarFractal,x::Union{AbstractVector,Real})

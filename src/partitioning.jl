@@ -16,6 +16,12 @@ struct partition_data_unindexed{T<:Union{Real,AbstractVector}} <: partition_data
     diameter::Float64
 end
 
+# struct partition_data_with_IFS{T<:Union{Real,AbstractVector}} <: partition_data{T}
+#     barycentre::T
+#     weight::Float64
+#     diameter::Float64
+# end
+
 zero(::Type{partition_data_indexed{T}}) where {T<:Union{Real,AbstractVector}} =  partition_data_indexed{T}(zero(T),0.0,0.0,[0])
 
 zero(::Type{partition_data_unindexed{T}}) where {T<:Union{Real,AbstractVector}} =  partition_data_unindexed{T}(zero(T),0.0,0.0)
