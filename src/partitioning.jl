@@ -16,11 +16,12 @@ struct partition_data_unindexed{T<:Union{Real,AbstractVector}} <: partition_data
     diameter::Float64
 end
 
-# struct partition_data_with_IFS{T<:Union{Real,AbstractVector}} <: partition_data{T}
-#     barycentre::T
-#     weight::Float64
-#     diameter::Float64
-# end
+struct partition_data_with_IFS{T<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} <: partition_data{T}
+    barycentre::T
+    weight::Float64
+    diameter::Float64
+    IFS::Vector{Similarity{T,M}}
+end
 
 zero(::Type{partition_data_indexed{T}}) where {T<:Union{Real,AbstractVector}} =  partition_data_indexed{T}(zero(T),0.0,0.0,[0])
 
@@ -38,6 +39,15 @@ function subdivide_unindexed(M::Integer, S::Vector{Similarity{T,M_}}, weights::V
     Y = zeros(partition_data_unindexed{T},M)
     for m=1:M
         Y[m] = partition_data_unindexed{T}(sim_map(S[m],X.barycentre), X.weight*weights[m], X.diameter*S[m].r)
+    end
+    return Y[1], Y[2:end]
+end
+
+# below is a fucking mess. need to fix this so both the IFSs are the right way around.
+function subdivide_with_IFS(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::partition_data_with_IFS{T}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+    Y = zeros(partition_data_with_IFS{T,M_},M)
+    for m=1:M
+        Y[m] = partition_data_with_IFS{T,M_}(sim_map(S[m],X.barycentre), X.weight*weights[m], X.diameter*S[m].r, [Similarity{T,M_}(IFS[m].r, (I-IFS[m].rA)*s.δ + s.rA*IFS[m].δ, IFS[m].A, IFS[m].rA) for m=1:length(IFS)])
     end
     return Y[1], Y[2:end]
 end

@@ -31,14 +31,14 @@ end
 sim_map(s::Similarity, x::Union{Real,AbstractVector{<:Real}}) = s.rA*x + s.δ
 sim_map_inv(s::Similarity, x::Union{Real,AbstractVector{<:Real}}) = s.rA/(x-s.δ)
 
-function sim_map(s::Similarity{V,M}, IFS::Vector{Similarity{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    # newIFS = IFS
-    # for m=1:length(IFS)
-    #     new_translation = (I-IFS[m].rA)*s.δ + s.rA*IFS[m].δ
-    #     newIFS[m] = Similarity{V,M}(IFS[m].r, new_translation, IFS[m].A, IFS[m].rA)
-    # end
+function sim_map(s::Similarity{V,M}, IFS::Vector{Similarity{V,M}}) where {V<:Union{Real,AbstractVector}, M<:AbstractMatrix}
+    Achain = [s.A*IFS[m].A/s.A]
+    rAchain = s.r*Achain
+    return [Similarity{V,M}(IFS[m].r, (-rAchain+s.Ar+I)*IFS[m].δ, Achain, rAchain) for m=1:length(IFS)]
+end
+
+function sim_map(s::Similarity{V,M}, IFS::Vector{Similarity{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Real}
     return [Similarity{V,M}(IFS[m].r, (I-IFS[m].rA)*s.δ + s.rA*IFS[m].δ, IFS[m].A, IFS[m].rA) for m=1:length(IFS)]
-    # return newIFS
 end
 
 function full_map(S::Vector{Similarity{V,M_}},X::Vector{Vector{Float64}}) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
