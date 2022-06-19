@@ -44,7 +44,8 @@ function subdivide(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Floa
 end
 
 function subdivide(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::partition_data_with_IFS{T,M_}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
-    Y =[partition_data_with_IFS{T,M_}(sim_map(S[m],X.barycentre), X.weight*weights[m], X.diameter*S[m].r, sim_map(S[m],X.IFS)) for m=1:M]
+    IFSnew = [sim_map(S[m],X.IFS) for m=1:M]
+    Y =[partition_data_with_IFS{T,M_}(sim_map(S[m],X.barycentre), X.weight*weights[m], X.diameter*S[m].r, IFSnew[m]) for m=1:M]
     return Y[1], Y[2:end]
 end
 
