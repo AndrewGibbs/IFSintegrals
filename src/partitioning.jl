@@ -1,22 +1,22 @@
 import Base: zero
 
-abstract type partition_data{T<:Union{Real,AbstractVector}}
+abstract type partition_data{T<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
 end
 
-struct partition_data_indexed{T<:Union{Real,AbstractVector}} <: partition_data{T}
+struct partition_data_indexed{T<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}} <: partition_data{T,M}
     barycentre::T
     weight::Float64
     diameter::Float64
     index::Vector{Int64}
 end
 
-struct partition_data_unindexed{T<:Union{Real,AbstractVector}} <: partition_data{T}
+struct partition_data_unindexed{T<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}} <: partition_data{T,M}
     barycentre::T
     weight::Float64
     diameter::Float64
 end
 
-struct partition_data_with_IFS{T<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} <: partition_data{T}
+struct partition_data_with_IFS{T<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} <: partition_data{T,M}
     barycentre::T
     weight::Float64
     diameter::Float64
@@ -27,7 +27,7 @@ zero(::Type{partition_data_indexed{T}}) where {T<:Union{Real,AbstractVector}} = 
 
 zero(::Type{partition_data_unindexed{T}}) where {T<:Union{Real,AbstractVector}} =  partition_data_unindexed{T}(zero(T),0.0,0.0)
 
-function subdivide_indexed(M::Integer,S::Vector{Similarity{T,M_}},weights::Vector{Float64}, X::partition_data_indexed{T}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+function subdivide(M::Integer,S::Vector{Similarity{T,M_}},weights::Vector{Float64}, X::partition_data_indexed{T}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     Y = zeros(partition_data_indexed{T},M)
     for m=1:M
         Y[m] = partition_data_indexed{T}(sim_map(S[m],X.barycentre), X.weight*weights[m], X.diameter*S[m].r, [X.index...,m])
@@ -35,7 +35,7 @@ function subdivide_indexed(M::Integer,S::Vector{Similarity{T,M_}},weights::Vecto
     return Y[1], Y[2:end]
 end
 
-function subdivide_unindexed(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::partition_data{T}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+function subdivide(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::partition_data_unindexed{T}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     Y = zeros(partition_data_unindexed{T},M)
     for m=1:M
         Y[m] = partition_data_unindexed{T}(sim_map(S[m],X.barycentre), X.weight*weights[m], X.diameter*S[m].r)
@@ -43,18 +43,14 @@ function subdivide_unindexed(M::Integer, S::Vector{Similarity{T,M_}}, weights::V
     return Y[1], Y[2:end]
 end
 
-# below is a fucking mess. need to fix this so both the IFSs are the right way around.
-function subdivide_with_IFS(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::partition_data_with_IFS{T}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
-    Y = zeros(partition_data_with_IFS{T,M_},M)
-    for m=1:M
-        Y[m] = partition_data_with_IFS{T,M_}(sim_map(S[m],X.barycentre), X.weight*weights[m], X.diameter*S[m].r, [Similarity{T,M_}(IFS[m].r, (I-IFS[m].rA)*s.δ + s.rA*IFS[m].δ, IFS[m].A, IFS[m].rA) for m=1:length(IFS)])
-    end
+function subdivide(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::partition_data_with_IFS{T,M_}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+    Y =[partition_data_with_IFS{T,M_}(sim_map(S[m],X.barycentre), X.weight*weights[m], X.diameter*S[m].r, sim_map(S[m],X.IFS)) for m=1:M]
     return Y[1], Y[2:end]
 end
 
-subdivide(M::Integer,S::Vector{Similarity{T,M_}},weights::Vector{Float64}, X::partition_data_indexed{T}) where  {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = subdivide_indexed(M, S, weights, X)
+# subdivide(M::Integer,S::Vector{Similarity{T,M_}},weights::Vector{Float64}, X::partition_data_indexed{T}) where  {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = subdivide_indexed(M, S, weights, X)
 
-subdivide(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::partition_data_unindexed{T}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = subdivide_unindexed(M, S, weights, X)
+# subdivide(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::partition_data_unindexed{T}) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} = subdivide_unindexed(M, S, weights, X)
 
 function get_max_power(S::Vector{Similarity{T,M_}}, diameter::Float64, h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     r_max = 0.0
@@ -64,8 +60,9 @@ end
 
 function create_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     max_size = M^get_max_power(S,γ.diameter*(1+eps()), h)
-    X = zeros(typeof(γ),max_size)
-    X[1] = γ
+    # X = zeros(typeof(γ),max_size)
+    X = [γ for _=1:max_size]
+    # X[1] = γ
     total_count = Int64(1)
     start_checking = Int64(1)
     subdiv = true

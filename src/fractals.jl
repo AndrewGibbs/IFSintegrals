@@ -58,8 +58,8 @@ struct Attractor{V,M} <: SelfSimilarFractal{V,M}
     IFS::Vector{Similarity{V,M}}
     topological_dimension::Int64
     Hausdorff_dimension::Float64
-    Hausdorff_weights::Bool
     homogeneous::Bool
+    Hausdorff_weights::Bool
     barycentre::V
     diameter::Float64
     measure::Float64
