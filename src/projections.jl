@@ -119,3 +119,9 @@ function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64},mes
     norm(ϕ::Projection) = sqrt((2*abs(embed(ϕ,mesh).coeffs'*Gᵢ*embed(ϕ,mesh).coeffs)))
     return norm
 end
+
+function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64})
+    #embed
+    norm(ϕ::Projection) = sqrt((2*abs(ϕ.coeffs'*Gᵢ*ϕ.coeffs)))
+    return norm
+end
