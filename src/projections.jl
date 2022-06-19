@@ -70,6 +70,34 @@ function embed(f::Projection,g::Projection)
     return Projection(f.domain,g.mesh,new_coeffs)
 end
 
+function embed(f::Projection,mesh::Vector{SubAttractor{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    if length(mesh) == length(f.coeffs)
+        return f
+    elseif length(mesh) > length(f.coeffs)
+        f_dim = length(f.coeffs)
+        mesh_dim = length(mesh)
+        new_coeffs = zeros(Complex{Float64},g_dim)
+        m_count = 1
+        for mesh_el in mesh.mesh
+            m = mesh_el.index
+            # find the vector in f
+            n_count = 0
+            for nesh_el in f.mesh
+                n = nesh_el.index
+                n_count +=1
+                if n == m[1:length(n)]
+                    new_coeffs[m_count] = f.coeffs[n_count]
+                    m_count+=1
+                    break
+                end
+            end
+        end
+    else
+        error("Mesh is not refined enough to support function")
+    end
+
+end
+
 function -(f::Projection,g::Projection)
     ϕ = embed(f,g)
     if length(f.coeffs)>length(g.coeffs)
@@ -86,7 +114,8 @@ function get_H_minus_half_norm_function(Γ::SelfSimilarFractal, h_BEM::Real; h_q
     return norm
 end
 
-function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64})
-    norm(ϕ::Projection) = sqrt((2*abs(ϕ.coeffs'*Gᵢ*ϕ.coeffs)))
+function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64},mesh::Vector{SubAttractor{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    #embed
+    norm(ϕ::Projection) = sqrt((2*abs(embed(ϕ,mesh).coeffs'*Gᵢ*embed(ϕ,mesh).coeffs)))
     return norm
 end
