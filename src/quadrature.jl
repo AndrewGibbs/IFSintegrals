@@ -1,4 +1,4 @@
-function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Real, M_<:Real}
+function get_quadrature_from_partition(γ::partition_data, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Real, M_<:Real}
     if h<γ.diameter
         X = create_partition(γ, M, S, weights, h)
         N = length(X)
@@ -16,7 +16,7 @@ function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vecto
     return x, w
 end
 
-function get_quadrature_from_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:AbstractVector, M_<:Union{Real,AbstractMatrix}}
+function get_quadrature_from_partition(γ::partition_data, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:AbstractVector, M_<:Union{Real,AbstractMatrix}}
     if h<γ.diameter
         X = create_partition(γ, M, S, weights, h)
         N = length(X)
@@ -49,10 +49,10 @@ function barycentre_rule(Γ::Attractor{T,M_},h::Float64) where {T<:Union{Real,Ab
 end
 
 function barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} 
-    if Γ.homogeneous
+    if Γ.attractor.homogeneous
         return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.attractor.weights, h)
     else
-        return get_quadrature_from_partition(partition_data_with_IFS{T}(Γ.barycentre,Γ.measure,Γ.diameter,Γ.IFS), length(Γ.IFS), Γ.IFS, Γ.attractor.weights, h)
+        return get_quadrature_from_partition(partition_data_with_IFS{T,M_}(Γ.barycentre,Γ.measure,Γ.diameter,Γ.IFS), length(Γ.IFS), Γ.IFS, Γ.attractor.weights, h)
     end
 end
 

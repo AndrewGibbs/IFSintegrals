@@ -1,26 +1,26 @@
 import Base: zero
 
-abstract type partition_data{T<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+abstract type partition_data#{T<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
 end
 
-struct partition_data_indexed{T<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}} <: partition_data{T,M}
+struct partition_data_indexed{T<:Union{Real,AbstractVector}} <: partition_data#{T,M}
     barycentre::T
     weight::Float64
     diameter::Float64
     index::Vector{Int64}
 end
 
-struct partition_data_unindexed{T<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}} <: partition_data{T,M}
+struct partition_data_unindexed{T<:Union{Real,AbstractVector}} <: partition_data#{T,M}
     barycentre::T
     weight::Float64
     diameter::Float64
 end
 
-struct partition_data_with_IFS{T<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} <: partition_data{T,M}
+struct partition_data_with_IFS{T<:Union{Real,AbstractVector}, S<:Union{Real,AbstractMatrix}} <: partition_data#{T,M}
     barycentre::T
     weight::Float64
     diameter::Float64
-    IFS::Vector{Similarity{T,M}}
+    IFS::Vector{Similarity{T,S}}
 end
 
 zero(::Type{partition_data_indexed{T}}) where {T<:Union{Real,AbstractVector}} =  partition_data_indexed{T}(zero(T),0.0,0.0,[0])
@@ -59,7 +59,7 @@ function get_max_power(S::Vector{Similarity{T,M_}}, diameter::Float64, h::Float6
     return max(ceil(Int64,log(h/diameter)/log(r_max)),0)
 end
 
-function create_partition(γ::partition_data{T}, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+function create_partition(γ::partition_data, M::Int64, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     max_size = M^get_max_power(S,γ.diameter*(1+eps()), h)
     # X = zeros(typeof(γ),max_size)
     X = [γ for _=1:max_size]
