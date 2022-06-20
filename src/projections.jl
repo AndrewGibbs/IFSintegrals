@@ -60,7 +60,7 @@ function embed(f::Projection,g::Projection)
         for nesh_el in f.mesh
             n = nesh_el.index
             n_count +=1
-            if n == m[1:length(n)]
+            if (n == m[1:length(n)]) || n == [0]
                 new_coeffs[m_count] = f.coeffs[n_count]
                 m_count+=1
                 break
@@ -76,16 +76,16 @@ function embed(f::Projection,mesh::Vector{SubAttractor{V,M}}) where {V<:Union{Re
     elseif length(mesh) > length(f.coeffs)
         f_dim = length(f.coeffs)
         mesh_dim = length(mesh)
-        new_coeffs = zeros(Complex{Float64},g_dim)
+        new_coeffs = zeros(Complex{Float64},mesh_dim)
         m_count = 1
-        for mesh_el in mesh.mesh
+        for mesh_el in mesh
             m = mesh_el.index
             # find the vector in f
             n_count = 0
             for nesh_el in f.mesh
                 n = nesh_el.index
                 n_count +=1
-                if n == m[1:length(n)]
+                if (n == m[1:length(n)]) || n == [0]
                     new_coeffs[m_count] = f.coeffs[n_count]
                     m_count+=1
                     break
@@ -95,7 +95,7 @@ function embed(f::Projection,mesh::Vector{SubAttractor{V,M}}) where {V<:Union{Re
     else
         error("Mesh is not refined enough to support function")
     end
-
+    return Projection(f.domain,mesh,new_coeffs)
 end
 
 function -(f::Projection,g::Projection)
@@ -107,7 +107,7 @@ function -(f::Projection,g::Projection)
     end
 end
 
-function get_H_minus_half_norm_function(Γ::SelfSimilarFractal, h_BEM::Real; h_quad::Real=h_BEM, h_quad_diag::Real = h_quad,  vary_quad::Bool = true)
+function get_H_minus_half_norm_function(Γ::SelfSimilarFractal; h_BEM::Real=1.0, h_quad::Real=h_BEM, h_quad_diag::Real = h_quad,  vary_quad::Bool = true)
     Sᵢ = SingleLayer(Γ,im)
     DBIO = DiscreteBIO(Sᵢ; h_BEM = h_BEM, h_quad = h_quad, h_quad_diag = h_quad_diag, vary_quad = vary_quad)
     norm(ϕ::Projection) = sqrt((2*abs(embed(ϕ,DBIO.mesh).coeffs'*DBIO.Galerkin_matrix*embed(ϕ,DBIO.mesh).coeffs)))
