@@ -231,17 +231,3 @@ The middle-α Cantor set (default is α=1/3),
 formed by removing the middle α of the unit interval, and repeating on each sub interval.
 """
 
-# provides a sketch of an attractor in N topological dimensions
-function sketch_attractor(Γ::SelfSimilarFractal; mem_const = 10000, start_count = 10)
-    if isa(Γ,Attractor)
-        N = Γ.topological_dimension
-    elseif isa(Γ,SubAttractor)
-        N = Γ.attractor.topological_dimension
-    end
-    X = slicematrix(rand(start_count,N))
-    num_its = floor(log(mem_const/(N*start_count))/log(length(Γ.IFS)))
-    for _ = 1:num_its
-        X = full_map(Γ.IFS, X)
-    end
-    return X
-end

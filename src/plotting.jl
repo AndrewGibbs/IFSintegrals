@@ -1,3 +1,18 @@
+# provides a sketch of an attractor in N topological dimensions
+function sketch_attractor(Γ::SelfSimilarFractal; mem_const = 10000, start_count = 10)
+    if isa(Γ,Attractor)
+        N = Γ.topological_dimension
+    elseif isa(Γ,SubAttractor)
+        N = Γ.attractor.topological_dimension
+    end
+    X = [Γ.barycentre]
+    num_its = floor(log(mem_const/(N*start_count))/log(length(Γ.IFS)))
+    for _ = 1:num_its
+        X = full_map(Γ.IFS, X)
+    end
+    return X
+end
+
 function matrix_of_vectors(Nx::Int64, Ny::Int64)
     array = Array{Vector{Float64}}(undef, Nx,Ny)
     for i in eachindex(array)
