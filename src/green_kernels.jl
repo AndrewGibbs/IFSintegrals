@@ -11,6 +11,7 @@ end
 zero_kernel(_, _) =  zero(Complex{Float64})
 
 HelhmoltzGreen2D(k::Number,x::T, y::T) where T<:Union{Real,AbstractVector} = im/4*besselh(0,1,k*norm(x-y))
+HelhmoltzGreen2D(k::Number,r::Real) = im/4*besselh(0,1,k*r)
 
 function HelhmoltzGreen2D_Lipschitz_part(k::Number, x::T, y::T) where T<:Union{Real,AbstractVector}
     if x == y
@@ -21,6 +22,7 @@ function HelhmoltzGreen2D_Lipschitz_part(k::Number, x::T, y::T) where T<:Union{R
 end
 
 HelhmoltzGreen3D(k::Number,x::T,y::T) where T<:Union{Real,AbstractVector} = exp(im*k*norm(x-y))/(4π*norm(x-y))
+HelhmoltzGreen3D(k::Number,r::Real) = exp(im*k*r)/(4π*r)
 
 function HelhmoltzGreen3D_Lipschitz_part(k::Number, x::T, y::T) where T<:Union{Real,AbstractVector}
     if x == y
