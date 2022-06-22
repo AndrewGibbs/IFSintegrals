@@ -25,9 +25,10 @@ end
 function \(K::DiscreteBIO, fₕ::Projection)
     thresh = 1E-8
     if length(fₕ.coeffs)>1000 #use iterative method
-        if K.BIO.self_adjoint && K.BIO.coercive
-            coeffs = cg(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
-        elseif K.BIO.self_adjoint
+        # if K.BIO.self_adjoint && K.BIO.coercive
+        #     coeffs = cg(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
+        # else
+        if K.BIO.self_adjoint
             coeffs = minres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
         else
             coeffs = bicgstabl(K.Galerkin_matrix,fₕ.coeffs,1,reltol=thresh)
