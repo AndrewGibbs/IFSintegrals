@@ -2,7 +2,7 @@ struct Projection{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} 
     domain::SelfSimilarFractal{V,M}
     #Lₕ::Vector{Vector{Int64}} # subindices list
     mesh::Vector{SubAttractor{V,M}}
-    coeffs::Vector{<:Complex{<:Float64}}
+    coeffs::Vector{Complex{Float64}}
 end
 
 function project(mesh::Vector{SubAttractor{V,M}}, f::Function, h_quad::Float64) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}

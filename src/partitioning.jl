@@ -58,7 +58,9 @@ subdivide(M::Integer, S::Vector{Similarity{T,M_}}, weights::Vector{Float64}, X::
 
 function get_max_power(S::Vector{Similarity{T,M_}}, diameter::Float64, h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     r_max = 0.0
-    for s in S r_max=max(r_max,s.r) end
+    for s in S
+        r_max=max(r_max,s.r)
+    end
     return max(ceil(Int64,log(h/diameter)/log(r_max)),0)
 end
 
