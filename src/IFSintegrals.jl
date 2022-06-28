@@ -26,7 +26,7 @@ include("BIOs.jl")
 include("projections.jl")
 include("diam_approx.jl")
 include("presets.jl")
-include("scattering.jl")
+include("screen_scattering.jl")
 include("plotting.jl")
 
 # routine below was copied from:
