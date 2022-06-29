@@ -51,7 +51,7 @@ function single_layer_potential(density::Projection{V,M}, k::Real; h_quad::Float
         for n=1:vec_length
             R[n] += (x[1]-Y[n]).^2
         end
-        return Vector{Float64}(sqrt.(R))
+        R = Vector{Float64}(sqrt.(R))
         return transpose(W::Vector{Complex{Float64}})*im/4*besselh.(0,1,k*R)
     end
     # error("Cannot compute single layer potential for this number of spatial dimensions")

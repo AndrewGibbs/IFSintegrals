@@ -25,6 +25,8 @@ function box(c1::Vector{Float64},c2::Vector{Float64},Nx::Int64,Ny::Int64)
 end
 
 function slice(c1::Vector{Float64},c2::Vector{Float64},z::Float64,Nx::Int64,Ny::Int64)
+    Nx = max(Nx,2)
+    Ny = max(Ny,2)
     xmin = min(c1[1],c2[1])
     xmax = max(c1[1],c2[1])
     ymin = min(c1[2],c2[2])
