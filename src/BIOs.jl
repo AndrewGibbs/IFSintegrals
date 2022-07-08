@@ -2,6 +2,9 @@
 # import Base: \ # to be overloaded with discrete operators
 # using ProgressMeter
 
+"""
+BIO is the type for boundary integral operators.
+"""
 struct BIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     domain::SelfSimilarFractal{V,M}
     kernel::Function #function
@@ -19,7 +22,7 @@ singularity_scale::Complex{<:Real},self_adjoint::Bool,coercive::Bool) where {V<:
 BIO{V,M}(domain,kernel,Lipschitz_part_of_kernel,singularity_strength,singularity_scale,self_adjoint,coercive,0.0)
 
 """
-    DiscreteBIO(BIO::BIO, h_BEM::Real, h_quad::Real)
+    DiscreteBIO(BIO::BIO; h_BEM::Real, h_quad::Real)
     
 is the constructor for a discretisation of a boundary layer boundary integral operator, 'BIO'.
 h_BEM is the meshwidth parameter for the discretisation of the underlying fractal
@@ -102,7 +105,7 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
 end
 
 """
-    SingleLayer(Γ::SelfSimilarFractal, k::Real=0.0)
+    SingleLayer(Γ::SelfSimilarFractal, wavenumber::Real=0.0)
 
 represents the single layer boundary integral operator, Sϕ(x) = ∫_Γ Φ(x,y) ϕ(x) dHᵈ(y),
 where Φ is the fundamental solution for the underlying PDE.

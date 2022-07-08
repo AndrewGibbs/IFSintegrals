@@ -24,6 +24,10 @@ function full_surface_quad(density::Projection,h::Float64)
 end
 
 
+"""
+    single_layer_potential(density::Projection, wavenumber::Real; h_quad::Float64=0.1/k)
+Returns a function which is the single layer potential in Rⁿ⁺¹, from a density on the screen Γ ∈ Rⁿ.
+"""
 function single_layer_potential(density::Projection{V,M}, k::Real; h_quad::Float64=0.1/k) where {V<:AbstractVector, M<:Union{Real,AbstractMatrix}}
     # get points on surface of Γ
     Y, W = full_surface_quad(density,h_quad)
@@ -64,8 +68,10 @@ FF2D_kernel(θ::Float64, x::Float64,k::Float64) = exp(-im*k*(cos(θ)*x))
 # far-field kernel 3D:
 FF3D_kernel(θ::Float64, ψ::Float64, x::Vector{Float64}, k::Float64) = exp.(-im*k*(cos(θ)*x[1]+sin(ψ)*x[2]))
 
+"""
+Returns a function which is the far-field pattern in Rⁿ⁺¹, from a density on the screen Γ ∈ Rⁿ.
+"""
 function far_field_pattern(density::Projection{V,M}, k::Real=0.0; h_quad::Float64=0.1/k) where {V<:AbstractVector, M<:Union{Real,AbstractMatrix}}
-    
     density.domain.topological_dimension > 2 ? error("Cannot compute far-field pattern for this number of spatial dimensions") : Nothing# get points on surface of Γ
     Y, W = full_surface_quad(density,h_quad)
     # create map, based on appropriate kernel

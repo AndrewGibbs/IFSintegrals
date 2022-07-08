@@ -61,11 +61,21 @@ function slice(c1::Vector{Float64},c2::Vector{Float64},z::Float64,Nx::Int64,Ny::
     return M,x,y
 end
 
+"""
+    draw(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+Provides a simple sketch of the attractor Γ, by repeatedly applying the IFS.
+
+See also: [`draw!`](@ref)
+"""
 function draw(Γ::SelfSimilarFractal; markersize=0.1, color="black")
     X = sketch_attractor(Γ)
     scatter([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
 end
 
+"""
+    draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+Similar to [`draw`](@ref), except it will draw on the current image.
+"""
 function draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
     X = sketch_attractor(Γ)
     scatter!([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)

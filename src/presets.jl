@@ -8,6 +8,10 @@ function default_bary(S::Vector{Similarity{V,M}}, d::Number, weights::Vector{Flo
     return bary
 end
 
+"""
+    CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
+Returns a Cantor Set as an Attractor (type) of an iterated function system.
+"""
 function CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
     S = [Similarity(contraction,0.0),Similarity(contraction,1-contraction)]
     d = log(1/2)/log(contraction)
@@ -16,8 +20,8 @@ function CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
 end
 
 """
-The middle-α Cantor dust (default is α=1/3),
-formed by taking the cartesian product of two middle-α Cantor sets.
+    CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
+Returns a Cantor dust as an Attractor (type) of an iterated function system.
 """
 function CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
     S = [Similarity(contraction,[0.0,0.0]),Similarity(contraction,[1-contraction,0.0]),Similarity(contraction,[0.0,1-contraction]),Similarity(contraction,[1-contraction,1-contraction])]
@@ -26,6 +30,12 @@ function CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
     return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0,weights)
 end
 
+
+"""
+    CantorN(N::Integer; contraction = 1/3)
+Returns the Cartesian product of N Cantor Sets, as an Attractor (type) of an iterated function system.
+For example, when N=2, we obtain Cantor Dust.
+"""
 function CantorN(N::Integer; contraction = 1/3)
     M = 2^N
     S = Similarity{SVector{N,Float64},SMatrix{N,N,Float64,N^2}}[]
@@ -40,7 +50,8 @@ function CantorN(N::Integer; contraction = 1/3)
 end
 
 """
-The Sierpinski triangle, as an attractor of an iterated function system.
+    Sierpinski(;weights=[1/3, 1/3, 1/3])
+Returns the Sierpinski triangle, as an Attractor (type) of an iterated function system.
 """
 function Sierpinski(;weights=[1/3, 1/3, 1/3])
     courage = Similarity(1/2,[0,1/6])
@@ -53,6 +64,12 @@ function Sierpinski(;weights=[1/3, 1/3, 1/3])
 end
 #            Attractor(sims,top_dim,Hdim,uniform,get_barycentre(sims,Hdim),diameter,measure)
 
+
+"""
+    SquareFlake(;weights=ones(16)./16)
+Returns the Square Snowflake, sometimes referred to as the "Minkowski Island", as an Attractor (type) of an iterated function system.
+See: https://en.wikipedia.org/wiki/Minkowski_sausage
+"""
 function SquareFlake(;weights=ones(16)./16)
     scale = 1
     h = scale/4 # width of square subcomponent
@@ -80,6 +97,10 @@ function SquareFlake(;weights=ones(16)./16)
     return Attractor(IFS, 2, 2.0, true, are_weights_Hausdorff(weights,IFS,2), bary, R, 1.0, weights)
 end
 
+"""
+    KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
+Returns the Koch Snowflake as an Attractor (type) of an iterated function system.
+"""
 function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     IFS = [Similarity(sqrt(1/3),[0, 0], pi/6),
             Similarity(1/3,[0,2/3]),

@@ -67,16 +67,6 @@ function barycentre_rule(Γ1::SelfSimilarFractal,Γ2::SelfSimilarFractal,h::Floa
         n1 = length(w1)
         x2, w2 = barycentre_rule(Γ2,h)
         n2 = length(w2)
-        # X1 = [zero(x1[1]) for _=1:n1*n2]
-        # X2 = [zero(x2[1]) for _=1:n1*n2]
-        # W = zeros(Float64, n1*n2)
-        # for i=0:(n1-1)
-        #     for j=0:(n2-1)
-        #         X1[j*n1 + i + 1] = x1[i + 1]
-        #         X2[j*n1 + i + 1] = x2[j + 1]
-        #         W[j*n1 + i + 1] = w1[i + 1]*w2[j + 1]
-        #     end
-        # end
     return repeat(x1,inner=n2), repeat(x2,outer=n1), repeat(w1,inner=n2).*repeat(w2,outer=n1)
 end
 
