@@ -39,22 +39,22 @@ Approximates the integral ∫_Γ∫_Γ Φ_t(x,y) dH^d(y)dH^d(x), where Φ_t is t
 the n-dimensional Laplace problem, and the integrals are with respect to Hausdorff measure.
 """
 function eval_green_double_integral(Γ::SelfSimilarFractal, t::Real, h::Real)
-    if isa(Γ,Attractor)
-        IFS = Γ.IFS
-        d = Γ.Hausdorff_dimension
-    else
-        IFS = Γ.attractor.IFS
-        d = Γ.attractor.Hausdorff_dimension
-    end
+    # if isa(Γ,Attractor)
+    #     IFS = Γ.IFS
+    #     # d = Γ.Hausdorff_dimension
+    # else
+    #     IFS = Γ.attractor.IFS
+    #     # d = Γ.attractor.Hausdorff_dimension
+    # end
     M = length(IFS)
     log_sum = 0.0
     scale = 1.0
     smooth_integrals = 0.0
 
     for m=1:M
-        scale -= IFS[m].r^(2d-t)
+        scale -= Γ.IFS[m].r^-t * Γ.weight[m]^2 #IFS[m].r^(2d-t)
         if t == 0.0
-            log_sum += Γ.measure^2*IFS[m].r^(2d)*log(IFS[m].r)
+            log_sum += Γ.measure^2 * Γ.weight[m]^2 * log(Γ.IFS[m].r) # Γ.measure^2 **IFS[m].r^(2d)*log(IFS[m].r)
         end
         Γm = SubAttractor(Γ,[m])
 
@@ -78,32 +78,32 @@ Approximates the integral ∫_Γ Φ_t(x,y) dH^d(x), where Φ_t is the Green's fu
 the n-dimensional Laplace equation, and the integrals are with respect to Hausdorff measure.
 """
 function eval_green_single_integral_fixed_point(Γ::SelfSimilarFractal, t::Real, h::Real, n::Int64)
-    if isa(Γ,Attractor)
-        IFS = Γ.IFS
-        d = Γ.Hausdorff_dimension
-    else
-        IFS = Γ.attractor.IFS
-        d = Γ.attractor.Hausdorff_dimension
-    end
+    # if isa(Γ,Attractor)
+    #     IFS = Γ.IFS
+    #     d = Γ.Hausdorff_dimension
+    # else
+    #     IFS = Γ.attractor.IFS
+    #     d = Γ.attractor.Hausdorff_dimension
+    # end
     ηₙ = Vector(fixed_point(IFS[n])) # get fixed point, convert to standard vector type
     Φₜ_(x) = Φₜ(t,x,ηₙ)
     M = length(IFS)
     if t == 0.0
-        log_sum = Γ.measure*IFS[n].r^d*log(IFS[n].r)
+        log_sum = Γ.measure*Γ.weight[n]*log(IFS[n].r) #Γ.measure*IFS[n].r^d*log(IFS[n].r)
     else
         log_sum = 0.0
     end
     smooth_integrals = 0.0
-    d = Γ.Hausdorff_dimension
-    scale = 1.0 - IFS[n].r^(d-t)
+    # d = Γ.Hausdorff_dimension
+    scale = 1.0 - (IFS[n].r^-t*Γ.weight[n])#1.0 - IFS[n].r^(d-t)
     for m=1:M
-        Γm = SubAttractor(Γ,[m])
+        # Γm = SubAttractor(Γ,[m])
         if m!=n
-            x, w = barycentre_rule(Γm,h)
+            x, w = barycentre_rule(Γ[m],h)
             smooth_integrals += w'* Φₜ_.(x)
         end
     end
 
-    return Float64((smooth_integrals + log_sum)/scale)
+    return (smooth_integrals + log_sum)/scale
 
 end
