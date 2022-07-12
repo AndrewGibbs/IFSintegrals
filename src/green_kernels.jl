@@ -33,37 +33,47 @@ function HelhmoltzGreen3D_Lipschitz_part(k::Number, x::T, y::T) where T<:Union{R
 end
 
 """
-    eval_green_double_integral(Γ::Union{Attractor,SubAttractor}, t::Float64, h::Float64)
+    eval_green_double_integral(Γ::Union{Attractor,SubAttractor}, t::Float64, h::Float64; μ::Vector{Float64} = Γ.weights)
 
-Approximates the integral ∫_Γ∫_Γ Φ_t(x,y) dH^d(y)dH^d(x), where Φ_t is the Green's function for
+Approximates the integral ∫_Γ∫_Γ Φ_t(x,y) dμ(y)dμ'(x), where Φ_t is the Green's function for
 the n-dimensional Laplace problem, and the integrals are with respect to Hausdorff measure.
+
+The optional argument μ will default to μ', which is the probability weights assigned to the measure of Γ.
+But this can be specified manually, if it is required that both integrals are over a different measure.
 """
-function eval_green_double_integral(Γ::SelfSimilarFractal, t::Real, h::Real)
-    # if isa(Γ,Attractor)
-    #     IFS = Γ.IFS
-    #     # d = Γ.Hausdorff_dimension
-    # else
-    #     IFS = Γ.attractor.IFS
-    #     # d = Γ.attractor.Hausdorff_dimension
-    # end
-    M = length(IFS)
+function eval_green_double_integral(Γ::SelfSimilarFractal, t::Real, h::Real; μ₂::Vector{Float64} = [0.0])
+
+    if isa(Γ,Attractor)
+        μ₁ = Γ.weights
+    else
+        μ₁ = Γ.attractor.weights
+    end
+    if μ₂ == [0.0]
+        μ₂ = μ₁
+    end
+    M = length(Γ.IFS)
+    for μ = [μ₁,μ₂]
+        length(μ)!=M ? error("μ must be a vector containing the same length as the IFS") : Nothing
+        sum(μ) ≈ 1 ? Nothing : error("μ must sum to one")
+    end
+
     log_sum = 0.0
     scale = 1.0
     smooth_integrals = 0.0
 
     for m=1:M
-        scale -= Γ.IFS[m].r^-t * Γ.weight[m]^2 #IFS[m].r^(2d-t)
+        scale -= Γ.IFS[m].r^(-t)*μ₁[m]*μ₂[m] #IFS[m].r^(2d-t)
         if t == 0.0
-            log_sum += Γ.measure^2 * Γ.weight[m]^2 * log(Γ.IFS[m].r) # Γ.measure^2 **IFS[m].r^(2d)*log(IFS[m].r)
+            log_sum += Γ.measure^2 * μ₁[m]*μ₂[m] * log(Γ.IFS[m].r) # Γ.measure^2 **IFS[m].r^(2d)*log(IFS[m].r)
         end
-        Γm = SubAttractor(Γ,[m])
+        Γm = Γ[m]#SubAttractor(Γ,[m])
 
         # can exploit symmetry of double sum
 
         for n=(m+1):M
-            Γn = SubAttractor(Γ,[n])
+            # Γn = SubAttractor(Γ,[n])
             if m!=n
-                X1, X2, W = barycentre_rule(Γm,Γn,h)
+                X1, X2, W = barycentre_rule(Γm,Γ[n],h)
                 smooth_integrals += 2*W'* Φₜ.(t,X1,X2)
             end
         end
@@ -85,17 +95,22 @@ function eval_green_single_integral_fixed_point(Γ::SelfSimilarFractal, t::Real,
     #     IFS = Γ.attractor.IFS
     #     d = Γ.attractor.Hausdorff_dimension
     # end
-    ηₙ = Vector(fixed_point(IFS[n])) # get fixed point, convert to standard vector type
+    if isa(Γ,Attractor)
+        μ = Γ.weights
+    else
+        μ = Γ.attractor.weights
+    end
+    ηₙ = Vector(fixed_point(Γ.IFS[n])) # get fixed point, convert to standard vector type
     Φₜ_(x) = Φₜ(t,x,ηₙ)
-    M = length(IFS)
+    M = length(Γ.IFS)
     if t == 0.0
-        log_sum = Γ.measure*Γ.weight[n]*log(IFS[n].r) #Γ.measure*IFS[n].r^d*log(IFS[n].r)
+        log_sum = Γ.measure*μ[n]*log(IFS[n].r) #Γ.measure*IFS[n].r^d*log(IFS[n].r)
     else
         log_sum = 0.0
     end
     smooth_integrals = 0.0
     # d = Γ.Hausdorff_dimension
-    scale = 1.0 - (IFS[n].r^-t*Γ.weight[n])#1.0 - IFS[n].r^(d-t)
+    scale = 1.0 - (Γ.IFS[n].r^-t*μ[n])#1.0 - IFS[n].r^(d-t)
     for m=1:M
         # Γm = SubAttractor(Γ,[m])
         if m!=n
