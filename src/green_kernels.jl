@@ -8,6 +8,8 @@ function Φₜ(t::Real, x::T, y::T) where T<:Union{Real,AbstractVector}
     end
 end
 
+Φₜ(t::Real, x::Vector{Float64}, y::SVector{N,Float64}) where N = Φₜ(t, x, Vector{Float64}(y))
+
 zero_kernel(_, _) =  zero(Complex{Float64})
 
 HelhmoltzGreen2D(k::Number,x::T, y::T) where T<:Union{Real,AbstractVector} = im/4*besselh(0,1,k*norm(x-y))
@@ -85,7 +87,7 @@ function eval_green_single_integral_fixed_point(Γ::SelfSimilarFractal, t::Real,
         IFS = Γ.attractor.IFS
         d = Γ.attractor.Hausdorff_dimension
     end
-    ηₙ = Vector(fixed_point(IFS[n])) # get fixed point, convert to standard vector type
+    ηₙ = fixed_point(IFS[n]) # get fixed point
     Φₜ_(x) = Φₜ(t,x,ηₙ)
     M = length(IFS)
     if t == 0.0

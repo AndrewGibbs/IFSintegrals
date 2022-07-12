@@ -76,8 +76,55 @@ function test5(Γ,h)
     end
 end
 
+function test6(Γ,h)
+    t = 0.0 # singularity strength
+    n = 1 #fixed point index, must be an integer
+    Ih = eval_green_single_integral_fixed_point(Γ, t, h, n)
+    I_bm = -1.290945787479564
+    if abs(Ih-I_bm)>threshold
+        return false
+    else
+        return true
+    end
+end
+
+function test7(Γ,h)
+    γ = Γ[1]
+    t = 0.0 # singularity strength
+    n = 1 #fixed point index, must be an integer
+    Ih = eval_green_single_integral_fixed_point(γ, t, h, n)
+    I_bm = -1.194257492236754
+    if abs(Ih-I_bm)>threshold
+        return false
+    else
+        return true
+    end
+end
+
+function test8(Γ,h)
+    γ = Γ[1]
+    t = 0.0 # singularity strength
+    n = 1 #fixed point index, must be an integer
+    Ih = eval_green_single_integral_fixed_point(γ, t, h, n)
+    I_bm = -0.37960691168218147
+    if abs(Ih-I_bm)>threshold
+        return false
+    else
+        return true
+    end
+end
+
 println(test1(Γ,h))
 println(test2(h))
 println(test3(Γ,h))
 println(test4(Γ,h))
 println(test5(Γ,h))
+
+Γ = CantorSet()
+
+println(test6(Γ,h))
+println(test7(Γ,h))
+
+Γ = CantorDust()
+
+test8(Γ,h)
