@@ -102,11 +102,11 @@ function eval_green_single_integral_fixed_point(Γ::SelfSimilarFractal, t::Real,
     else
         μ = Γ.attractor.weights
     end
-    ηₙ = Vector(fixed_point(Γ.IFS[n])) # get fixed point, convert to standard vector type
+    ηₙ = fixed_point(Γ.IFS[n]) # get fixed point, convert to standard vector type
     Φₜ_(x) = Φₜ(t,x,ηₙ)
     M = length(Γ.IFS)
     if t == 0.0
-        log_sum = Γ.measure*μ[n]*log(IFS[n].r) #Γ.measure*IFS[n].r^d*log(IFS[n].r)
+        log_sum = Γ.measure*μ[n]*log(Γ.IFS[n].r) #Γ.measure*IFS[n].r^d*log(IFS[n].r)
     else
         log_sum = 0.0
     end

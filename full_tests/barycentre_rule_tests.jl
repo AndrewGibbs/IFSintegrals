@@ -76,7 +76,15 @@ function test5(h)
     end
 end
 
-function test6(Γ,h)
+println(test1(h))
+println(test2(h))
+println(test3(h))
+println(test4(h))
+println(test5(h))
+
+Γ = CantorSet()
+
+function test6(h)
     t = 0.0 # singularity strength
     n = 1 #fixed point index, must be an integer
     Ih = eval_green_single_integral_fixed_point(Γ, t, h, n)
@@ -88,7 +96,7 @@ function test6(Γ,h)
     end
 end
 
-function test7(Γ,h)
+function test7(h)
     γ = Γ[1]
     t = 0.0 # singularity strength
     n = 1 #fixed point index, must be an integer
@@ -101,7 +109,12 @@ function test7(Γ,h)
     end
 end
 
-function test8(Γ,h)
+println(test6(h))
+println(test7(h))
+
+Γ = CantorDust()
+
+function test8(h)
     γ = Γ[1]
     t = 0.0 # singularity strength
     n = 1 #fixed point index, must be an integer
@@ -114,17 +127,4 @@ function test8(Γ,h)
     end
 end
 
-println(test1(Γ,h))
-println(test2(h))
-println(test3(Γ,h))
-println(test4(Γ,h))
-println(test5(Γ,h))
-
-Γ = CantorSet()
-
-println(test6(Γ,h))
-println(test7(Γ,h))
-
-Γ = CantorDust()
-
-test8(Γ,h)
+test8(h)
