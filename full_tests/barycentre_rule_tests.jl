@@ -14,7 +14,7 @@ h = 0.05
 
 threshold = 1E-14
 
-function test1(Γ,h)
+function test1(h)
     y, w = barycentre_rule(Γ,h)
 
     f(x) = sin.(norm.(x)) # define integrand
@@ -42,7 +42,7 @@ function test2(h)
     end
 end
 
-function test3(Γ,h)
+function test3(h)
     t = 1/2 # singularity strength
     n = 2 #fixed point index, must be an integer
     Ih = eval_green_single_integral_fixed_point(Γ, t, h, n)
@@ -54,7 +54,7 @@ function test3(Γ,h)
     end
 end
 
-function test4(Γ,h)
+function test4(h)
     t = 1.0
     Ih = eval_green_double_integral(Γ, t, h)
     I_bm = 4.738268418342183
@@ -65,7 +65,7 @@ function test4(Γ,h)
     end
 end
 
-function test5(Γ,h)
+function test5(h)
     k = 1.96
     Ih = singular_elliptic_double_integral(Γ, k, h)
     I_bm = 0.3206113688339223 + 0.13651121576163053im
