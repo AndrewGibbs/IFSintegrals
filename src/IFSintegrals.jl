@@ -29,6 +29,7 @@ include("diam_approx.jl")
 include("presets.jl")
 include("screen_scattering.jl")
 include("plotting.jl")
+include("Jacobi_matrices.jl")
 
 # routine below was copied from:
 # https://discourse.julialang.org/t/converting-a-matrix-into-an-array-of-arrays/17038
