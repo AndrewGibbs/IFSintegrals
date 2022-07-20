@@ -1,5 +1,31 @@
+function map_coeffs_to_tilde_coeffs(coeffs::Vector{Float64},rₙ::Float64)
+    n = length(coeffs)
+    tilde_coeffs = zeros(n)
+    tilde_coeffs[1:(n-1)] = coeffs[1:(n-1)].*rₙ
+    tilde_coeffs[n] = coeffs[n]
+    return tilde_coeffs
+end
+function map_tilde_coeffs_to_coeffs(tilde_coeffs::Vector{Float64},rₙ::Float64)
+    n = length(tilde_coeffs)
+    coeffs = zeros(n)
+    coeffs[1:(n-1)] = tilde_coeffs[1:(n-1)]./rₙ
+    coeffs[n] = tilde_coeffs[n]
+    return coeffs
+end
 
-function get_modified_coeffs_from_coeffs(coeffs_one_below::Vector{Float64},coeffs_two_below::Vector{Float64},A::Vector{Float64},r::Vector{Float64},sₘ::Similarity)
+# now overload both of the above functions with full i=1,…,M inputs
+function map_coeffs_to_tilde_coeffs(coeffs::Vector{Vector{Float64}},rₙ::Float64)
+    M = length(coeffs)
+    tilde_coeffs = [map_coeffs_to_tilde_coeffs(coeffs[i],rₙ) for i=1:M]
+    return tilde_coeffs
+end
+function map_tilde_coeffs_to_coeffs(tilde_coeffs::Vector{Vector{Float64}},rₙ::Float64)
+    M = length(tilde_coeffs)
+    coeffs = [map_coeffs_to_tilde_coeffs(tilde_coeffs[i],rₙ) for i=1:M]
+    return coeffs
+end
+
+function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ⁻²::Vector{Float64}, A::Vector{Float64}, r::Vector{Float64}, sₘ::Similarity)
     # rule of thumb: square bracket indices should always be incremented by one compared with what's written above,
      # to account for the zero index
 
@@ -8,63 +34,62 @@ function get_modified_coeffs_from_coeffs(coeffs_one_below::Vector{Float64},coeff
      βᵢ = sₘ.δ
      # that's better.
      
-     n = length(coeffs_one_below) # one more because of the zeroth entry, one less because we're incrementing
-     modified_coeffs = zeros(Float64,n+1)
+     n = length(Γⁿ⁻¹) # one more because of the zeroth entry, one less because we're incrementing
+     modΓⁿ = zeros(Float64,n+1)
+
+    #  modΓⁿ⁻¹ = map_coeffs_to_tilde_coeffs(Γⁿ⁻¹,r[end])
+    #  modΓⁿ⁻² = map_coeffs_to_tilde_coeffs(Γⁿ⁻²,r[end])
      
      function γ(ℓ::Integer,j::Integer)
          if ℓ==j
-             return A[ℓ+1]*coeffs_one_below[j]
+             return A[ℓ+1]*Γⁿ⁻¹[j+1]
          elseif ℓ==j-1
-             return r[ℓ+1]*coeffs_one_below[j]
+             return r[ℓ+1]*Γⁿ⁻¹[j+1]
          elseif j==ℓ-1
-             return r[j+1]*coeffs_one_below[j]
+             return r[j+1]*Γⁿ⁻¹[j+1]
          else
              return 0.0
          end
      end
-
-     
-# Currently, you're mixing the modified coefficients for $\tilde{p}$ with the (normalised) coefficients for $p$.
-# Need to write a function which maps between these, given $r$.
-
          
      function get_trickier_sum(j)
          trickier_sum = 0.0
-         for ℓ=max(0,j-1):min(n-1,j+1)
+         for ℓ=0:n-1#max(0,j-1):min(n-1,j+1) # should try to limit this to the non-zero stuff
              trickier_sum += γ(ℓ,j)
          end
          return trickier_sum
      end
          
      for j = 0:(n-2)
-         modified_coeffs[j+1] = (βᵢ-A[n])*coeffs_one_below[j+1] +  δᵢ*get_trickier_sum(j+1) - r[n]*coeffs_two_below[j+1]
+        modΓⁿ[j+1] = (βᵢ-A[n])*Γⁿ⁻¹[j+1] + δᵢ*get_trickier_sum(j) - r[n]*Γⁿ⁻²[j+1]
      end
      
      # now deal with j = n-1
-     modified_coeffs[n] = (βᵢ-A[n])*coeffs_one_below[n] +  δᵢ*get_trickier_sum(n)
+     modΓⁿ[n] = (βᵢ-A[n])*Γⁿ⁻¹[n] + δᵢ*get_trickier_sum(n-1)
      
      # now deal with j = n, which is not in orthanormal function
-     modified_coeffs[n+1] =  δᵢ*coeffs_one_below[n]
+     modΓⁿ[n+1] =  δᵢ*Γⁿ⁻¹[n]
      
-     return modified_coeffs
+     return modΓⁿ
  end
 
- function get_rₙ(modified_coeffs::Vector{Vector{Float64}}, coeffs_one_below::Vector{Vector{Float64}}, A::Vector{Float64}, Γ::SelfSimilarFractal)
-    n = length(modified_coeffs::Vector{Vector{Float64}})-1
+ function get_rₙ(modΓⁿ::Vector{Vector{Float64}}, Γⁿ⁻¹::Vector{Vector{Float64}}, A::Vector{Float64}, Γ::SelfSimilarFractal)
+    n = length(modΓⁿ::Vector{Vector{Float64}})-1
      M = length(Γ.IFS)
      B = zeros(Float64,M)
      C = zeros(Float64,M)
-     D = zeros(Float64,M)
+    #  D = zeros(Float64,M)
      D_nominator = zeros(Float64,M)
      
      for i=1:M
          for ℓ=0:(n-1)
-            B[i] += (Γ.IFS[i].δ + Γ.IFS[i].r*A[ℓ+1])*modified_coeffs[i][ℓ+1]*coeffs_one_below[i][ℓ+1]
+            B[i] += (Γ.IFS[i].δ + Γ.IFS[i].r*A[ℓ+1])*modΓⁿ[i][ℓ+1]*Γⁿ⁻¹[i][ℓ+1]
          end
-         for ℓ=0:(n-2)
-            C[i] +=  Γ.IFS[i].r*r[ℓ+2]*(modified_coeffs[i][ℓ+1]*coeffs_one_below[i][ℓ+2] + modified_coeffs[i][ℓ+2]*coeffs_one_below[i][ℓ+1])
+         for ℓ=0:(n-2) # Not used for n=1
+            C[i] +=  Γ.IFS[i].r*r[ℓ+2]*(modΓⁿ[i][ℓ+1]*Γⁿ⁻¹[i][ℓ+2] + modΓⁿ[i][ℓ+2]*Γⁿ⁻¹[i][ℓ+1])
          end
-         D_nominator[i] = Γ.IFS[i].r*modified_coeffs[i][n+1]*coeffs_one_below[i][n]
+         C[i] *= Γ.IFS[i].r
+         D_nominator[i] = Γ.IFS[i].r*modΓⁿ[i][n+1]*Γⁿ⁻¹[i][n]
      end
      
      rₙ² = (Γ.weights'*(B+C)) / (1-(Γ.weights'*D_nominator))
@@ -76,7 +101,7 @@ function get_modified_coeffs_from_coeffs(coeffs_one_below::Vector{Float64},coeff
     M = length(Γ.IFS)
     n = length(coeffs_this_level)-1
     big_sum = 0.0
-    denominator = 1.0
+    denominator = 0.0
     for i=1:M
         big_sum += coeffs_this_level[i][n+1]^2*Γ.IFS[i].δ
         for m=0:(n-1)
@@ -104,7 +129,7 @@ function get_Jacobi_matrix(Γ::Attractor,N::Int64)
         # step one
         modified_coeffs = [zeros(n+1) for _=1:M]
         for m=1:M
-            modified_coeffs[m] = get_modified_coeffs_from_coeffs(coeffs_one_below[m], coeffs_two_below[m], A, r, Γ.IFS[m])
+            modified_coeffs[m] = get_next_modified_coeffs_from_coeffs(coeffs_one_below[m], coeffs_two_below[m], A, r, Γ.IFS[m])
         end
         
         # step two
@@ -112,10 +137,7 @@ function get_Jacobi_matrix(Γ::Attractor,N::Int64)
         push!(r,rₙ)
         
         # step three
-        for m=1:M
-            coeffs_this_level[m][1:n] = modified_coeffs[m][1:n]/r[n+1]
-            coeffs_this_level[m][n+1] = modified_coeffs[m][n+1]
-        end
+        coeffs_this_level = map_tilde_coeffs_to_coeffs(modified_coeffs,rₙ)
         
         # step four
         Aₙ = get_Aₙ(coeffs_this_level, A, r, Γ)
