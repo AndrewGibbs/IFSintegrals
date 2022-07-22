@@ -21,7 +21,7 @@ function map_coeffs_to_tilde_coeffs(coeffs::Vector{Vector{Float64}},rₙ::Float6
 end
 function map_tilde_coeffs_to_coeffs(tilde_coeffs::Vector{Vector{Float64}},rₙ::Float64)
     M = length(tilde_coeffs)
-    coeffs = [map_coeffs_to_tilde_coeffs(tilde_coeffs[i],rₙ) for i=1:M]
+    coeffs = [map_tilde_coeffs_to_coeffs(tilde_coeffs[i],rₙ) for i=1:M]
     return coeffs
 end
 
@@ -42,11 +42,11 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
      
      function γ(ℓ::Integer,j::Integer)
          if ℓ==j
-             return A[ℓ+1]*Γⁿ⁻¹[j+1]
+             return A[ℓ+1]*Γⁿ⁻¹[ℓ+1]
          elseif ℓ==j-1
-             return r[ℓ+1]*Γⁿ⁻¹[j+1]
+             return r[j+1]*Γⁿ⁻¹[ℓ+1]
          elseif j==ℓ-1
-             return r[j+1]*Γⁿ⁻¹[j+1]
+             return r[ℓ+1]*Γⁿ⁻¹[ℓ+1]
          else
              return 0.0
          end
@@ -54,7 +54,7 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
          
      function get_trickier_sum(j)
          trickier_sum = 0.0
-         for ℓ=0:n-1#max(0,j-1):min(n-1,j+1) # should try to limit this to the non-zero stuff
+         for ℓ=max(0,j-1):min(n-1,j+1) # should try to limit this to the non-zero stuff
              trickier_sum += γ(ℓ,j)
          end
          return trickier_sum
@@ -100,17 +100,17 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
  function get_Aₙ(coeffs_this_level::Vector{Vector{Float64}}, A::Vector{Float64}, r::Vector{Float64}, Γ::SelfSimilarFractal)
     M = length(Γ.IFS)
     n = length(coeffs_this_level)-1
-    big_sum = 0.0
+    big_sum = zeros(M)
     denominator = 0.0
     for i=1:M
-        big_sum += coeffs_this_level[i][n+1]^2*Γ.IFS[i].δ
+        big_sum[i] += coeffs_this_level[i][n+1]^2*Γ.IFS[i].δ
         for m=0:(n-1)
-            big_sum += coeffs_this_level[i][m+1]^2*(Γ.IFS[i].δ+Γ.IFS[i].r*A[m+1]) + coeffs_this_level[i][m+1]*coeffs_this_level[i][m+2]*Γ.IFS[i].r*(r[m+1]+r[m+2])
+            big_sum[i] += coeffs_this_level[i][m+1]^2*(Γ.IFS[i].δ+Γ.IFS[i].r*A[m+1]) + coeffs_this_level[i][m+1]*coeffs_this_level[i][m+2]*Γ.IFS[i].r*(r[m+1]+r[m+2])
         end
-        big_sum *= Γ.weights[i]
+        # big_sum[i] *= Γ.weights[i]
         denominator += Γ.weights[i]*coeffs_this_level[i][n+1]^2*Γ.IFS[i].r
     end
-    return big_sum/(1-denominator)
+    return (Γ.weights'*big_sum)/(1-denominator)
 end
 
 function get_Jacobi_matrix(Γ::Attractor,N::Int64)
