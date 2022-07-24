@@ -68,8 +68,19 @@ Provides a simple sketch of the attractor Γ, by repeatedly applying the IFS.
 See also: [`draw!`](@ref)
 """
 function draw(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+    if isa(Γ,Attractor)
+        n = Γ.topological_dimension
+    else
+        n = Γ.attractor.topological_dimension
+    end
     X = sketch_attractor(Γ)
-    scatter([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+    if n == 2
+        scatter([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+    elseif n == 1
+        scatter(X,zeros(length(X)),legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+    else
+        error("Can only plot in one and two spatial dimensions")
+    end
 end
 
 """
@@ -77,6 +88,17 @@ end
 Similar to [`draw`](@ref), except it will draw on the current image.
 """
 function draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+    if isa(Γ,Attractor)
+        n = Γ.topological_dimension
+    else
+        n = Γ.attractor.topological_dimension
+    end
     X = sketch_attractor(Γ)
-    scatter!([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+    if n == 2
+        scatter!([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+    elseif n == 1
+        scatter!(X,zeros(length(X)),legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+    else
+        error("Can only plot in one and two spatial dimensions")
+    end
 end
