@@ -73,8 +73,8 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
      return modΓⁿ
  end
 
- function get_rₙ(modΓⁿ::Vector{Vector{Float64}}, Γⁿ⁻¹::Vector{Vector{Float64}}, A::Vector{Float64}, Γ::SelfSimilarFractal)
-    n = length(modΓⁿ::Vector{Vector{Float64}})-1
+ function get_rₙ(modΓⁿ::Vector{Vector{Float64}}, Γⁿ⁻¹::Vector{Vector{Float64}}, A::Vector{Float64}, r::Vector{Float64}, Γ::SelfSimilarFractal)
+    n = length(modΓⁿ[1])-1
      M = length(Γ.IFS)
      B = zeros(Float64,M)
      C = zeros(Float64,M)
@@ -86,7 +86,7 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
             B[i] += (Γ.IFS[i].δ + Γ.IFS[i].r*A[ℓ+1])*modΓⁿ[i][ℓ+1]*Γⁿ⁻¹[i][ℓ+1]
          end
          for ℓ=0:(n-2) # Not used for n=1
-            C[i] +=  Γ.IFS[i].r*r[ℓ+2]*(modΓⁿ[i][ℓ+1]*Γⁿ⁻¹[i][ℓ+2] + modΓⁿ[i][ℓ+2]*Γⁿ⁻¹[i][ℓ+1])
+            C[i] += r[ℓ+2]*(modΓⁿ[i][ℓ+1]*Γⁿ⁻¹[i][ℓ+2] + modΓⁿ[i][ℓ+2]*Γⁿ⁻¹[i][ℓ+1])
          end
          C[i] *= Γ.IFS[i].r
          D_nominator[i] = Γ.IFS[i].r*modΓⁿ[i][n+1]*Γⁿ⁻¹[i][n]
@@ -99,7 +99,7 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
 
  function get_Aₙ(coeffs_this_level::Vector{Vector{Float64}}, A::Vector{Float64}, r::Vector{Float64}, Γ::SelfSimilarFractal)
     M = length(Γ.IFS)
-    n = length(coeffs_this_level)-1
+    n = length(coeffs_this_level[1])-1
     big_sum = zeros(M)
     denominator = 0.0
     for i=1:M
@@ -133,7 +133,7 @@ function get_Jacobi_matrix(Γ::Attractor,N::Int64)
         end
         
         # step two
-        rₙ = get_rₙ(modified_coeffs, coeffs_one_below, A, Γ)
+        rₙ = get_rₙ(modified_coeffs, coeffs_one_below, A, r, Γ)
         push!(r,rₙ)
         
         # step three
