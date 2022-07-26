@@ -115,11 +115,13 @@ end
 
 function get_Jacobi_matrix(Γ::Attractor,N::Int64)
     # initialisation
-   A = [Γ.measure*Γ.barycentre] # checks out, given def'n of barycentre, should be ∫_Γ x dμ(x)
-    r = [0.0]
+    A = zeros(Float64,N+1)
+    r = zeros(Float64,N+1)
+    J = zeros(Float64,N+1,N+1)
     M = length(Γ.IFS)
     coeffs_one_below = [[1.0] for _=1:M]
     coeffs_two_below = [[0.0] for _=1:M]
+    A[1] = Γ.measure*Γ.barycentre # checks out, given def'n of barycentre, should be ∫_Γ x dμ(x)
     
     # iteration
     for n=1:N #we've done n=0 above
@@ -133,15 +135,13 @@ function get_Jacobi_matrix(Γ::Attractor,N::Int64)
         end
         
         # step two
-        rₙ = get_rₙ(modified_coeffs, coeffs_one_below, A, r, Γ)
-        push!(r,rₙ)
+        r[n+1] = get_rₙ(modified_coeffs, coeffs_one_below, A, r, Γ)
         
         # step three
-        coeffs_this_level = map_tilde_coeffs_to_coeffs(modified_coeffs,rₙ)
+        coeffs_this_level = map_tilde_coeffs_to_coeffs(modified_coeffs,r[n+1])
         
         # step four
-        Aₙ = get_Aₙ(coeffs_this_level, A, r, Γ)
-        push!(A,Aₙ)
+        A[n+1] = get_Aₙ(coeffs_this_level, A, r, Γ)
         
         coeffs_two_below = coeffs_one_below
         coeffs_one_below = coeffs_this_level
@@ -149,7 +149,6 @@ function get_Jacobi_matrix(Γ::Attractor,N::Int64)
     end
     
     # now make the Jacobi matrix
-    J = zeros(Float64,N+1,N+1)
     for i=0:(N-1)
        J[i+1,i+1] = A[i+1]
         J[i+1,i+2] = r[i+2]

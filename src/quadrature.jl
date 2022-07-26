@@ -114,8 +114,8 @@ end
 
 function gauss_quad(Γ::SelfSimilarFractal{V,M}, N::Int64) where {V<:Real, M<:Real}
     J = get_Jacobi_matrix(Γ,N)
-    vv = eigvecs(J)
-    x = eigvals(J)
+    vv = real.(eigvecs(J))
+    x = real.(eigvals(J))
     w = vv[1,:].^2
     return x,w
 end
