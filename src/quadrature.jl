@@ -111,3 +111,11 @@ function chaos_step(Γ::SelfSimilarFractal,x::Union{AbstractVector,Real})
     τ = minimum((1:length(Γ.weights))[rand().<cumsum(Γ.weights)])
     return sim_map(Γ.IFS[τ],x)
 end
+
+function gauss_quad(Γ::SelfSimilarFractal{V,M}, N::Int64) where {V<:Real, M<:Real}
+    J = get_Jacobi_matrix(Γ,N)
+    vv = real.(eigvecs(J))
+    x = real.(eigvals(J))
+    w = vv[1,:].^2
+    return x,w
+end

@@ -5,7 +5,7 @@ using ProgressMeter
 import Plots: scatter!, scatter
 import Base: -, \, getindex
 import Roots: find_zero, Bisection
-import LinearAlgebra: norm, I, UniformScaling
+import LinearAlgebra: norm, I, UniformScaling, eigvals, eigvecs
 import StaticArrays: SVector, SMatrix
 export Similarity, Attractor, SubAttractor, SelfSimilarFractal, sketch_attractor, CantorSet,
         Sierpinski, SquareFlake, KochFlake, CantorN, sim_map, full_map,
@@ -14,7 +14,7 @@ export Similarity, Attractor, SubAttractor, SelfSimilarFractal, sketch_attractor
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,
         BIO, DiscreteBIO, SingleLayer, Projection,
         single_layer_potential, far_field_pattern,
-        chaos_quad, barycentre_uniform, long_bary,
+        chaos_quad, barycentre_uniform, long_bary, gauss_quad,
         slice, box, draw, draw!,
         get_H_minus_half_norm_function, get_H_minus_half_norm_function_from_matrix
 include("similarities.jl")
@@ -29,6 +29,7 @@ include("diam_approx.jl")
 include("presets.jl")
 include("screen_scattering.jl")
 include("plotting.jl")
+include("Jacobi_matrices.jl")
 
 # routine below was copied from:
 # https://discourse.julialang.org/t/converting-a-matrix-into-an-array-of-arrays/17038
