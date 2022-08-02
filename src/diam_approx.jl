@@ -39,7 +39,7 @@ function get_diameter(sims::Vector{Similarity{V,M}}) where {V<:Union{Real,Abstra
 
     if V<:Real
         D = get_diameter(FPs)
-    else
+    elseif length(FPs[1]) == 2
         Xhull = VPolygon(convex_hull(FPs))
 
         s_of_fixed_points = full_map(sims,FPs)
@@ -49,6 +49,9 @@ function get_diameter(sims::Vector{Similarity{V,M}}) where {V<:Union{Real,Abstra
             element(Singleton(y)) ∈ Xhull ? true : X_in_hull = false
         end
         X_in_hull ? D=get_diameter(s_of_fixed_points) : D=get_diam_long(sims)
+    else
+        @warn("Currently cannot accurately estimate diamter in 3+ spatial dimensions.")
+        D = get_diameter(FPs)
     end
     return D
 end

@@ -7,6 +7,7 @@ import Base: -, \, getindex
 import Roots: find_zero, Bisection
 import LinearAlgebra: norm, I, UniformScaling, eigvals, eigvecs
 import StaticArrays: SVector, SMatrix
+using Polyhedra
 export Similarity, Attractor, SubAttractor, SelfSimilarFractal, sketch_attractor, CantorSet,
         Sierpinski, SquareFlake, KochFlake, CantorN, sim_map, full_map,
         barycentre_rule, subdivide_indices, eval_green_double_integral,

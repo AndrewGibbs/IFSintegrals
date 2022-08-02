@@ -5,8 +5,7 @@ struct Similarity{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     rA::M # contraction * rotation
 end
 
-
-function Similarity(r::Real, δ::Union{Vector{<:Real},Real}, θ=0::Real)
+function Similarity(r::Real, δ::Union{Vector{<:Real},Real}, rotation::Union{AbstractMatrix,Real}=I(length(δ)))
     # θ = Float64(θ)
     r = Float64(r)
     #build translation
@@ -17,16 +16,35 @@ function Similarity(r::Real, δ::Union{Vector{<:Real},Real}, θ=0::Real)
         ndims = length(δ)
         static_δ = SVector{ndims,Float64}(δ)
     end
+
+    if isa(rotation,Real) # convert to rotation matrix
+        if ndims != 2
+            error("If rotation is to be determined from a single angle, similarity must be two-dimensional")
+        end
+        rotation = [cos(rotation) -sin(rotation); sin(rotation) cos(rotation)]
+    end
+
     #build rotation
     if ndims ==1
         A = 1.0
-    elseif θ == 0
-        A = SMatrix{ndims,ndims,Float64}(I(ndims))
     else
-        A = SMatrix{ndims,ndims}([cos(θ) -sin(θ); sin(θ) cos(θ)])
+        A = SMatrix{ndims,ndims,Float64}(rotation)
     end
     return Similarity(r,static_δ,A,r*A)
 end
+
+# function Similarity(r::Real, δ::Union{Vector{<:Real},Real}, θ=0::Real)
+#     ndims = length(δ)
+#     if θ == 0
+#         return Similarity(r, δ, I(ndims))
+#     else
+#         if ndims != 2
+#             error("If rotation is to be determined from a single angle, similarity must be two-dimensional")
+#         end
+#         A = [cos(θ) -sin(θ); sin(θ) cos(θ)]
+#         return Similarity(r, δ, A)
+#     end
+# end
 
 sim_map(s::Similarity, x::Union{Real,AbstractVector{<:Real}}) = s.rA*x + s.δ
 sim_map_inv(s::Similarity, x::Union{Real,AbstractVector{<:Real}}) = s.rA/(x-s.δ)
