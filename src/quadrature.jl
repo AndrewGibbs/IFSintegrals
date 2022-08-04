@@ -112,6 +112,13 @@ function chaos_step(Γ::SelfSimilarFractal,x::Union{AbstractVector,Real})
     return sim_map(Γ.IFS[τ],x)
 end
 
+
+"""
+    x,w = gauss_quad(Γ::SelfSimilarFractal{V,M}, N::Int64) where {V<:Real, M<:Real}
+
+Returns vectors of real-valued Gaussian nodes x, and weights w.
+Here Γ must be an attractor in one spatial dimension.
+"""
 function gauss_quad(Γ::SelfSimilarFractal{V,M}, N::Int64) where {V<:Real, M<:Real}
     J = get_Jacobi_matrix(Γ,N)
     vv = real.(eigvecs(J))

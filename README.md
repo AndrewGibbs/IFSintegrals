@@ -15,7 +15,12 @@ To install, type the following into Julia:
 `Pkg.add("https://github.com/AndrewGibbs/IFSintegrals.git")`
 
 ## Quadrature:
-Weights and nodes for the evaluation of integrals with respect to Hausdorff (or equivalent) measure can be obtained using `barycentre_rule`. Certain classes of singular integrals can be evaluated using `eval_green_double_integral` and `eval_green_single_integral_fixed_point`.
+Weights and nodes for the evaluation of integrals with respect to Hausdorff (or equivalent) measure can be obtained using `barycentre_rule`, which is a generalisation of the midpoint rule to IFS attractors.
+
+For IFS attractors which are subsets of $\mathbb{R}$, Gaussian quadrature is available using `gauss_quad`.
+
+Certain classes of singular integrals can be evaluated using `eval_green_double_integral` and `eval_green_single_integral_fixed_point`.
+
 
 ## BEM:
 Boundary Integral operators can be defined and discretised on attractors, using the types `BIO` and `DiscreteBIO`.
@@ -23,3 +28,6 @@ There are examples of these problems being solved in the notebook files, where t
 
 ## Bibliography
 * [**Numerical Quadrature for Singular Integrals on Fractals**](http://arxiv.org/abs/2112.11793), A. Gibbs, D. P. Hewett, A. Moiola.
+* [**A Stable Stieltjes Technique for Computing Orthogonal Polynomials and Jacobi Matrices Associated with a
+Class of Singular Measures**](https://link.springer.com/article/10.1007/BF02437506) G. Mantica
+
