@@ -117,7 +117,8 @@ end
     x,w = gauss_quad(Γ::SelfSimilarFractal{V,M}, N::Int64) where {V<:Real, M<:Real}
 
 Returns vectors of real-valued Gaussian nodes x, and weights w.
-Here Γ must be an attractor in one spatial dimension.
+Here Γ must be an SelfSimilarFractal in one spatial dimension.
+N is the order of the Gauss rule, i.e. number of weights and nodes.
 """
 function gauss_quad(Γ::SelfSimilarFractal{V,M}, N::Int64) where {V<:Real, M<:Real}
     J = get_Jacobi_matrix(Γ,N)
