@@ -12,21 +12,21 @@ struct BIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     singularity_strength::Real
     singularity_scale::Complex{<:Real}
     self_adjoint::Bool
-    coercive:: Bool
     wavenumber::Number
 end
 
 #constructor for zero wavenumber case
 BIO(domain::SelfSimilarFractal{V,M},kernel::Function,Lipschitz_part_of_kernel::Function,singularity_strength::Real,
-singularity_scale::Complex{<:Real},self_adjoint::Bool,coercive::Bool) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}} =
-BIO{V,M}(domain,kernel,Lipschitz_part_of_kernel,singularity_strength,singularity_scale,self_adjoint,coercive,0.0)
+singularity_scale::Complex{<:Real},self_adjoint::Bool) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}} =
+BIO{V,M}(domain,kernel,Lipschitz_part_of_kernel,singularity_strength,singularity_scale,self_adjoint,0.0)
 
 """
-    DiscreteBIO(BIO::BIO; h_BEM::Real, h_quad::Real)
+    DiscreteBIO(BIO::BIO; h_BEM::Real, h_quad::Real, h_quad_diag::Real)
     
 is the constructor for a discretisation of a boundary layer boundary integral operator, 'BIO'.
 h_BEM is the meshwidth parameter for the discretisation of the underlying fractal
 h_quad denotes the discretisation parameter for the integrals in the stiffness matrix.
+h_quad_diag is the parameter used to compute the diagonal elements of the matrix
 """
 struct DiscreteBIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     BIO::BIO{V,M}
@@ -119,7 +119,6 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
             0.0, # strength of singularity, corresponding to log singularity
             -1/(2π), # scaling of singularity
             true, #self-adjoint
-            true, #coercive
             k #wavenumber
             )
         else #2D Helmholtz case        
@@ -129,7 +128,6 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
             0.0, # strength of singularity, corresponding to log singularity
             -1/(2π), # scaling of singularity
             true, #self-adjoint
-            true, #coercive
             k #wavenumber
             )
         end
@@ -141,7 +139,6 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
             1.0, # strength of singularity, corresponding to 1/|x-y|
             1/(4π), # scaling of singularity
             true, #self-adjoint
-            true, #coercive
             k #wavenumber
             )
         else #3D Helmholtz case        
@@ -151,7 +148,6 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
             1.0, # strength of singularity, corresponding to 1/|x-y|
             1/(4π), # scaling of singularity
             true, #self-adjoint
-            true, #coercive
             k #wavenumber
             )
         end
