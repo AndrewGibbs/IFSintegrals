@@ -1,14 +1,10 @@
-# import Base: -
-# import Base: \ # to be overloaded with discrete operators
-# using ProgressMeter
-
 """
 BIO is the type for boundary integral operators.
 """
 struct BIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     domain::SelfSimilarFractal{V,M}
-    kernel::Function #function
-    Lipschitz_part_of_kernel::Function #function
+    kernel::Function
+    Lipschitz_part_of_kernel::Function
     singularity_strength::Real
     singularity_scale::Complex{<:Real}
     self_adjoint::Bool
@@ -40,15 +36,16 @@ end
 #constructor:
 function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()), h_quad::Real=h_BEM, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf), vary_quad::Bool = true, repeat_blocks::Bool =true)
     Γ = K.domain
-    Lₕ = subdivide_indices(K.domain,h_BEM)
+    Lₕ = subdivide_indices(K.domain,h_BEM) #get vector indices for subcomponents
     N = length(Lₕ)
-    mesh = [SubAttractor(Γ,Lₕ[n]) for n=1:N]
+    mesh = [SubAttractor(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
     M = length(Γ.IFS)
 
     # create blank matrix of flags, describing if the matrix entry has been filled
     BEM_filled = zeros(Bool,N,N)
     m_count = 0
 
+    # now get matrix of how much we can adjust the h_quad parameter for far away elements
     if vary_quad
         h_quad_adjust = get_quad_scales(K,Lₕ)
     else
@@ -57,6 +54,7 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
 
     if Γ.homogeneous && repeat_blocks && N>1
         ℓ = length(Lₕ[1])
+        # the sizes of the repeated sub-blocks will be as follows:
         diag_block_sizes = M.^(0:(ℓ-1))
     else
          diag_block_sizes = []
@@ -75,12 +73,12 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
         for n_count = n_count_start:N#n in Lₕ
             if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
                 n = Lₕ[n_count]
-                Γₙ = mesh[n_count]
-                x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad*h_quad_adjust[m_count,n_count])
                 if n==m
                     Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad_diag,n;Cosc=Cosc)
                 else
-                    Galerkin_matrix[m_count,n_count] = w'*K.kernel.(x,y)
+                    Γₙ = mesh[n_count] # mesh element
+                    x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad*h_quad_adjust[m_count,n_count]) # get quadrature
+                    Galerkin_matrix[m_count,n_count] = w'*K.kernel.(x,y) # evaluate non-diagonal Galerkin integral
                 end
 
                 # if matrix is symmetric, expoit this to save time
@@ -157,6 +155,7 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
 end
 
 function singular_elliptic_double_integral(K::BIO, h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
+    # if there are many wavelengths, use the more complicated approximation, which has better rates for high frequencies
     if real(K.wavenumber)*SubAttractor(K.domain,index).diameter > Cosc
         return singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index; Cosc = Cosc)
     else
@@ -173,7 +172,7 @@ function singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index::Array
     # following the procedure in the paper, to avoid errors in far-field.
     # notation agrees with quadrature paper here, rather than BEM paper.
     Γ = SubAttractor(K.domain,index)
-    h_star = Cosc/real(K.wavenumber)
+    h_star = Cosc/real(K.wavenumber) # new quadrature parameter introduced for this routine
     h = min(h_star,h_quad)
     L_h_star = subdivide_indices(Γ,h_star)
     Npts = 0
