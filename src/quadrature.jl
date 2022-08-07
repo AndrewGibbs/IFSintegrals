@@ -37,8 +37,7 @@ end
 """
     x,w = barycentre_rule(Γ::Union{Attractor,SubAttractor},h::Real) 
 
-returns N weights w ∈ Rⁿ and nodes x ∈ Rᴺˣⁿ,
-for approximation of integrals defined on an IFS Γ
+returns a vector of N weights wⱼ>0 and nodes xⱼ ∈ Rⁿ, for approximation of integrals defined on an IFS Γ⊂Rⁿ.
 """
 function barycentre_rule(Γ::Attractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     if Γ.homogeneous
@@ -59,8 +58,9 @@ end
 """
     x,y,w = barycentre_rule(Γ₁::Union{Attractor,SubAttractor},Γ₂::Union{Attractor,SubAttractor},h::Real)
 
-returns N weights w ∈ Rⁿ and nodes x,y ∈ Rᴺˣⁿ,
-for approximation of double integrals over Γ₁,Γ₂.
+returns N weights wⱼ>0 and nodes x,y ∈ Rⁿ, for approximation of double integrals over Γ₁,Γ₂⊂Rⁿ.
+Uses Barycentre rule quadrature, the fractal Γ will be subdivided until each subcomponent has a diameter of
+less than h.
 """
 function barycentre_rule(Γ1::SelfSimilarFractal,Γ2::SelfSimilarFractal,h::Float64)
         x1, w1 = barycentre_rule(Γ1,h)
@@ -70,6 +70,12 @@ function barycentre_rule(Γ1::SelfSimilarFractal,Γ2::SelfSimilarFractal,h::Floa
     return repeat(x1,inner=n2), repeat(x2,outer=n1), repeat(w1,inner=n2).*repeat(w2,outer=n1)
 end
 
+"""
+    long_bary(Γ::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<:Union{Real,AbstractVector}, U<:Union{Real,AbstractMatrix}}
+
+Computes the integral ∫_Γ f(x) dx via a barycentre rule, without storing all of the points.
+This routine is slower than barycentre_rule, but is capable of achieving higher accuracy.
+"""
 function long_bary(Γ::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<:Union{Real,AbstractVector}, U<:Union{Real,AbstractMatrix}}
     # note that the input Γ may be an attractor or a subcomponent of an attractor
     I = 0.0 # value of integral which will be added to cumulatively
@@ -88,6 +94,12 @@ function long_bary(Γ::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<
     return I, N
 end
 
+"""
+    chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64,x₀::AbstractVector) where {V<:AbstractVector, M<:Union{Real,AbstractMatrix}}
+
+Returns a vector of N weights w>0 and nodes x ∈ Rⁿ, for approximation of integrals defined on an IFS Γ⊂Rⁿ.
+Using Chaos game quadrature.
+"""
 function chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64,x₀::AbstractVector) where {V<:AbstractVector, M<:Union{Real,AbstractMatrix}}
     x = [Vector{Float64}(undef, length(x₀)) for _ = 1:N]
     x[1] = x₀
@@ -96,7 +108,6 @@ function chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64,x₀::AbstractVector) w
     end
     return x, ones(N)./N
 end
-
 function chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64,x₀::Float64) where {V<:Real, M<:Real}
     x = zeros(V,N)
     x[1] = x₀
@@ -116,7 +127,7 @@ end
 """
     x,w = gauss_quad(Γ::SelfSimilarFractal{V,M}, N::Int64) where {V<:Real, M<:Real}
 
-Returns vectors of real-valued Gaussian nodes x, and weights w.
+Returns N Gaussian weights w ∈ Rᴺ and nodes x ∈ Rᴺˣᴺ.
 Here Γ must be an SelfSimilarFractal in one spatial dimension.
 N is the order of the Gauss rule, i.e. number of weights and nodes.
 """
