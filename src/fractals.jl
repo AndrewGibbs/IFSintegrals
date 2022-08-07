@@ -59,7 +59,7 @@ and dimension, which are approximated numerically.
 """
 struct Attractor{V,M} <: SelfSimilarFractal{V,M}
     IFS::Vector{Similarity{V,M}}
-    topological_dimension::Int64
+    spatial_dimension::Int64
     Hausdorff_dimension::Float64
     homogeneous::Bool
     Hausdorff_weights::Bool
@@ -144,7 +144,7 @@ struct SubAttractor{V,M} <: SelfSimilarFractal{V,M}
     attractor::Attractor
     IFS::Vector{Similarity{V,M}} # could be removed ?
     index::Vector{Int64}
-    # topological_dimension::Int64 # could be removed
+    # spatial_dimension::Int64 # could be removed
     # Hausdorff_dimension::T # could be removed
     barycentre::V
     diameter::Float64

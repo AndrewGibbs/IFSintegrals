@@ -1,9 +1,9 @@
 # provides a sketch of an attractor in N topological dimensions
 function sketch_attractor(Γ::SelfSimilarFractal; mem_const = 10000, start_count = 10)
     if isa(Γ,Attractor)
-        N = Γ.topological_dimension
+        N = Γ.spatial_dimension
     elseif isa(Γ,SubAttractor)
-        N = Γ.attractor.topological_dimension
+        N = Γ.attractor.spatial_dimension
     end
     X = [Γ.barycentre]
     num_its = floor(log(mem_const/(N*start_count))/log(length(Γ.IFS)))
@@ -69,9 +69,9 @@ See also: [`draw!`](@ref)
 """
 function draw(Γ::SelfSimilarFractal; markersize=0.1, color="black")
     if isa(Γ,Attractor)
-        n = Γ.topological_dimension
+        n = Γ.spatial_dimension
     else
-        n = Γ.attractor.topological_dimension
+        n = Γ.attractor.spatial_dimension
     end
     X = sketch_attractor(Γ)
     if n == 2
@@ -89,9 +89,9 @@ Similar to [`draw`](@ref), except it will draw on the current image.
 """
 function draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
     if isa(Γ,Attractor)
-        n = Γ.topological_dimension
+        n = Γ.spatial_dimension
     else
-        n = Γ.attractor.topological_dimension
+        n = Γ.attractor.spatial_dimension
     end
     X = sketch_attractor(Γ)
     if n == 2

@@ -111,7 +111,7 @@ represents the single layer boundary integral operator, Sϕ(x) = ∫_Γ Φ(x,y) 
 where Φ is the fundamental solution for the underlying PDE.
 """
 function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    if Γ.topological_dimension == 1
+    if Γ.spatial_dimension == 1
         if k==0.0 #2D Laplace case
             K = BIO{V,M}(Γ, #fractal domain
             (x,y)->Φₜ(0.0,x,y), # log kernel
@@ -133,7 +133,7 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
             k #wavenumber
             )
         end
-    elseif Γ.topological_dimension == 2
+    elseif Γ.spatial_dimension == 2
         if k==0.0 #3D Laplace case
             K = BIO{V,M}(Γ, #fractal domain
             (x,y)-> Φₜ(1.0,x,y), # Green's function
@@ -227,11 +227,11 @@ function get_quad_scales(K::BIO,Lₕ::Vector{Vector{Int64}})
                 measure_weight = Γₙ.measure*Γₘ.measure
                 # noting that F_nomeasure is monotonic decreasing in r, can bound as follows:
                 if dist_lower>0
-                    F_upper[m_count,n_count] = measure_weight*F_nomeasure(dist_lower, K.wavenumber, K.domain.topological_dimension)
+                    F_upper[m_count,n_count] = measure_weight*F_nomeasure(dist_lower, K.wavenumber, K.domain.spatial_dimension)
                 else
                     F_upper[m_count,n_count]= Inf
                 end
-                 F_lower[m_count,n_count] = measure_weight*F_nomeasure(dist_upper, K.wavenumber, K.domain.topological_dimension)
+                 F_lower[m_count,n_count] = measure_weight*F_nomeasure(dist_upper, K.wavenumber, K.domain.spatial_dimension)
             else
                 F_upper[m_count,n_count] = Inf
             end
