@@ -55,6 +55,21 @@ function sim_map(s::Similarity{V,M}, IFS::Vector{Similarity{V,M}}) where {V<:Uni
     return [Similarity{V,M}(IFS[m].r, (I-rAchain[m])*s.δ + s.rA*IFS[m].δ, Achain[m], rAchain[m]) for m=1:length(IFS)]
 end
 
+∘(s₁::Similarity{V,M},s₂::Similarity{V,M}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} = Similarity(s₁.r*s₂.r, s₁.δ+s₁.rA*s₂.δ, s₁.A*s₂.A, s₁.rA*s₂.rA)
+"""   
+r::Float64 # contraction
+δ::V # translation
+A::M # rotation
+rA::M # contraction * rotation
+"""
+function sim_comp(IFS::Vector{Similarity{V,M}}, m::Vector{Int64}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    s = IFS[m[1]]
+        for j = 2:length(m)
+            s = s∘IFS[m[j]]
+        end
+    return s
+end
+
 # below could just be rs
 function sim_map(s::Similarity{V,M}, IFS::Vector{Similarity{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Real}
     return [Similarity{V,M}(IFS[m].r, (I-IFS[m].rA)*s.δ + s.rA*IFS[m].δ, IFS[m].A, IFS[m].rA) for m=1:length(IFS)]
