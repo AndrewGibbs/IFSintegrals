@@ -19,8 +19,8 @@ function eval_green_double_integral(Γ::SelfSimilarFractal, t::Real, h::Real; μ
     end
     M = length(Γ.IFS)
     for μ = [μ₁,μ₂]
-        length(μ)!=M ? error("μ must be a vector containing the same length as the IFS") : Nothing
-        sum(μ) ≈ 1 ? Nothing : error("μ must sum to one")
+        length(μ)!=M ? error("μ must be a vector containing the same length as the IFS") : nothing
+        sum(μ) ≈ 1 ? nothing : error("μ must sum to one")
     end
 
     log_sum = 0.0

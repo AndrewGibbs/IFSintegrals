@@ -31,6 +31,7 @@ include("presets.jl")
 include("screen_scattering.jl")
 include("plotting.jl")
 include("Jacobi_matrices.jl")
+include("nondisjoint_singularities.jl")
 
 # routine below was copied from:
 # https://discourse.julialang.org/t/converting-a-matrix-into-an-array-of-arrays/17038
