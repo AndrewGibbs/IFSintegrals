@@ -1,22 +1,25 @@
 # The below variation of vcat is needed for our convention that Γ₀:=Γ
 vcat_(x,y) = vcat(x[x .!= 0],y[y .!= 0])
-vcat_(x,y) = hcat(x[x .!= 0],y[y .!= 0])
+hcat_(x,y) = hcat(x[x .!= 0],y[y .!= 0])
 
 function check_if_similar(Γ::SelfSimilarFractal,m,n,m_,n_)
     # get shorthand for IFS
     S = Γ.IFS
 
     condition_two_holds = true
-    ρ̃  = 0.0 # initialise
+    ρ = 0.0 # initialise
 
-    sₘ = sim_comp(S,m)
-    sₙ = sim_comp(S,n)
-    sₘ_ = sim_comp(S,m_)
-    sₙ_ = sim_comp(S,n_)
+    # define identity similarity, which is a workaround for index [0]
+    s₀ = Similarity(1.0,zeros(Γ.spatial_dimension))
+
+    m != [0] ? sₘ = sim_comp(S,m) : sₘ = s₀
+    n != [0] ? sₙ = sim_comp(S,n) : sₙ = s₀
+    m_ !=[0] ? sₘ_ = sim_comp(S,m_) : sₘ_ = s₀
+    n_ !=[0] ? sₙ_ = sim_comp(S,n_) : sₙ_ = s₀
 
     # first test (6)
     if sₘ.r/sₙ.r ≈ sₘ_.r/sₙ_.r
-        ρ̃ = sₘ.r/sₙ.r
+        ρ = sₘ.r/sₙ.r
     else
         condition_two_holds = false
     end
@@ -35,19 +38,20 @@ function check_if_similar(Γ::SelfSimilarFractal,m,n,m_,n_)
         condition_two_holds = false
     end
         
-    return [condition_two_holds, ρ̃ ]
+    return condition_two_holds, ρ
 end
 
-function check_for_similar_integrals(X,mcat,mcat_) # here X is some set of indices... leave abstract for now
-    is_X_similar == false
+function check_for_similar_integrals(Γ, X,mcat,mcat_) # here X is some set of indices... leave abstract for now
+    is_X_similar = false
     similar_index = nothing
+    proportionality_const = 0.0
     # should compactly write the following as a function, it's almost repeated
     for ∫∫_index = 1:length(X)
         ∫∫_indices_higher_level = X[∫∫_index]
-        this_is_X_similar, ρ̃  = check_for_condition_two(Γ,∫∫_indices_higher_level[1],mcat,_indices_higher_level[2],mcat_)
+        this_is_X_similar, ρ = check_if_similar(Γ, ∫∫_indices_higher_level[1], mcat, ∫∫_indices_higher_level[2], mcat_)
         if this_is_X_similar
             is_X_similar = true
-            proportionality_const = ρ̃ 
+            proportionality_const = ρ
             similar_index = ∫∫_index
             break
         end
@@ -55,7 +59,7 @@ function check_for_similar_integrals(X,mcat,mcat_) # here X is some set of indic
     return is_X_similar, proportionality_const, similar_index
 end
 
-function check_for_ℓ_singular_integrals(Γ_singularities::Matrix{Bool}, mcat, mcat_; ℓ_depth==2)
+function check_for_ℓ_singular_integrals(Γ_singularities::Matrix{Bool}, mcat, mcat_; ℓ_depth=2)
     is_singular = false
 
     if ℓ_depth != 2
@@ -69,10 +73,19 @@ function check_for_ℓ_singular_integrals(Γ_singularities::Matrix{Bool}, mcat, 
     return is_singular
 end
 
-function construct_singularity_matrix(Γ::SelfSimilarFractal, Γ_singularities::Matrix{Bool}, s::Float64; μ₂::Vector{Float64} = [0.0])
+function construct_singularity_matrix(Γ::SelfSimilarFractal, Γ_singularities::Matrix{Bool}, s::Number; μ₂::Vector{Float64} = [0.0])
 
     # add optional third argument for the case when the second set of weights is different.
     # Need to add a method for computing p_\bm too.
+
+    # initialise stuff
+    S = [([0],[0])] # needs to be a collection of pairs of indices
+    f = [false] # S hasn't been processed yet. 
+    R = Tuple{Vector{Int64}, Vector{Int64}}[] # blank version of S
+    # B = Matrix{Float64}[]
+    M = length(Γ.IFS)
+    A = zeros(1,1)
+    B = zeros(1,1)
 
     if isa(Γ,Attractor)
         μ₁ = Γ.weights
@@ -89,17 +102,10 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, Γ_singularities::
 
     function scaler(ρ::Float64, m::Vector{<:Int64},m_::Vector{<:Int64},n::Vector{<:Int64},n_::Vector{<:Int64})
         # account for convention Γ₀:=Γ
-        m == [0] ? pₘ = prod(μ₁[m]) : pₘ = 1.0
-        m_ == [0] ? pₘ_ = prod(μ₂[m_]) : pₘ_ = 1.0
+        m  != [0] ? pₘ = prod(μ₁[m]) : pₘ = 1.0
+        m_ != [0] ? pₘ_ = prod(μ₂[m_]) : pₘ_ = 1.0
         return ρ^(-s)*pₘ*pₘ_/prod(μ₁[n])/prod(μ₂[n_])
     end
-
-    # initialise stuff
-    S = [([0],[0])] # needs to be a collection of pairs of indices
-    f = [false] # S hasn't been processed yet. 
-    R = Vector{Tuple{Vector{Int64}, Vector{Int64}}}[] # blank version of S
-    # B = Matrix{Float64}[]
-    M = length(Γ.IFS)
 
     A_rows = 0
     A_cols = 0
@@ -109,20 +115,19 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, Γ_singularities::
     while sum(f)<length(f) # while f contains zeros
         for ∫∫_count = 1:length(S)
             if ~f[∫∫_count]
-                a_row = [0.0]
-                b_row = [0.0]
+                a_row = zeros(length(S))
+                b_row = zeros(length(R))
                 ∫∫_indices = S[∫∫_count]
                 for m=1:M, m_=1:M
                     mcat = vcat_(∫∫_indices[1],m)
                     mcat_ = vcat_(∫∫_indices[2],m_)
-
-                    is_S_similar, ρ, similar_index = check_for_similar_integrals(S, mcat, mcat_)
+                    is_S_similar, ρ, similar_index = check_for_similar_integrals(Γ, S, mcat, mcat_)
                     is_ℓ_singular = check_for_ℓ_singular_integrals(Γ_singularities, mcat, mcat_)
 
                     # only need to check for R similarities if regular integral.
                     is_singular = is_S_similar || is_ℓ_singular
                     if !is_singular
-                        is_R_similar, ρ, similar_index = check_for_similar_integrals(R, mcat, mcat_)
+                        is_R_similar, ρ, similar_index = check_for_similar_integrals(Γ, R, mcat, mcat_)
                     else
                         is_R_similar = false
                     end
@@ -132,17 +137,17 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, Γ_singularities::
                     if is_ℓ_singular && !is_S_similar # new singularity type
                         push!(S,(mcat,mcat_)) # new type of singularitiy
                         push!(f,false)
-                        push!(a_row,0.0) # increase row by one
+                        push!(a_row, 1.0) # increase row by one
                         if A_rows > 0
                             A = hcat(A, zeros(A_rows))
                         end
                     elseif is_S_similar # singular, but seen similar
-                        a_row[similar_index] *= scale_adjust
+                        a_row[similar_index] += scale_adjust
                     elseif is_R_similar # smooth, but seen similar
-                        b_row[similar_index] *= scale_adjust
+                        b_row[similar_index] += scale_adjust
                     else # smooth, nothing similar
                         push!(R,(mcat,mcat_))
-                        push!(b_row,0.0) # increase row by one
+                        push!(b_row, 1.0) # increase row by one
                         if B_rows > 0
                             B = hcat(B, zeros(B_rows))
                         end
@@ -150,17 +155,20 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, Γ_singularities::
                 end
                 # add new row to each matrix
                 if A_rows == 0
-                    A = reshape(a_row, 1, A_cols)
+                    A = reshape(a_row, 1, length(a_row))
                 else
-                    A = vcat(A, a_row)
+                    A = vcat(A, reshape(a_row, 1, length(a_row)))
                 end
                 if B_rows == 0
-                    B = reshape(b_row, 1, B_cols)
+                    B = reshape(b_row, 1, length(b_row))
                 else
-                    B = vcat(B, b_row)
+                    B = vcat(B, reshape(b_row, 1, length(b_row)))
                 end
-                f[int_count] = true
+                f[∫∫_count] = true
             end
+            # update matrix sizes
+            A_rows, A_cols = size(A)
+            B_rows, B_cols = size(B)
         end
     end
     return A,B,S,R
