@@ -67,6 +67,8 @@ struct Attractor{V,M} <: SelfSimilarFractal{V,M}
     diameter::Float64
     measure::Float64
     weights::Vector{Float64}
+    disjoint::Bool
+    connectedness::Matrix{Bool}
 end
 
 # outer constructor, when diameter isn't given:
@@ -79,7 +81,7 @@ any rotations.
 
 # Attractor(sims::Array{Similarity}; measure::Real=1.0) = Attractor(sims, get_diameter(sims); measure=measure)
 
-function Attractor(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::Real=1.0, weights::Vector{<:Real}=[0.0]) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}# outer constructor for attractor type
+function Attractor(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::Real=1.0, weights::Vector{<:Real}=[0.0], connectedness::Matrix{Bool}=Matrix(I(length(sims)))) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}# outer constructor for attractor type
     count = 1
     top_dims = zeros(Int64,length(sims))
     contractions = zeros(Float64,length(sims))
@@ -135,7 +137,10 @@ function Attractor(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::
         diameter = get_diameter(sims)
     end
 
-    return Attractor(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary, Float64(diameter), Float64(measure), weights)
+    # disjointness
+    connectedness==Matrix(I(length(sims))) ? disjoint=false : disjoint=true
+
+    return Attractor(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary, Float64(diameter), Float64(measure), weights, connectedness)
 
 end
 
@@ -144,8 +149,6 @@ struct SubAttractor{V,M} <: SelfSimilarFractal{V,M}
     attractor::Attractor
     IFS::Vector{Similarity{V,M}} # could be removed ?
     index::Vector{Int64}
-    # spatial_dimension::Int64 # could be removed
-    # Hausdorff_dimension::T # could be removed
     barycentre::V
     diameter::Float64
     measure::Float64
@@ -227,6 +230,7 @@ SubAttractor(Γ::SelfSimilarFractal, index::Integer) = SubAttractor(Γ, [index])
 
 # overload the indexing function, so we can get neat vector subscripts
 getindex(Γ::SelfSimilarFractal, inds...) = SubAttractor(Γ,[i for i in inds])
+getindex(Γ::SelfSimilarFractal, inds::Vector{<:Integer}) = SubAttractor(Γ,inds)
 
 # now define attractors of popular fractals
 """

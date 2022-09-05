@@ -17,7 +17,8 @@ export Similarity, Attractor, SubAttractor, SelfSimilarFractal, sketch_attractor
         single_layer_potential, far_field_pattern,
         chaos_quad, barycentre_uniform, long_bary, gauss_quad,
         slice, box, draw, draw!,
-        get_H_minus_half_norm_function, get_H_minus_half_norm_function_from_matrix
+        get_H_minus_half_norm_function, get_H_minus_half_norm_function_from_matrix,
+        s_energy
 include("similarities.jl")
 include("fractals.jl")
 include("partitioning.jl")

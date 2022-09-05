@@ -16,7 +16,7 @@ function CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
     S = [Similarity(contraction,0.0),Similarity(contraction,1-contraction)]
     d = log(1/2)/log(contraction)
     bary = default_bary(S,d,weights,1/2)
-    return Attractor(S,1,d,true,are_weights_Hausdorff(weights,S,d),bary,1.0,1.0,weights)
+    return Attractor(S,1,d,true,are_weights_Hausdorff(weights,S,d),bary,1.0,1.0,weights, true,Matrix(I(2)))
 end
 
 """
@@ -27,7 +27,7 @@ function CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
     S = [Similarity(contraction,[0.0,0.0]),Similarity(contraction,[1-contraction,0.0]),Similarity(contraction,[0.0,1-contraction]),Similarity(contraction,[1-contraction,1-contraction])]
     d = log(1/4)/log(contraction)
     bary = default_bary(S,d,weights,[0.5,0.5])
-    return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0,weights)
+    return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0,weights,true,Matrix(I(4)))
 end
 
 
@@ -46,7 +46,7 @@ function CantorN(N::Integer; contraction = 1/3)
     d = log(1/M)/log(contraction)
     weights = ones(M)./M 
     bary =  SVector{N,Float64}(0.5.*ones(N))
-    return Attractor(S, 2, d, true, true, bary, sqrt(N), 1.0, weights)
+    return Attractor(S, 2, d, true, true, bary, sqrt(N), 1.0, weights, true, Matrix(Bool,I(2^N)))
 end
 
 """
@@ -60,7 +60,7 @@ function Sierpinski(;weights=[1/3, 1/3, 1/3])
     S = [courage,wisdom,power]
     d = log(3)/log(2)
     bary = default_bary(S,d,weights,[0,(1-2*sqrt(2))/9])
-    return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights)
+    return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)))
 end
 #            Attractor(sims,top_dim,Hdim,uniform,get_barycentre(sims,Hdim),diameter,measure)
 
@@ -111,5 +111,18 @@ function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
             Similarity(1/3,[1/sqrt(3),1/3])
             ]
     bary = default_bary(IFS,2.0,weights,[0.0,0.0])
-    return Attractor(IFS, 2, 2.0, false, are_weights_Hausdorff(weights,IFS,2), bary, 2*sqrt(3)/3, 1.0, weights)
+    # now create connectedness matrix for Γ_singularities
+    M = 7
+    connectendess = zeros(Bool,M,M)
+    for m=1:M
+        for m_=1:M
+            if m==1 || m_==1
+                connectendess[m,m_] = true
+            end
+            if abs(m-m_)==1 || abs(m-m_)==6
+                connectendess[m,m_] = true
+            end
+        end
+    end
+    return Attractor(IFS, 2, 2.0, false, are_weights_Hausdorff(weights,IFS,2), bary, 2*sqrt(3)/3, 1.0, weights, false, connectendess)
 end

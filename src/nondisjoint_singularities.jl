@@ -73,32 +73,20 @@ function check_for_ℓ_singular_integrals(Γ_singularities::Matrix{Bool}, mcat, 
     return is_singular
 end
 
-function construct_singularity_matrix(Γ::SelfSimilarFractal, Γ_singularities::Matrix{Bool}, s::Number; μ₂::Vector{Float64} = [0.0])
+function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::Vector{Float64} = Γ.weights)
 
     # add optional third argument for the case when the second set of weights is different.
     # Need to add a method for computing p_\bm too.
 
     # initialise stuff
     S = [([0],[0])] # needs to be a collection of pairs of indices
-    f = [false] # S hasn't been processed yet. 
+    f = [false] # S hasn't been processed yet.
     R = Tuple{Vector{Int64}, Vector{Int64}}[] # blank version of S
+    μ₁ = Γ.weights
     # B = Matrix{Float64}[]
     M = length(Γ.IFS)
     A = zeros(1,1)
     B = zeros(1,1)
-
-    if isa(Γ,Attractor)
-        μ₁ = Γ.weights
-    else
-        μ₁ = Γ.attractor.weights
-    end
-    if μ₂ == [0.0]
-        μ₂ = μ₁
-    end
-    for μ = [μ₁,μ₂]
-        length(μ)!=M ? error("μ must be a vector containing the same length as the IFS") : nothing
-        sum(μ) ≈ 1 ? nothing : error("μ must sum to one")
-    end
 
     function scaler(ρ::Float64, m::Vector{<:Int64},m_::Vector{<:Int64},n::Vector{<:Int64},n_::Vector{<:Int64})
         # account for convention Γ₀:=Γ
@@ -116,13 +104,14 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, Γ_singularities::
         for ∫∫_count = 1:length(S)
             if ~f[∫∫_count]
                 a_row = zeros(length(S))
+                a_row[∫∫_count] = 1.0
                 b_row = zeros(length(R))
                 ∫∫_indices = S[∫∫_count]
                 for m=1:M, m_=1:M
                     mcat = vcat_(∫∫_indices[1],m)
                     mcat_ = vcat_(∫∫_indices[2],m_)
                     is_S_similar, ρ, similar_index = check_for_similar_integrals(Γ, S, mcat, mcat_)
-                    is_ℓ_singular = check_for_ℓ_singular_integrals(Γ_singularities, mcat, mcat_)
+                    is_ℓ_singular = check_for_ℓ_singular_integrals(Γ.connectedness, mcat, mcat_)
 
                     # only need to check for R similarities if regular integral.
                     is_singular = is_S_similar || is_ℓ_singular
@@ -132,17 +121,22 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, Γ_singularities::
                         is_R_similar = false
                     end
                     # compute (3) from Dave's notes:
-                    scale_adjust = scaler(ρ, ∫∫_indices[1], ∫∫_indices[2], mcat, mcat_)
+                    is_similar = is_S_similar || is_R_similar
+                    if is_similar
+                        is_S_similar ? similar_indices = S[similar_index] : similar_indices = R[similar_index]
+                        # scale_adjust = 1/scaler(ρ, ∫∫_indices[1], ∫∫_indices[2], mcat, mcat_)
+                        scale_adjust = 1/scaler(ρ, similar_indices[1], similar_indices[2], mcat, mcat_)
+                    end
 
                     if is_ℓ_singular && !is_S_similar # new singularity type
                         push!(S,(mcat,mcat_)) # new type of singularitiy
                         push!(f,false)
-                        push!(a_row, 1.0) # increase row by one
+                        push!(a_row, -1.0) # increase row by one
                         if A_rows > 0
                             A = hcat(A, zeros(A_rows))
                         end
                     elseif is_S_similar # singular, but seen similar
-                        a_row[similar_index] += scale_adjust
+                        a_row[similar_index] -= scale_adjust
                     elseif is_R_similar # smooth, but seen similar
                         b_row[similar_index] += scale_adjust
                     else # smooth, nothing similar
@@ -173,3 +167,23 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, Γ_singularities::
     end
     return A,B,S,R
 end
+
+function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂::Vector{Float64} = Γ.weights)
+
+    A,B,S,R = IFSintegrals.construct_singularity_matrix(Γ, s)
+    
+    r = zeros(length(R))
+    for n=1:length(r)
+        (m,m_) = R[n]
+        x,y,w = quad_rule(Γ[m],Γ[m_])
+        r[n] = w'*Φₜ.(s,x,y)
+        println(n)
+    end
+
+    x = A\(B*r)
+
+    return x[1]
+end
+
+# default to barycentre rule as follows:
+s_energy(Γ::SelfSimilarFractal, s::Number, h::Real) = s_energy(Γ,s,(A::SelfSimilarFractal, B::SelfSimilarFractal)->barycentre_rule(A,B,h))
