@@ -126,3 +126,31 @@ function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     end
     return Attractor(IFS, 2, 2.0, false, are_weights_Hausdorff(weights,IFS,2), bary, 2*sqrt(3)/3, 1.0, weights, false, connectendess)
 end
+
+function Carpet()
+    ρ = 1/3
+    IFS = [Similarity(ρ,[0,0]),
+    Similarity(ρ,[0,ρ]),
+    Similarity(ρ,[0,2ρ]),
+    Similarity(ρ,[ρ,0]),
+    Similarity(ρ,[ρ,2ρ]),
+    Similarity(ρ,[2ρ,0]),
+    Similarity(ρ,[2ρ,ρ]),
+    Similarity(ρ,[2ρ,2ρ])
+    ]
+    M = 8
+    connectendess = zeros(Bool,M,M)
+    for m=1:M
+        for m_=1:M
+            if m==1 || m_==1
+                connectendess[m,m_] = true
+            end
+            if abs(m-m_)==1
+                connectendess[m,m_] = true
+            end
+        end
+    end
+    d = log(8)/log(3)
+    bary = bary = default_bary(S,d,weights,[0.5,0.5])
+    return Attractor(IFS, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0, weights, false, connectendess)
+end
