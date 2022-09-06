@@ -3,7 +3,7 @@ module IFSintegrals
 using Base: Float64
 using ProgressMeter
 import Plots: scatter!, scatter
-import Base: -, \, *, getindex
+import Base: -, \, *, getindex, isapprox
 import Roots: find_zero, Bisection
 import LinearAlgebra: norm, I, UniformScaling, eigvals, eigvecs
 import StaticArrays: SVector, SMatrix
@@ -33,6 +33,7 @@ include("screen_scattering.jl")
 include("plotting.jl")
 include("Jacobi_matrices.jl")
 include("nondisjoint_singularities.jl")
+include("symmetry_groups.jl")
 
 # routine below was copied from:
 # https://discourse.julialang.org/t/converting-a-matrix-into-an-array-of-arrays/17038

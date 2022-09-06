@@ -2,11 +2,13 @@
 vcat_(x,y) = vcat(x[x .!= 0],y[y .!= 0])
 hcat_(x,y) = hcat(x[x .!= 0],y[y .!= 0])
 
-function check_if_similar(Γ::SelfSimilarFractal,m,n,m_,n_)
+function check_if_similar(Γ::SelfSimilarFractal,m,n,m_,n_, G, G_)
     # get shorthand for IFS
     S = Γ.IFS
-
-    condition_two_holds = true
+    test_one = false
+    test_two = false
+    test_three = false
+    is_similar = false # requires above three to be true
     ρ = 0.0 # initialise
 
     # define identity similarity, which is a workaround for index [0]
@@ -20,35 +22,42 @@ function check_if_similar(Γ::SelfSimilarFractal,m,n,m_,n_)
     # first test (6)
     if sₘ.r/sₙ.r ≈ sₘ_.r/sₙ_.r
         ρ = sₘ.r/sₙ.r
-    else
-        condition_two_holds = false
+        test_one = true
     end
-    
-    # second test (7)
-    if sₘ.A*inv(sₙ.A) ≈ sₘ_.A*inv(sₙ_.A)
-        nothing
-    else
-        condition_two_holds = false
-    end
-    
-    # third test (8)
-    if norm(sₘ.δ - sₘ_.δ - sₘ.r/sₙ.r*sₘ.A*inv(sₙ.A)*sₙ.δ + sₘ_.r/sₙ_.r*sₘ_.A*inv(sₙ_.A)*sₙ_.δ) ≈ 0
-        nothing
-    else
-        condition_two_holds = false
-    end
+
+    for T ∈ G, T_ ∈ G_
+        # second test (7)
+        if sₘ.A*T.A*inv(sₙ.A) ≈ sₘ_.A*T_.A*inv(sₙ_.A)
+            test_two = true
+        else
+            test_two = false
+        end
         
-    return condition_two_holds, ρ
+        # third test (8)
+        if sₘ.δ - sₘ_.δ - sₘ.r*sₘ.A*(T.A/sₙ.r*inv(sₙ.A)*sₙ.δ-T.δ) ≈ - sₘ_.r*sₘ_.A*(T_.A/sₙ_.r*inv(sₙ_.A)*sₙ_.δ - T_.δ)
+            #norm(sₘ.δ - sₘ_.δ - sₘ.r*sₘ.A*(T.A/sₙ.r*inv(sₙ.A)*sₙ.δ-T.δ) + sₘ_.r*sₘ_.A*(T_.A/sₙ_.r*inv(sₙ_.A)*sₙ_.δ - T_.δ)) ≈ 0
+            test_three = true
+        else
+            test_three = false
+        end
+
+        # if tests are satisfies for some particular group element, can break loop early:
+        if test_two && test_three
+            break
+        end
+    end
+    is_similar = test_one && test_two && test_three
+    return is_similar, ρ
 end
 
-function check_for_similar_integrals(Γ, X,mcat,mcat_) # here X is some set of indices... leave abstract for now
+function check_for_similar_integrals(Γ, X,mcat, mcat_, G₁, G₂) # here X is some set of indices... leave abstract for now
     is_X_similar = false
     similar_index = nothing
     proportionality_const = 0.0
     # should compactly write the following as a function, it's almost repeated
     for ∫∫_index = 1:length(X)
         ∫∫_indices_higher_level = X[∫∫_index]
-        this_is_X_similar, ρ = check_if_similar(Γ, ∫∫_indices_higher_level[1], mcat, ∫∫_indices_higher_level[2], mcat_)
+        this_is_X_similar, ρ = check_if_similar(Γ, ∫∫_indices_higher_level[1], mcat, ∫∫_indices_higher_level[2], mcat_, G₁, G₂)
         if this_is_X_similar
             is_X_similar = true
             proportionality_const = ρ
@@ -73,7 +82,7 @@ function check_for_ℓ_singular_integrals(Γ_singularities::Matrix{Bool}, mcat, 
     return is_singular
 end
 
-function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::Vector{Float64} = Γ.weights)
+function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::Vector{Float64} = getweights(Γ), G₁=TrivialGroup(), G₂=TrivialGroup())
 
     # add optional third argument for the case when the second set of weights is different.
     # Need to add a method for computing p_\bm too.
@@ -110,13 +119,13 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
                 for m=1:M, m_=1:M
                     mcat = vcat_(∫∫_indices[1],m)
                     mcat_ = vcat_(∫∫_indices[2],m_)
-                    is_S_similar, ρ, similar_index = check_for_similar_integrals(Γ, S, mcat, mcat_)
+                    is_S_similar, ρ, similar_index = check_for_similar_integrals(Γ, S, mcat, mcat_, G₁, G₂)
                     is_ℓ_singular = check_for_ℓ_singular_integrals(Γ.connectedness, mcat, mcat_)
 
                     # only need to check for R similarities if regular integral.
                     is_singular = is_S_similar || is_ℓ_singular
                     if !is_singular
-                        is_R_similar, ρ, similar_index = check_for_similar_integrals(Γ, R, mcat, mcat_)
+                        is_R_similar, ρ, similar_index = check_for_similar_integrals(Γ, R, mcat, mcat_, G₁, G₂)
                     else
                         is_R_similar = false
                     end
@@ -168,9 +177,14 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
     return A,B,S,R
 end
 
-function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂::Vector{Float64} = Γ.weights)
+function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂::Vector{Float64} = getweights(Γ), G=nothing, G₁=TrivialGroup(), G₂=TrivialGroup())
 
-    A,B,S,R = IFSintegrals.construct_singularity_matrix(Γ, s)
+    if G!==nothing
+        G₁ = G
+        G₂ = G
+    end
+
+    A,B,_,R = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₁=G₁, G₂=G₂)
     
     r = zeros(length(R))
     for n=1:length(r)
@@ -186,4 +200,5 @@ function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂:
 end
 
 # default to barycentre rule as follows:
-s_energy(Γ::SelfSimilarFractal, s::Number, h::Real) = s_energy(Γ,s,(A::SelfSimilarFractal, B::SelfSimilarFractal)->barycentre_rule(A,B,h))
+s_energy(Γ::SelfSimilarFractal, s::Number, h::Real; μ₂::Vector{Float64}=getweights(Γ), G=nothing, G₁=TrivialGroup(), G₂=TrivialGroup()) = s_energy(Γ, s, (A::SelfSimilarFractal, B::SelfSimilarFractal)->barycentre_rule(A,B,h); μ₂ = μ₂, G=G, G₁=G₁, G₂=G₂)
+# s_energy(Γ::SelfSimilarFractal, s::Number, h::Real; μ₂::Vector{Float64} = getweights(Γ), G=nothing) = s_energy(Γ,s,(A::SelfSimilarFractal, B::SelfSimilarFractal)->barycentre_rule(A,B,h); μ₂=μ₂, G=nothing)

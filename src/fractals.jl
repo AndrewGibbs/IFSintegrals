@@ -237,4 +237,4 @@ getindex(Γ::SelfSimilarFractal, inds::Vector{<:Integer}) = SubAttractor(Γ,inds
 The middle-α Cantor set (default is α=1/3),
 formed by removing the middle α of the unit interval, and repeating on each sub interval.
 """
-
+getweights(Γ::SelfSimilarFractal) = isa(Γ,Attractor) ? Γ.weights : Γ.attractor.weights

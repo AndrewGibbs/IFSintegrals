@@ -54,14 +54,23 @@ end
 Returns the Sierpinski triangle, as an Attractor (type) of an iterated function system.
 """
 function Sierpinski(;weights=[1/3, 1/3, 1/3])
-    courage = Similarity(1/2,[0,1/6])
-    wisdom = Similarity(1/2,sqrt(2)*[1/6,-1/6])
-    power = Similarity(1/2,sqrt(2)*[-1/6,-1/6])
+    courage = Similarity(1/2,[0,0])
+    wisdom = Similarity(1/2,[1/2,0])
+    power = Similarity(1/2,[1/4,sqrt(3)/4])
     S = [courage,wisdom,power]
     d = log(3)/log(2)
-    bary = default_bary(S,d,weights,[0,(1-2*sqrt(2))/9])
+    bary = default_bary(S,d,weights,[1/2,sqrt(3)/4])
     return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)))
 end
+# function Sierpinski(;weights=[1/3, 1/3, 1/3])
+#     courage = Similarity(1/2,[0,1/6])
+#     wisdom = Similarity(1/2,sqrt(2)*[1/6,-1/6])
+#     power = Similarity(1/2,sqrt(2)*[-1/6,-1/6])
+#     S = [courage,wisdom,power]
+#     d = log(3)/log(2)
+#     bary = default_bary(S,d,weights,[0,(1-2*sqrt(2))/9])
+#     return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)))
+# end
 #            Attractor(sims,top_dim,Hdim,uniform,get_barycentre(sims,Hdim),diameter,measure)
 
 
