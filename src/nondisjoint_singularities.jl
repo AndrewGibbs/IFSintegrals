@@ -50,14 +50,24 @@ function check_if_similar(Γ::SelfSimilarFractal,m,n,m_,n_, G, G_)
     return is_similar, ρ
 end
 
-function check_for_similar_integrals(Γ, X,mcat, mcat_, G₁, G₂) # here X is some set of indices... leave abstract for now
+function check_for_similar_integrals(Γ, X,mcat, mcat_, G₁, G₂, fubini_flag) # here X is some set of indices... leave abstract for now
     is_X_similar = false
     similar_index = nothing
     proportionality_const = 0.0
     # should compactly write the following as a function, it's almost repeated
     for ∫∫_index = 1:length(X)
         ∫∫_indices_higher_level = X[∫∫_index]
+        # check for opposite index, i.e. (m,m_) ∼ (m_,m), assuming μ₁ = μ₂
+        # if fubini_flag && X[∫∫_index][1] == mcat_ && X[∫∫_index][2] == mcat
+        this_is_X_similar = true
+        ρ = 1.0
+        # else # check for less obvious similarities
         this_is_X_similar, ρ = check_if_similar(Γ, ∫∫_indices_higher_level[1], mcat, ∫∫_indices_higher_level[2], mcat_, G₁, G₂)
+        # end
+        if !this_is_X_similar && fubini_flag
+            this_is_X_similar, ρ = check_if_similar(Γ, ∫∫_indices_higher_level[2], mcat, ∫∫_indices_higher_level[1], mcat_, G₁, G₂)
+        end
+        # if we've found a similarity, terminate the process early
         if this_is_X_similar
             is_X_similar = true
             proportionality_const = ρ
@@ -97,6 +107,8 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
     A = zeros(1,1)
     B = zeros(1,1)
 
+    μ₁ == μ₂ ? fubuni_flag = true : fubuni_flag = false
+
     function scaler(ρ::Float64, m::Vector{<:Int64},m_::Vector{<:Int64},n::Vector{<:Int64},n_::Vector{<:Int64})
         # account for convention Γ₀:=Γ
         m  != [0] ? pₘ = prod(μ₁[m]) : pₘ = 1.0
@@ -119,13 +131,13 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
                 for m=1:M, m_=1:M
                     mcat = vcat_(∫∫_indices[1],m)
                     mcat_ = vcat_(∫∫_indices[2],m_)
-                    is_S_similar, ρ, similar_index = check_for_similar_integrals(Γ, S, mcat, mcat_, G₁, G₂)
+                    is_S_similar, ρ, similar_index = check_for_similar_integrals(Γ, S, mcat, mcat_, G₁, G₂, fubuni_flag)
                     is_ℓ_singular = check_for_ℓ_singular_integrals(Γ.connectedness, mcat, mcat_)
 
                     # only need to check for R similarities if regular integral.
                     is_singular = is_S_similar || is_ℓ_singular
                     if !is_singular
-                        is_R_similar, ρ, similar_index = check_for_similar_integrals(Γ, R, mcat, mcat_, G₁, G₂)
+                        is_R_similar, ρ, similar_index = check_for_similar_integrals(Γ, R, mcat, mcat_, G₁, G₂, fubuni_flag)
                     else
                         is_R_similar = false
                     end
@@ -191,7 +203,6 @@ function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂:
         (m,m_) = R[n]
         x,y,w = quad_rule(Γ[m],Γ[m_])
         r[n] = w'*Φₜ.(s,x,y)
-        println(n)
     end
 
     x = A\(B*r)
