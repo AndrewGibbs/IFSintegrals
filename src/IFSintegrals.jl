@@ -9,7 +9,8 @@ import LinearAlgebra: norm, I, UniformScaling, eigvals, eigvecs
 import StaticArrays: SVector, SMatrix
 using Polyhedra
 export Similarity, Attractor, SubAttractor, SelfSimilarFractal, sketch_attractor, CantorSet,
-        Sierpinski, SquareFlake, KochFlake, CantorN, sim_map, full_map,
+        Sierpinski, SquareFlake, KochFlake, CantorN, Carpet,
+        sim_map, full_map,
         barycentre_rule, subdivide_indices, eval_green_double_integral,
         CantorDust, eval_green_single_integral_fixed_point, fixed_point,
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,

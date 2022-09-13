@@ -140,7 +140,7 @@ function Attractor(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::
     # disjointness
     connectedness==Matrix(I(length(sims))) ? disjoint=false : disjoint=true
 
-    return Attractor(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary, Float64(diameter), Float64(measure), weights, connectedness)
+    return Attractor(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary, Float64(diameter), Float64(measure), weights, disjoint, connectedness)
 
 end
 
@@ -238,3 +238,14 @@ The middle-α Cantor set (default is α=1/3),
 formed by removing the middle α of the unit interval, and repeating on each sub interval.
 """
 getweights(Γ::SelfSimilarFractal) = isa(Γ,Attractor) ? Γ.weights : Γ.attractor.weights
+
+changeweights(Γ::Attractor,μ::Vector{Float64}) = Attractor(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, Γ.Hausdorff_weights, Γ.barycentre, Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness)
+changeweights(Γ::SubAttractor,μ::Vector{Float64}) = SubAttractor(changeweights(Γ.attractor,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
+"""
+attractor::Attractor
+IFS::Vector{Similarity{V,M}} # could be removed ?
+index::Vector{Int64}
+barycentre::V
+diameter::Float64
+measure::Float64
+"""

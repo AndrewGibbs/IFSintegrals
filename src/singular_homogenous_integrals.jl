@@ -7,16 +7,9 @@ the n-dimensional Laplace problem, and the integrals are with respect to Hausdor
 The optional argument μ₂ will default to μ₁, which is the probability weights assigned to the measure of Γ.
 But this can be specified manually, if it is required that both integrals are over a different measure.
 """
-function eval_green_double_integral(Γ::SelfSimilarFractal, t::Real, h::Real; μ₂::Vector{Float64} = [0.0])
+function eval_green_double_integral(Γ::SelfSimilarFractal, t::Real, h::Real; μ₂::Vector{Float64} = getweights(Γ))
 
-    if isa(Γ,Attractor)
-        μ₁ = Γ.weights
-    else
-        μ₁ = Γ.attractor.weights
-    end
-    if μ₂ == [0.0]
-        μ₂ = μ₁
-    end
+    μ₁ = getweights(Γ)
     M = length(Γ.IFS)
     for μ = [μ₁,μ₂]
         length(μ)!=M ? error("μ must be a vector containing the same length as the IFS") : nothing
@@ -27,6 +20,12 @@ function eval_green_double_integral(Γ::SelfSimilarFractal, t::Real, h::Real; μ
     scale = 1.0
     smooth_integrals = 0.0
 
+    if μ₁ == μ₂
+        Γ_μ₂ = Γ
+    else
+        Γ_μ₂ = changeweights(Γ,μ₂)
+    end
+
     for m=1:M
         scale -= Γ.IFS[m].r^(-t)*μ₁[m]*μ₂[m]
         if t == 0.0
@@ -36,10 +35,19 @@ function eval_green_double_integral(Γ::SelfSimilarFractal, t::Real, h::Real; μ
 
         # can exploit symmetry of double sum
 
-        for n=(m+1):M
-            if m!=n
-                X1, X2, W = barycentre_rule(Γm,Γ[n],h)
-                smooth_integrals += 2*W'* Φₜ.(t,X1,X2)
+        if μ₁ == μ₂
+            for n=(m+1):M
+                if m!=n
+                    X1, X2, W = barycentre_rule(Γm,Γ[n],h)
+                    smooth_integrals += 2*W'* Φₜ.(t,X1,X2)
+                end
+            end
+        else
+            for n=1:M
+                if m!=n
+                    X1, X2, W = barycentre_rule(Γm,Γ_μ₂[n],h)
+                    smooth_integrals += W'* Φₜ.(t,X1,X2)
+                end
             end
         end
     end
