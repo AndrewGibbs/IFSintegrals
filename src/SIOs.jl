@@ -34,7 +34,10 @@ struct DiscreteSIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
 end
 
 #constructor:
-function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()), h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf), vary_quad::Bool = true, repeat_blocks::Bool =true)
+function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()),
+          h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf),
+           vary_quad::Bool = true, repeat_blocks::Bool =true,
+           symmetry_group = TrivialGroup(K.domain.spatial_dimension))
     Γ = K.domain
     Lₕ = subdivide_indices(K.domain,h_mesh) #get vector indices for subcomponents
     N = length(Lₕ)
@@ -64,7 +67,23 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
     Galerkin_matrix = zeros(Complex{Float64},N,N)
 
     #collect the different types of singular matrix, and their indices
-    # ...
+    h_high_scale = Γ.diameter*h_quad_diag/h_mesh
+    s = K.singularity_strength
+    # NOTE: when the non-disjoint singular stuff is optimised,
+    # the first part of the below if statement can be replaced by the second
+    if Γ.disjoint
+        prepared_singular_inds = ([0],[0])
+        prepared_singular_vals = eval_green_double_integral(Γ, s, h_high_scale)
+    else #non-disjoint
+        A,B,prepared_singular_inds,R = construct_singularity_matrix(Γ, s, G₁ = symmetry_group, G₂ = symmetry_group)
+        r = zeros(length(R))
+        for n=1:length(r)
+            (m,m_) = R[n]
+            x,y,w = barycentre_rule(Γ[m],Γ[m_],h_high_scale)
+            r[n] = w'*Φₜ.(s,x,y)
+        end
+        prepared_singular_vals = A\(B*r) # vector of 'singular values'
+    end
 
     @showprogress 1 "Constructing discrete system " for m_count=1:N#m in Lₕ
         m = Lₕ[m_count]
@@ -76,11 +95,12 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
         for n_count = n_count_start:N#n in Lₕ
             if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
                 n = Lₕ[n_count]
-                if n==m
+                is_similar, scaler, similar_index = check_for_similar_integrals(Γ, prepared_singular_inds, n, m, symmetry_group, symmetry_group, true)
+                if is_similar
+                    x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad)
+                    Galerkin_matrix[n_count,m_count] = K.singularity_scale*prepared_singular_vals[similar_index]/scaler + w'*K.Lipschitz_part_of_kernel.(x,y)
+                elseif n==m
                     # compute the right scaling for the singular matrices, and reuse ingredients
-                    # ...
-
-                    # replace the below bits
                     Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad_diag,n;Cosc=Cosc)
                 else
                     Γₙ = mesh[n_count] # mesh element
