@@ -14,7 +14,7 @@ export Similarity, Attractor, SubAttractor, SelfSimilarFractal, sketch_attractor
         barycentre_rule, subdivide_indices, eval_green_double_integral,
         CantorDust, eval_green_single_integral_fixed_point, fixed_point,
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,
-        BIO, DiscreteBIO, SingleLayer, Projection,
+        SIO, DiscreteSIO, SingleLayer, Projection,
         single_layer_potential, far_field_pattern,
         chaos_quad, barycentre_uniform, long_bary, gauss_quad,
         slice, box, draw, draw!,
@@ -26,7 +26,7 @@ include("partitioning.jl")
 include("quadrature.jl")
 include("green_kernels.jl")
 include("singular_homogenous_integrals.jl")
-include("BIOs.jl")
+include("SIOs.jl")
 include("projections.jl")
 include("diam_approx.jl")
 include("presets.jl")

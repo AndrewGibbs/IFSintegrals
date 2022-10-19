@@ -1,7 +1,7 @@
 """
-BIO is the type for boundary integral operators.
+SIO is the type for singular integral operators.
 """
-struct BIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+struct SIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     domain::SelfSimilarFractal{V,M}
     kernel::Function
     Lipschitz_part_of_kernel::Function
@@ -12,21 +12,21 @@ struct BIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
 end
 
 #constructor for zero wavenumber case
-BIO(domain::SelfSimilarFractal{V,M},kernel::Function,Lipschitz_part_of_kernel::Function,singularity_strength::Real,
+SIO(domain::SelfSimilarFractal{V,M},kernel::Function,Lipschitz_part_of_kernel::Function,singularity_strength::Real,
 singularity_scale::Complex{<:Real},self_adjoint::Bool) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}} =
-BIO{V,M}(domain,kernel,Lipschitz_part_of_kernel,singularity_strength,singularity_scale,self_adjoint,0.0)
+SIO{V,M}(domain,kernel,Lipschitz_part_of_kernel,singularity_strength,singularity_scale,self_adjoint,0.0)
 
 """
-    DiscreteBIO(BIO::BIO; h_BEM::Real, h_quad::Real, h_quad_diag::Real)
+    DiscreteSIO(SIO::SIO; h_mesh::Real, h_quad::Real, h_quad_diag::Real)
     
-is the constructor for a discretisation of a boundary layer boundary integral operator, 'BIO'.
-h_BEM is the meshwidth parameter for the discretisation of the underlying fractal
+is the constructor for a discretisation of a singular integral operator, 'SIO'.
+h_mesh is the meshwidth parameter for the discretisation of the underlying fractal
 h_quad denotes the discretisation parameter for the integrals in the stiffness matrix.
 h_quad_diag is the parameter used to compute the diagonal elements of the matrix
 """
-struct DiscreteBIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    BIO::BIO{V,M}
-    h_BEM::Float64
+struct DiscreteSIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    SIO::SIO{V,M}
+    h_mesh::Float64
     h_quad::Float64
     mesh::Vector{SubAttractor{V,M}}
     Lₕ::Vector{Vector{Int64}} # subindices list
@@ -34,9 +34,9 @@ struct DiscreteBIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
 end
 
 #constructor:
-function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()), h_quad::Real=h_BEM, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf), vary_quad::Bool = true, repeat_blocks::Bool =true)
+function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()), h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf), vary_quad::Bool = true, repeat_blocks::Bool =true)
     Γ = K.domain
-    Lₕ = subdivide_indices(K.domain,h_BEM) #get vector indices for subcomponents
+    Lₕ = subdivide_indices(K.domain,h_mesh) #get vector indices for subcomponents
     N = length(Lₕ)
     mesh = [SubAttractor(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
     M = length(Γ.IFS)
@@ -63,7 +63,10 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
     #initialise Galerkin matrix:
     Galerkin_matrix = zeros(Complex{Float64},N,N)
 
-    @showprogress 1 "Constructing BEM system " for m_count=1:N#m in Lₕ
+    #collect the different types of singular matrix, and their indices
+    # ...
+
+    @showprogress 1 "Constructing discrete system " for m_count=1:N#m in Lₕ
         m = Lₕ[m_count]
         Γₘ = mesh[m_count]
 
@@ -74,6 +77,10 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
             if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
                 n = Lₕ[n_count]
                 if n==m
+                    # compute the right scaling for the singular matrices, and reuse ingredients
+                    # ...
+
+                    # replace the below bits
                     Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad_diag,n;Cosc=Cosc)
                 else
                     Γₙ = mesh[n_count] # mesh element
@@ -99,7 +106,7 @@ function DiscreteBIO(K::BIO; h_BEM::Real=max(2π/(10.0*K.wavenumber),K.domain.di
             end
         end
     end
-    DiscreteBIO(K, h_BEM, h_quad, mesh, Lₕ, Galerkin_matrix)
+    DiscreteSIO(K, h_mesh, h_quad, mesh, Lₕ, Galerkin_matrix)
 end
 
 """
@@ -111,7 +118,7 @@ where Φ is the fundamental solution for the underlying PDE.
 function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     if Γ.spatial_dimension == 1
         if k==0.0 #2D Laplace case
-            K = BIO{V,M}(Γ, #fractal domain
+            K = SIO{V,M}(Γ, #fractal domain
             (x,y)->Φₜ(0.0,x,y), # log kernel
             (x,y)->zero_kernel(x,y), # kernel minus singularity
             0.0, # strength of singularity, corresponding to log singularity
@@ -120,7 +127,7 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
             k #wavenumber
             )
         else #2D Helmholtz case        
-            K = BIO{V,M}(Γ, #fractal domain
+            K = SIO{V,M}(Γ, #fractal domain
             (x,y)->HelhmoltzGreen2D(k,x,y), # Hankel function
             (x,y)->HelhmoltzGreen2D_Lipschitz_part(k,x,y), # kernel minus singularity
             0.0, # strength of singularity, corresponding to log singularity
@@ -131,7 +138,7 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
         end
     elseif Γ.spatial_dimension == 2
         if k==0.0 #3D Laplace case
-            K = BIO{V,M}(Γ, #fractal domain
+            K = SIO{V,M}(Γ, #fractal domain
             (x,y)-> Φₜ(1.0,x,y), # Green's function
             (x,y)-> zero_kernel(x,y), # kernel minus singularity
             1.0, # strength of singularity, corresponding to 1/|x-y|
@@ -140,7 +147,7 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
             k #wavenumber
             )
         else #3D Helmholtz case        
-            K = BIO{V,M}(Γ, #fractal domain
+            K = SIO{V,M}(Γ, #fractal domain
             (x,y)->HelhmoltzGreen3D(k,x,y), # Green's function
             (x,y)->HelhmoltzGreen3D_Lipschitz_part(k,x,y), # kernel minus singularity
             1.0, # strength of singularity, corresponding to 1/|x-y|
@@ -150,16 +157,16 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
             )
         end
     else
-        error("Haven't coded single layer BIO for this many dimensions")
+        error("Haven't coded single layer SIO for this many dimensions")
     end
 end
 
-function singular_elliptic_double_integral(K::BIO, h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
+function singular_elliptic_double_integral(K::SIO, h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
     # if there are many wavelengths, use the more complicated approximation, which has better rates for high frequencies
     if real(K.wavenumber)*SubAttractor(K.domain,index).diameter > Cosc
-        return singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index; Cosc = Cosc)
+        return singular_elliptic_double_integral_full(K::SIO,h_quad::Real,index; Cosc = Cosc)
     else
-        return singular_elliptic_double_integral_basic(K::BIO,h_quad::Real,index)
+        return singular_elliptic_double_integral_basic(K::SIO,h_quad::Real,index)
     end
 end
 
@@ -168,7 +175,7 @@ function singular_elliptic_double_integral(Γ::Union{Attractor,SubAttractor},k::
     return singular_elliptic_double_integral(K, h_quad; Cosc = Cosc)
 end
 
-function singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
+function singular_elliptic_double_integral_full(K::SIO,h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
     # following the procedure in the paper, to avoid errors in far-field.
     # notation agrees with quadrature paper here, rather than BEM paper.
     Γ = SubAttractor(K.domain,index)
@@ -195,7 +202,7 @@ function singular_elliptic_double_integral_full(K::BIO,h_quad::Real,index::Array
     return I
 end
 
-function singular_elliptic_double_integral_basic(K::BIO,h::Real,index::Array{Int64}=[0])
+function singular_elliptic_double_integral_basic(K::SIO,h::Real,index::Array{Int64}=[0])
     Γ = SubAttractor(K.domain,index)
     x,y,w = barycentre_rule(Γ,Γ,h)
     I = K.singularity_scale*eval_green_double_integral(Γ,K.singularity_strength,h) + w'*K.Lipschitz_part_of_kernel.(x,y)
@@ -207,7 +214,7 @@ end
 
 F_nomeasure(r::Real, k::Number, n::Int64) = (1+(abs(k)*r)^(n/2+1))/r^(n+1)
 
-function get_quad_scales(K::BIO,Lₕ::Vector{Vector{Int64}})
+function get_quad_scales(K::SIO,Lₕ::Vector{Vector{Int64}})
     Γ = K.domain
     # compute upper and lower bounds for the F in my notes, which is stated above.
     F_upper = ones(Float64,length(Lₕ),length(Lₕ))

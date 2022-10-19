@@ -16,19 +16,19 @@ function project(mesh::Vector{SubAttractor{V,M}}, f::Function, h_quad::Float64) 
     return Projection(mesh[1].attractor,mesh,F)
 end
 
-function \(K::DiscreteBIO, f::Function)
+function \(K::DiscreteSIO, f::Function)
     fₕ = project(K.mesh, f, K.h_quad)
     coeffs = K.Galerkin_matrix \ fₕ.coeffs
-    return Projection(K.BIO.domain, K.mesh, coeffs)
+    return Projection(K.SIO.domain, K.mesh, coeffs)
 end
 
-function \(K::DiscreteBIO, fₕ::Projection)
+function \(K::DiscreteSIO, fₕ::Projection)
     thresh = 1E-8
     if length(fₕ.coeffs)>1000 #use iterative method
-        # if K.BIO.self_adjoint && K.BIO.coercive
+        # if K.SIO.self_adjoint && K.SIO.coercive
         #     coeffs = cg(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
         # else
-        if K.BIO.self_adjoint
+        if K.SIO.self_adjoint
             coeffs = minres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
         else
             coeffs = bicgstabl(K.Galerkin_matrix,fₕ.coeffs,1,reltol=thresh)
@@ -36,7 +36,7 @@ function \(K::DiscreteBIO, fₕ::Projection)
     else
         coeffs = K.Galerkin_matrix \ fₕ.coeffs
     end
-    return Projection(K.BIO.domain, K.mesh, coeffs)
+    return Projection(K.SIO.domain, K.mesh, coeffs)
 end
 
 # now some functions related to projections, and embeddings
@@ -108,10 +108,10 @@ function -(f::Projection,g::Projection)
     end
 end
 
-function get_H_minus_half_norm_function(Γ::SelfSimilarFractal; h_BEM::Real=1.0, h_quad::Real=h_BEM, h_quad_diag::Real = h_quad,  vary_quad::Bool = true)
+function get_H_minus_half_norm_function(Γ::SelfSimilarFractal; h_mesh::Real=1.0, h_quad::Real=h_mesh, h_quad_diag::Real = h_quad,  vary_quad::Bool = true)
     Sᵢ = SingleLayer(Γ,im)
-    DBIO = DiscreteBIO(Sᵢ; h_BEM = h_BEM, h_quad = h_quad, h_quad_diag = h_quad_diag, vary_quad = vary_quad)
-    norm(ϕ::Projection) = sqrt((2*abs(embed(ϕ,DBIO.mesh).coeffs'*DBIO.Galerkin_matrix*embed(ϕ,DBIO.mesh).coeffs)))
+    DSIO = DiscreteSIO(Sᵢ; h_mesh = h_mesh, h_quad = h_quad, h_quad_diag = h_quad_diag, vary_quad = vary_quad)
+    norm(ϕ::Projection) = sqrt((2*abs(embed(ϕ,DSIO.mesh).coeffs'*DSIO.Galerkin_matrix*embed(ϕ,DSIO.mesh).coeffs)))
     return norm
 end
 
