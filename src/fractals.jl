@@ -4,7 +4,7 @@ Type Similarity(r,δ,A), with contraction r<1, translation δ ∈ Rⁿ and a rot
 
 # a few useful functions for fractal properties:
 function get_dimension_from_contractions(R, homogeneous, top_dim)
-    if sum(R.^top_dim)>1
+    if sum(R.^top_dim)>1+100*eps()
         error("Contractions are too large - resulting fractal will have Hausdorff dimension larger than spatial dimension.")
     end
     if homogeneous

@@ -240,6 +240,6 @@ function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂:
     return x[1]
 end
 
-# default to barycentre rule as follows:
+# default to barycentre rule as follows: 
 s_energy(Γ::SelfSimilarFractal, s::Number, h::Real; μ₂::Vector{Float64}=getweights(Γ), G=nothing, G₁=TrivialGroup(Γ.spatial_dimension), G₂=TrivialGroup(Γ.spatial_dimension)) = s_energy(Γ, s, (A::SelfSimilarFractal, B::SelfSimilarFractal)->barycentre_rule(A,B,h); μ₂ = μ₂, G=G, G₁=G₁, G₂=G₂)
 # s_energy(Γ::SelfSimilarFractal, s::Number, h::Real; μ₂::Vector{Float64} = getweights(Γ), G=nothing) = s_energy(Γ,s,(A::SelfSimilarFractal, B::SelfSimilarFractal)->barycentre_rule(A,B,h); μ₂=μ₂, G=nothing)

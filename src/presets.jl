@@ -200,7 +200,19 @@ function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     ([1,1],[4,7]),
     ([1,1],[5,2]),
     ([1,1],[6,3]),
-    ([1,1],[7,4])]
+    ([1,1],[7,4]),# all the new level 2 singularities done
+    ([2,1],[1,2]),
+    ([2,1],[1,7]),
+    ([3,1],[1,2]),
+    ([3,1],[1,3]),
+    ([4,1],[1,3]),
+    ([4,1],[1,4]),
+    ([5,1],[1,4]),
+    ([5,1],[1,5]),
+    ([6,1],[1,5]),
+    ([6,1],[1,6]),
+    ([7,1],[1,6]),
+    ([7,1],[1,7])]#
     
     for (m,m_) ∈ Λ
         # mentry = 0
@@ -210,6 +222,7 @@ function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
         #     m_entry += M^(2-ℓ_)*m_[ℓ_]
         # end
         connectedness[(m[1]-1)*M+m[2], (m_[1]-1)*M+m_[2]] = true
+        connectedness[(m_[1]-1)*M+m_[2], (m[1]-1)*M+m[2]] = true
     end
     # all the tiny guys touching [1,1]]
 
@@ -226,7 +239,8 @@ function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     #         end
     #     end
     # end
-    return Attractor(IFS, 2, 2.0, false, are_weights_Hausdorff(weights,IFS,2), bary, 2*sqrt(3)/3, 1.0, weights, false, connectedness)
+    # more traditional diameter: 2*sqrt(3)/3
+    return Attractor(IFS, 2, 2.0, false, are_weights_Hausdorff(weights,IFS,2), bary, 2.0, 1.0, weights, false, connectedness)
 end
 
 function Carpet(;weights = ones(8)/8)

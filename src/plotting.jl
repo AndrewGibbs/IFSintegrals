@@ -67,17 +67,17 @@ Provides a simple sketch of the attractor Γ, by repeatedly applying the IFS.
 
 See also: [`draw!`](@ref)
 """
-function draw(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+function draw(Γ::SelfSimilarFractal; markersize=0.1, color="black", grid=true, mem_const = 10000)
     if isa(Γ,Attractor)
         n = Γ.spatial_dimension
     else
         n = Γ.attractor.spatial_dimension
     end
-    X = sketch_attractor(Γ)
+    X = sketch_attractor(Γ,mem_const=mem_const)
     if n == 2
-        scatter([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+        scatter([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color, grid=grid)
     elseif n == 1
-        scatter(X,zeros(length(X)),legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+        scatter(X,zeros(length(X)),legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color, grid=grid)
     else
         error("Can only plot in one and two spatial dimensions")
     end
@@ -87,17 +87,17 @@ end
     draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
 Similar to [`draw`](@ref), except it will draw on the current image.
 """
-function draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+function draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black", grid=true, mem_const = 10000)
     if isa(Γ,Attractor)
         n = Γ.spatial_dimension
     else
         n = Γ.attractor.spatial_dimension
     end
-    X = sketch_attractor(Γ)
+    X = sketch_attractor(Γ,mem_const=mem_const)
     if n == 2
-        scatter!([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+        scatter!([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color, grid=grid)
     elseif n == 1
-        scatter!(X,zeros(length(X)),legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color)
+        scatter!(X,zeros(length(X)),legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color, grid=grid)
     else
         error("Can only plot in one and two spatial dimensions")
     end

@@ -131,10 +131,27 @@ Returns N Gaussian weights w ∈ Rᴺ and nodes x ∈ Rᴺˣᴺ.
 Here Γ must be an SelfSimilarFractal in one spatial dimension.
 N is the order of the Gauss rule, i.e. number of weights and nodes.
 """
-function gauss_quad(Γ::SelfSimilarFractal{V,M}, N::Int64) where {V<:Real, M<:Real}
-    J = get_Jacobi_matrix(Γ,N)
+function gauss_quad(Γ::Attractor{V,M}, N::Int64) where {V<:Real, M<:Real}
+    J = get_Jacobi_matrix(Γ,N-1)
     vv = real.(eigvecs(J))
     x = real.(eigvals(J))
     w = vv[1,:].^2
     return x,w
+end
+
+# Bodged function below.
+# I think there's a scaling issue when applying Mantica's algorithm to subcomonents.
+ # A₀ = μ₁ does not seem to hold in that case. Need to understand why.
+function gauss_quad(Γ::SubAttractor{V,M}, N::Int64) where {V<:Real, M<:Real}
+    x, w = gauss_quad(Γ.attractor,N)
+    sₘ = sim_comp(Γ.IFS, Γ.index)
+    return [sim_map(sₘ,x[n]) for n=1:length(x)], w*Γ.measure/Γ.attractor.measure
+end
+
+function gauss_quad(Γ1::SelfSimilarFractal,Γ2::SelfSimilarFractal, N::Int64)
+    x1, w1 = gauss_quad(Γ1, N)
+    n1 = length(w1)
+    x2, w2 = gauss_quad(Γ2, N)
+    n2 = length(w2)
+return repeat(x1,inner=n2), repeat(x2,outer=n1), repeat(w1,inner=n2).*repeat(w2,outer=n1)
 end

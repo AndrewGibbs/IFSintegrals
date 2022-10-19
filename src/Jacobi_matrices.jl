@@ -92,7 +92,7 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
          D_nominator[i] = Γ.IFS[i].r*modΓⁿ[i][n+1]*Γⁿ⁻¹[i][n]
      end
      
-     rₙ² = (Γ.weights'*(B+C)) / (1-(Γ.weights'*D_nominator))
+     rₙ² = (getweights(Γ)'*(B+C)) / (1-(getweights(Γ)'*D_nominator))
      
      return sqrt(rₙ²)
  end
@@ -107,13 +107,13 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
         for m=0:(n-1)
             big_sum[i] += coeffs_this_level[i][m+1]^2*(Γ.IFS[i].δ+Γ.IFS[i].r*A[m+1]) + coeffs_this_level[i][m+1]*coeffs_this_level[i][m+2]*Γ.IFS[i].r*(r[m+1]+r[m+2])
         end
-        # big_sum[i] *= Γ.weights[i]
-        denominator += Γ.weights[i]*coeffs_this_level[i][n+1]^2*Γ.IFS[i].r
+        # big_sum[i] *= getweights(Γ)[i]
+        denominator += getweights(Γ)[i]*coeffs_this_level[i][n+1]^2*Γ.IFS[i].r
     end
-    return (Γ.weights'*big_sum)/(1-denominator)
+    return (getweights(Γ)'*big_sum)/(1-denominator)
 end
 
-function get_Jacobi_matrix(Γ::Attractor,N::Int64)
+function get_Jacobi_matrix(Γ::Attractor{V,M_}, N::Int64) where {V<:Real, M_<:Real}
     # initialisation
     A = zeros(Float64,N+1)
     r = zeros(Float64,N+1)
