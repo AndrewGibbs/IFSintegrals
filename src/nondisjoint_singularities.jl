@@ -174,19 +174,20 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
                         push!(S,(mcat,mcat_)) # new type of singularitiy
                         push!(f,false)
                         push!(a_row, -1.0) # increase row by one
+                        push!(L,0.0)
                         if A_rows > 0
                             A = hcat(A, zeros(A_rows))
-                            L = vcat(A, [0])
+                            # L = vcat(A, [0])
                         end
                     elseif is_S_similar # singular, but seen similar
                         a_row[similar_index] -= scale_adjust
                         if s == 0
-                             L[a_row]-= Γ.measure^2*log(ρ) # log constant adjustment
+                             L[similar_index] += Γ.measure^2*log(1/ρ)*prod(μ₁[mcat])*prod(μ₂[mcat_]) # log constant adjustment
                         end
                     elseif is_R_similar # smooth, but seen similar
                         b_row[similar_index] += scale_adjust
                         if s == 0
-                            L[a_row] += Γ.measure^2*log(ρ) # log constant adjustment
+                            L[similar_index] += Γ.measure^2*log(1/ρ)*prod(μ₁[mcat])*prod(μ₂[mcat_]) # log constant adjustment
                         end
                     else # smooth, nothing similar
                         push!(R,(mcat,mcat_))
