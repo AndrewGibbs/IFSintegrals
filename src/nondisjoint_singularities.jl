@@ -124,6 +124,7 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
     M = length(Γ.IFS)
     A = zeros(1,1)
     B = zeros(1,1)
+    L = zeros(1) # constant vector of log terms, only non-zero when s=0
 
     μ₁ == μ₂ ? fubuni_flag = true : fubuni_flag = false
 
@@ -175,11 +176,18 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
                         push!(a_row, -1.0) # increase row by one
                         if A_rows > 0
                             A = hcat(A, zeros(A_rows))
+                            L = vcat(A, [0])
                         end
                     elseif is_S_similar # singular, but seen similar
                         a_row[similar_index] -= scale_adjust
+                        if s == 0
+                             L[a_row]-= Γ.measure^2*log(ρ) # log constant adjustment
+                        end
                     elseif is_R_similar # smooth, but seen similar
                         b_row[similar_index] += scale_adjust
+                        if s == 0
+                            L[a_row] += Γ.measure^2*log(ρ) # log constant adjustment
+                        end
                     else # smooth, nothing similar
                         push!(R,(mcat,mcat_))
                         push!(b_row, 1.0) # increase row by one
@@ -206,17 +214,18 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
             B_rows, B_cols = size(B)
         end
     end
-    return A,B,S,R
+    return A,B,S,R,L
 end
 
-function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂::Vector{Float64} = getweights(Γ), G=nothing, G₁=TrivialGroup(Γ.spatial_dimension), G₂=TrivialGroup(Γ.spatial_dimension))
+function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂::Vector{Float64} = getweights(Γ),
+     G=nothing, G₁=TrivialGroup(Γ.spatial_dimension), G₂=TrivialGroup(Γ.spatial_dimension))
 
     if G!==nothing
         G₁ = G
         G₂ = G
     end
 
-    A,B,_,R = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₁=G₁, G₂=G₂)
+    A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₁=G₁, G₂=G₂)
 
     μ₁ = Γ.weights
     if μ₁ == μ₂
@@ -235,7 +244,7 @@ function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂:
     end
     # println(num_pts)
 
-    x = A\(B*r)
+    x = A\(B*r+L)
 
     return x[1]
 end

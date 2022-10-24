@@ -95,15 +95,15 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
         for n_count = n_count_start:N#n in Lₕ
             if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
                 n = Lₕ[n_count]
+                Γₙ = mesh[n_count] # mesh element
                 is_similar, scaler, similar_index = check_for_similar_integrals(Γ, prepared_singular_inds, n, m, symmetry_group, symmetry_group, true)
                 if is_similar
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad)
-                    Galerkin_matrix[n_count,m_count] = K.singularity_scale*prepared_singular_vals[similar_index]/scaler + w'*K.Lipschitz_part_of_kernel.(x,y)
+                    Galerkin_matrix[m_count,n_count] = K.singularity_scale*prepared_singular_vals[similar_index]/scaler + w'*K.Lipschitz_part_of_kernel.(x,y)
                 elseif n==m
                     # compute the right scaling for the singular matrices, and reuse ingredients
                     Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad_diag,n;Cosc=Cosc)
                 else
-                    Γₙ = mesh[n_count] # mesh element
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad*h_quad_adjust[m_count,n_count]) # get quadrature
                     Galerkin_matrix[m_count,n_count] = w'*K.kernel.(x,y) # evaluate non-diagonal Galerkin integral
                 end
