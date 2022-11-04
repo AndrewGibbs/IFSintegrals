@@ -173,12 +173,12 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
                     elseif is_S_similar # singular, but seen similar
                         a_row[similar_index] -= scale_adjust
                         if s == 0
-                             L[similar_index] += Γ.measure^2*log(1/ρ)*prod(μ₁[mcat])*prod(μ₂[mcat_]) # log constant adjustment
+                             L[∫∫_count] += Γ.measure^2*log(1/ρ)*prod(μ₁[mcat])*prod(μ₂[mcat_]) # log constant adjustment
                         end
                     elseif is_R_similar # smooth, but seen similar
                         b_row[similar_index] += scale_adjust
                         if s == 0
-                            L[similar_index] += Γ.measure^2*log(1/ρ)*prod(μ₁[mcat])*prod(μ₂[mcat_]) # log constant adjustment
+                            L[∫∫_count] += Γ.measure^2*log(1/ρ)*prod(μ₁[mcat])*prod(μ₂[mcat_]) # log constant adjustment
                         end
                     else # smooth, nothing similar
                         push!(R,(mcat,mcat_))
@@ -209,6 +209,18 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
     return A,B,S,R,L
 end
 
+"""
+    s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂::Vector{Float64} = getweights(Γ),
+     G::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension),
+     G₁::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension), G₂::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension))
+
+Computes the s-energy of a fractal Γ, using the function quad_rule. This must be of the form:
+
+    quad_rule = (A,B) -> f(A,B),
+    
+where A and B are SelfSimilarFractal.
+If quad_rule is replaced by some h::Number, the barycentre rule is used with meshwidth h.
+"""
 function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂::Vector{Float64} = getweights(Γ),
      G::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension),
      G₁::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension), G₂::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension))
@@ -240,7 +252,4 @@ function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂:
 end
 
 # default to barycentre rule as follows: 
-s_energy(Γ::SelfSimilarFractal, s::Number, h::Real; μ₂::Vector{Float64}=getweights(Γ), 
-        G=nothing, G₁=TrivialGroup(Γ.spatial_dimension), 
-        G₂=TrivialGroup(Γ.spatial_dimension)) = s_energy(Γ, s, (A::SelfSimilarFractal, 
-        B::SelfSimilarFractal)->barycentre_rule(A,B,h); μ₂ = μ₂, G=G, G₁=G₁, G₂=G₂)
+s_energy(Γ::SelfSimilarFractal, s::Number, h::Real;μ₂::Vector{Float64} = getweights(Γ), G::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension),G₁::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension), G₂::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension))= s_energy(Γ, s, (A::SelfSimilarFractal, B::SelfSimilarFractal)->barycentre_rule(A,B,h);μ₂ = μ₂, G=G, G₁=G₁, G₂=G₂)

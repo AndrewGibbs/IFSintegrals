@@ -96,10 +96,15 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
             if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
                 n = Lₕ[n_count]
                 Γₙ = mesh[n_count] # mesh element
-                is_similar, scaler, similar_index = check_for_similar_integrals(Γ, prepared_singular_inds, n, m, symmetry_group, symmetry_group, true)
+                is_similar, ρ, similar_index = check_for_similar_integrals(Γ, prepared_singular_inds, n, m, symmetry_group, symmetry_group, true)
                 if is_similar
+                    scale_adjust = 1/scaler(ρ, similar_indices[1], similar_indices[2], n, m)
+                    similar_indices = S[similar_index]
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad)
-                    Galerkin_matrix[m_count,n_count] = K.singularity_scale*prepared_singular_vals[similar_index]/scaler + w'*K.Lipschitz_part_of_kernel.(x,y)
+                    Galerkin_matrix[m_count,n_count] = K.singularity_scale*prepared_singular_vals[similar_index]*scale_adjust+ w'*K.Lipschitz_part_of_kernel.(x,y)
+                    if K.singularity_strength == 0
+                        Galerkin_matrix[m_count,n_count] += Γ.measure^2*log(1/ρ)*prod(Γ.weights[n])*prod(Γ.weights[m]) # log constant adjustment
+                   end
                 elseif n==m
                     # compute the right scaling for the singular matrices, and reuse ingredients
                     Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad_diag,n;Cosc=Cosc)

@@ -13,7 +13,6 @@ end
 # Now define some preset groups:
 IdentityMap(n::Int64) = AutomorphicMap(Matrix(I(n)),zeros(n))
 TrivialGroup(n::Int64) = [IdentityMap(n)]
-# zero(AutomorphicMap{V}) = AutomorphicMap(Matrix(I(2)),[0.0,0.0])
 
 # T₁(T₂x) = A₁(T₂x)+δ₁ = A₁(A₂x+δ₂)+δ₁ = A₁A₂x + A₁δ₂+δ₁
 ∘(T₁::AutomorphicMap, T₂::AutomorphicMap) = AutomorphicMap(T₁.A*T₂.A, T₁.A*T₁.δ+T₂.δ)
