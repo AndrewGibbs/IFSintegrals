@@ -72,7 +72,7 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
     # NOTE: when the non-disjoint singular stuff is optimised,
     # the first part of the below if statement can be replaced by the second
     if Γ.disjoint
-        prepared_singular_inds = ([0],[0])
+        prepared_singular_inds = [([0],[0])]
         prepared_singular_vals = eval_green_double_integral(Γ, s, h_high_scale)
     else #non-disjoint
         A,B,prepared_singular_inds,R = construct_singularity_matrix(Γ, s, G₁ = symmetry_group, G₂ = symmetry_group)
@@ -83,6 +83,15 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
             r[n] = w'*Φₜ.(s,x,y)
         end
         prepared_singular_vals = A\(B*r) # vector of 'singular values'
+    end
+
+    function scaler(ρ::Float64, m::Vector{<:Int64},m_::Vector{<:Int64},n::Vector{<:Int64},n_::Vector{<:Int64})
+        # account for convention Γ₀:=Γ
+        m  != [0] ? pₘ = prod(Γ.weights[m]) : pₘ = 1.0
+        m_ != [0] ? pₘ_ = prod(Γ.weights[m_]) : pₘ_ = 1.0
+        n  != [0] ? pₙ = prod(Γ.weights[n]) : pₙ = 1.0
+        n_ != [0] ? pₙ_ = prod(Γ.weights[n_]) : pₙ_ = 1.0
+        return ρ^(-s)*pₘ*pₘ_/pₙ/pₙ_
     end
 
     @showprogress 1 "Constructing discrete system " for m_count=1:N#m in Lₕ
@@ -98,8 +107,8 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
                 Γₙ = mesh[n_count] # mesh element
                 is_similar, ρ, similar_index = check_for_similar_integrals(Γ, prepared_singular_inds, n, m, symmetry_group, symmetry_group, true)
                 if is_similar
+                    similar_indices = prepared_singular_inds[similar_index]
                     scale_adjust = 1/scaler(ρ, similar_indices[1], similar_indices[2], n, m)
-                    similar_indices = S[similar_index]
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad)
                     Galerkin_matrix[m_count,n_count] = K.singularity_scale*prepared_singular_vals[similar_index]*scale_adjust+ w'*K.Lipschitz_part_of_kernel.(x,y)
                     if K.singularity_strength == 0

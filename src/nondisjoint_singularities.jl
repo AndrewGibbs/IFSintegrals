@@ -214,10 +214,15 @@ end
      G::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension),
      G₁::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension), G₂::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension))
 
+
+s is the value in |x-y|⁻ˢ, unless s==0, in which case log|x-y| is used.
+μ₂ is an optional set of (probability) weights describing an invariant measure of the outer integral.
+G₁ and G₂ are groups describing the symmetries of the inner and outer measures respectively.
+If G is defined, both measures are assigned this symmetry.
 Computes the s-energy of a fractal Γ, using the function quad_rule. This must be of the form:
 
     quad_rule = (A,B) -> f(A,B),
-    
+
 where A and B are SelfSimilarFractal.
 If quad_rule is replaced by some h::Number, the barycentre rule is used with meshwidth h.
 """

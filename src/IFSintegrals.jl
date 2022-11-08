@@ -26,6 +26,8 @@ include("partitioning.jl")
 include("quadrature.jl")
 include("green_kernels.jl")
 include("singular_homogenous_integrals.jl")
+include("symmetry_groups.jl")
+include("nondisjoint_singularities.jl")
 include("SIOs.jl")
 include("projections.jl")
 include("diam_approx.jl")
@@ -33,8 +35,6 @@ include("presets.jl")
 include("screen_scattering.jl")
 include("plotting.jl")
 include("Jacobi_matrices.jl")
-include("symmetry_groups.jl")
-include("nondisjoint_singularities.jl")
 
 # routine below was copied from:
 # https://discourse.julialang.org/t/converting-a-matrix-into-an-array-of-arrays/17038
