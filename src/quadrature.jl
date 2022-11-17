@@ -95,21 +95,14 @@ function long_bary(Γ::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<
 end
 
 """
-    chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64,x₀::AbstractVector) where {V<:AbstractVector, M<:Union{Real,AbstractMatrix}}
+    chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64;x₀=Γ.barycentre:::AbstractVector) where {V<:AbstractVector, M<:Union{Real,AbstractMatrix}}
 
 Returns a vector of N weights w>0 and nodes x ∈ Rⁿ, for approximation of integrals defined on an IFS Γ⊂Rⁿ.
 Using Chaos game quadrature.
+Optional third input is the initial guess, which is taken as barycentre by default.
 """
-function chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64,x₀::AbstractVector) where {V<:AbstractVector, M<:Union{Real,AbstractMatrix}}
-    x = [Vector{Float64}(undef, length(x₀)) for _ = 1:N]
-    x[1] = x₀
-    for n=2:N
-        x[n] = chaos_step(Γ,x[n-1])
-    end
-    return x, ones(N)./N
-end
-function chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64,x₀::Float64) where {V<:Real, M<:Real}
-    x = zeros(V,N)
+function chaos_quad(Γ::SelfSimilarFractal{V,M}, N::Int64; x₀=Γ.barycentre::V) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    x = [Γ.barycentre for _ = 1:N]
     x[1] = x₀
     for n=2:N
         x[n] = chaos_step(Γ,x[n-1])

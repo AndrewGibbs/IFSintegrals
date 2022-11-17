@@ -7,7 +7,7 @@ import Base: -, \, *, getindex, isapprox
 import Roots: find_zero, Bisection
 import LinearAlgebra: norm, I, UniformScaling, eigvals, eigvecs
 import StaticArrays: SVector, SMatrix
-using Polyhedra
+import LazySets: VPolygon, Singleton
 export Similarity, Attractor, SubAttractor, SelfSimilarFractal, sketch_attractor, CantorSet,
         Sierpinski, SquareFlake, KochFlake, CantorN, Carpet,
         sim_map, full_map,

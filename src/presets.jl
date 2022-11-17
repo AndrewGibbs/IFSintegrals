@@ -74,7 +74,14 @@ function CantorN(N::Integer; contraction = 1/3)
     d = log(1/M)/log(contraction)
     weights = ones(M)./M 
     bary =  SVector{N,Float64}(0.5.*ones(N))
-    return Attractor(S, 2, d, true, true, bary, sqrt(N), 1.0, weights, true, Matrix(Bool,I(2^N)))
+    if contraction< 1/2
+        adj_mat = Matrix(I(2^N))
+    elseif contraction == 1/2
+        adj_mat = ones(Bool,2^3,2^3)
+    else
+        error("Contraction must be <1/2")
+    end
+    return Attractor(S, 2, d, true, true, bary, sqrt(N), 1.0, weights, true, adj_mat)
 end
 
 """
