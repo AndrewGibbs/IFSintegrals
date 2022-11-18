@@ -237,7 +237,7 @@ function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂:
 
     A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₁=G₁, G₂=G₂)
 
-    μ₁ = Γ.weights
+    μ₁ = getweights(Γ)
     if μ₁ == μ₂
         Γ_μ₂ = Γ
     else

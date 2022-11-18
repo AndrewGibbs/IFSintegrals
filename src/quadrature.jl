@@ -103,11 +103,11 @@ Optional third input is the initial guess, which is taken as barycentre by defau
 """
 function chaos_quad(Γ::SelfSimilarFractal{V,M}, N::Int64; x₀=Γ.barycentre::V) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     x = [Γ.barycentre for _ = 1:N]
-    x[1] = x₀
+    # x[1] = x₀
     for n=2:N
         x[n] = chaos_step(Γ,x[n-1])
     end
-    return x, ones(N)./N
+    return x, Γ.measure*ones(N)./N
 end
 
 function chaos_quad(Γ₁::SelfSimilarFractal{V,M},Γ₂::SelfSimilarFractal{V,M}, N::Int64) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
@@ -120,7 +120,7 @@ end
 
 function chaos_step(Γ::SelfSimilarFractal,x::Union{AbstractVector,Real})
     # randomly choose a map
-    τ = minimum((1:length(Γ.weights))[rand().<cumsum(Γ.weights)])
+    τ = minimum((1:length(getweights(Γ)))[rand().<cumsum(getweights(Γ))])
     return sim_map(Γ.IFS[τ],x)
 end
 
