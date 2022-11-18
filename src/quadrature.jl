@@ -110,6 +110,14 @@ function chaos_quad(Γ::SelfSimilarFractal{V,M}, N::Int64; x₀=Γ.barycentre::V
     return x, ones(N)./N
 end
 
+function chaos_quad(Γ₁::SelfSimilarFractal{V,M},Γ₂::SelfSimilarFractal{V,M}, N::Int64) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    X₁,W₁ = chaos_quad(Γ₁,N)
+    X₂,W₂ = chaos_quad(Γ₂,N)
+    n1 = length(W₁)
+    n2 = length(W₂)
+    return repeat(X₁,inner=n2), repeat(X₂,outer=n1), repeat(W₁,inner=n2).*repeat(W₂,outer=n1)
+end
+
 function chaos_step(Γ::SelfSimilarFractal,x::Union{AbstractVector,Real})
     # randomly choose a map
     τ = minimum((1:length(Γ.weights))[rand().<cumsum(Γ.weights)])

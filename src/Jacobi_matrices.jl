@@ -1,31 +1,31 @@
-function map_coeffs_to_tilde_coeffs(coeffs::Vector{Float64},rₙ::Float64)
+function map_coeffs_to_tilde_coeffs(coeffs::Vector{T},rₙ::T) where T<:Real
     n = length(coeffs)
-    tilde_coeffs = zeros(n)
+    tilde_coeffs = zeros(T,n)
     tilde_coeffs[1:(n-1)] = coeffs[1:(n-1)].*rₙ
     tilde_coeffs[n] = coeffs[n]
     return tilde_coeffs
 end
-function map_tilde_coeffs_to_coeffs(tilde_coeffs::Vector{Float64},rₙ::Float64)
+function map_tilde_coeffs_to_coeffs(tilde_coeffs::Vector{T},rₙ::T) where T<:Real
     n = length(tilde_coeffs)
-    coeffs = zeros(n)
+    coeffs = zeros(T,n)
     coeffs[1:(n-1)] = tilde_coeffs[1:(n-1)]./rₙ
     coeffs[n] = tilde_coeffs[n]
     return coeffs
 end
 
 # now overload both of the above functions with full i=1,…,M inputs
-function map_coeffs_to_tilde_coeffs(coeffs::Vector{Vector{Float64}},rₙ::Float64)
+function map_coeffs_to_tilde_coeffs(coeffs::Vector{Vector{T}},rₙ::T) where T<:Real
     M = length(coeffs)
     tilde_coeffs = [map_coeffs_to_tilde_coeffs(coeffs[i],rₙ) for i=1:M]
     return tilde_coeffs
 end
-function map_tilde_coeffs_to_coeffs(tilde_coeffs::Vector{Vector{Float64}},rₙ::Float64)
+function map_tilde_coeffs_to_coeffs(tilde_coeffs::Vector{Vector{T}},rₙ::T) where T<:Real
     M = length(tilde_coeffs)
     coeffs = [map_tilde_coeffs_to_coeffs(tilde_coeffs[i],rₙ) for i=1:M]
     return coeffs
 end
 
-function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ⁻²::Vector{Float64}, A::Vector{Float64}, r::Vector{Float64}, sₘ::Similarity)
+function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{T}, Γⁿ⁻²::Vector{T}, A::Vector{T}, r::Vector{T}, sₘ::Similarity) where T<:Real
     # rule of thumb: square bracket indices should always be incremented by one compared with what's written above,
      # to account for the zero index
 
@@ -35,7 +35,7 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
      # that's better.
      
      n = length(Γⁿ⁻¹) # one more because of the zeroth entry, one less because we're incrementing
-     modΓⁿ = zeros(Float64,n+1)
+     modΓⁿ = zeros(T,n+1)
 
     #  modΓⁿ⁻¹ = map_coeffs_to_tilde_coeffs(Γⁿ⁻¹,r[end])
     #  modΓⁿ⁻² = map_coeffs_to_tilde_coeffs(Γⁿ⁻²,r[end])
@@ -73,13 +73,13 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
      return modΓⁿ
  end
 
- function get_rₙ(modΓⁿ::Vector{Vector{Float64}}, Γⁿ⁻¹::Vector{Vector{Float64}}, A::Vector{Float64}, r::Vector{Float64}, Γ::SelfSimilarFractal)
+ function get_rₙ(modΓⁿ::Vector{Vector{T}}, Γⁿ⁻¹::Vector{Vector{T}}, A::Vector{T}, r::Vector{T}, Γ::SelfSimilarFractal) where T<:Real
     n = length(modΓⁿ[1])-1
      M = length(Γ.IFS)
-     B = zeros(Float64,M)
-     C = zeros(Float64,M)
+     B = zeros(T,M)
+     C = zeros(T,M)
     #  D = zeros(Float64,M)
-     D_nominator = zeros(Float64,M)
+     D_nominator = zeros(T,M)
      
      for i=1:M
          for ℓ=0:(n-1)
@@ -97,7 +97,7 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
      return sqrt(rₙ²)
  end
 
- function get_Aₙ(coeffs_this_level::Vector{Vector{Float64}}, A::Vector{Float64}, r::Vector{Float64}, Γ::SelfSimilarFractal)
+ function get_Aₙ(coeffs_this_level::Vector{Vector{T}}, A::Vector{T}, r::Vector{T}, Γ::SelfSimilarFractal) where T<:Real
     M = length(Γ.IFS)
     n = length(coeffs_this_level[1])-1
     big_sum = zeros(M)
@@ -105,7 +105,9 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
     for i=1:M
         big_sum[i] += coeffs_this_level[i][n+1]^2*Γ.IFS[i].δ
         for m=0:(n-1)
-            big_sum[i] += coeffs_this_level[i][m+1]^2*(Γ.IFS[i].δ+Γ.IFS[i].r*A[m+1]) + coeffs_this_level[i][m+1]*coeffs_this_level[i][m+2]*Γ.IFS[i].r*(r[m+1]+r[m+2])
+            #big_sum[i] += coeffs_this_level[i][m+1]^2*(Γ.IFS[i].δ+Γ.IFS[i].r*A[m+1]) + coeffs_this_level[i][m+1]*coeffs_this_level[i][m+2]*Γ.IFS[i].r*(r[m+1]+r[m+2])
+            big_sum[i] += coeffs_this_level[i][m+1]^2*(Γ.IFS[i].δ+Γ.IFS[i].r*A[m+1])# +...
+            big_sum[i] += Γ.IFS[i].r*(2*coeffs_this_level[i][m+1]*coeffs_this_level[i][m+2])*r[m+2]
         end
         # big_sum[i] *= getweights(Γ)[i]
         denominator += getweights(Γ)[i]*coeffs_this_level[i][n+1]^2*Γ.IFS[i].r
@@ -113,23 +115,23 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{Float64}, Γⁿ
     return (getweights(Γ)'*big_sum)/(1-denominator)
 end
 
-function get_Jacobi_matrix(Γ::Attractor{V,M_}, N::Int64) where {V<:Real, M_<:Real}
+function get_Jacobi_matrix(Γ::Attractor{V,M_}, N::Int64; T=Float64::DataType) where {V<:Real, M_<:Real}
     # initialisation
-    A = zeros(Float64,N+1)
-    r = zeros(Float64,N+1)
-    J = zeros(Float64,N+1,N+1)
+    A = zeros(T,N+1)
+    r = zeros(T,N+1)
+    J = zeros(T,N+1,N+1)
     M = length(Γ.IFS)
-    coeffs_one_below = [[1.0] for _=1:M]
-    coeffs_two_below = [[0.0] for _=1:M]
+    coeffs_one_below = [[T(1.0)] for _=1:M]
+    coeffs_two_below = [[T(0.0)] for _=1:M]
     A[1] = Γ.measure*Γ.barycentre # checks out, given def'n of barycentre, should be ∫_Γ x dμ(x)
-    
+
     # iteration
     for n=1:N #we've done n=0 above
         # initialise this level
-        coeffs_this_level = [zeros(n+1) for _=1:M]
+        coeffs_this_level = [zeros(T,n+1) for _=1:M]
         
         # step one
-        modified_coeffs = [zeros(n+1) for _=1:M]
+        modified_coeffs = [zeros(T,n+1) for _=1:M]
         for m=1:M
             modified_coeffs[m] = get_next_modified_coeffs_from_coeffs(coeffs_one_below[m], coeffs_two_below[m], A, r, Γ.IFS[m])
         end
