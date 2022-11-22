@@ -106,7 +106,7 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
                 n = Lₕ[n_count]
                 Γₙ = mesh[n_count] # mesh element
                 is_similar, ρ, similar_index = check_for_similar_integrals(Γ, prepared_singular_inds, n, m, symmetry_group, symmetry_group, true)
-                if is_similar
+                if is_similar # TO DO: add some disjointness condition here
                     similar_indices = prepared_singular_inds[similar_index]
                     scale_adjust = 1/scaler(ρ, similar_indices[1], similar_indices[2], n, m)
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad)
@@ -239,7 +239,11 @@ end
 function singular_elliptic_double_integral_basic(K::SIO,h::Real,index::Array{Int64}=[0])
     Γ = SubAttractor(K.domain,index)
     x,y,w = barycentre_rule(Γ,Γ,h)
-    I = K.singularity_scale*eval_green_double_integral(Γ,K.singularity_strength,h) + w'*K.Lipschitz_part_of_kernel.(x,y)
+    if K.domain.disjoint
+        I = K.singularity_scale*eval_green_double_integral(Γ,K.singularity_strength,h) + w'*K.Lipschitz_part_of_kernel.(x,y)
+    else
+        I = K.singularity_scale*s_energy(Γ,s,h) + w'*K.Lipschitz_part_of_kernel.(x,y)
+    end
     return I
 end
 
