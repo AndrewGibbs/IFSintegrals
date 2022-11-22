@@ -48,10 +48,10 @@ function barycentre_rule(Γ::InvariantMeasure{T,M_},h::Float64) where {T<:Union{
 end
 
 function barycentre_rule(Γ::SubInvariantMeasure{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} 
-    if Γ.attractor.homogeneous
-        return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.attractor.weights, h)
+    if Γ.parent_measure.homogeneous
+        return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.parent_measure.weights, h)
     else
-        return get_quadrature_from_partition(partition_data_with_IFS{T,M_}(Γ.barycentre,Γ.measure,Γ.diameter,Γ.IFS), length(Γ.IFS), Γ.IFS, Γ.attractor.weights, h)
+        return get_quadrature_from_partition(partition_data_with_IFS{T,M_}(Γ.barycentre,Γ.measure,Γ.diameter,Γ.IFS), length(Γ.IFS), Γ.IFS, Γ.parent_measure.weights, h)
     end
 end
 
@@ -77,7 +77,7 @@ Computes the integral ∫_Γ f(x) dx via a barycentre rule, without storing all 
 This routine is slower than barycentre_rule, but is capable of achieving higher accuracy.
 """
 function long_bary(Γ::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<:Union{Real,AbstractVector}, U<:Union{Real,AbstractMatrix}}
-    # note that the input Γ may be an attractor or a subcomponent of an attractor
+    # note that the input Γ may be an parent_measure or a subcomponent of an parent_measure
     I = 0.0 # value of integral which will be added to cumulatively
     N = 0
     M = length(Γ.IFS)
@@ -144,9 +144,9 @@ end
 # I think there's a scaling issue when applying Mantica's algorithm to subcomonents.
  # A₀ = μ₁ does not seem to hold in that case. Need to understand why.
 function gauss_quad(Γ::SubInvariantMeasure{V,M}, N::Int64) where {V<:Real, M<:Real}
-    x, w = gauss_quad(Γ.attractor,N)
+    x, w = gauss_quad(Γ.parent_measure,N)
     sₘ = sim_comp(Γ.IFS, Γ.index)
-    return [sim_map(sₘ,x[n]) for n=1:length(x)], w*Γ.measure/Γ.attractor.measure
+    return [sim_map(sₘ,x[n]) for n=1:length(x)], w*Γ.measure/Γ.parent_measure.measure
 end
 
 function gauss_quad(Γ1::SelfSimilarFractal,Γ2::SelfSimilarFractal, N::Int64)

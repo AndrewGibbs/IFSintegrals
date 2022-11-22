@@ -1,9 +1,9 @@
-# provides a sketch of an attractor in N topological dimensions
+# provides a sketch of an parent_measure in N topological dimensions
 function sketch_attractor(Γ::SelfSimilarFractal; mem_const = 10000, start_count = 10)
     if isa(Γ,InvariantMeasure)
         N = Γ.spatial_dimension
     elseif isa(Γ,SubInvariantMeasure)
-        N = Γ.attractor.spatial_dimension
+        N = Γ.parent_measure.spatial_dimension
     end
     X = [Γ.barycentre]
     num_its = floor(log(mem_const/(N*start_count))/log(length(Γ.IFS)))
@@ -63,7 +63,7 @@ end
 
 """
     draw(Γ::SelfSimilarFractal; markersize=0.1, color="black")
-Provides a simple sketch of the attractor Γ, by repeatedly applying the IFS.
+Provides a simple sketch of the parent_measure Γ, by repeatedly applying the IFS.
 
 See also: [`draw!`](@ref)
 """
@@ -71,7 +71,7 @@ function draw(Γ::SelfSimilarFractal; markersize=0.1, color="black", grid=true, 
     if isa(Γ,InvariantMeasure)
         n = Γ.spatial_dimension
     else
-        n = Γ.attractor.spatial_dimension
+        n = Γ.parent_measure.spatial_dimension
     end
     X = sketch_attractor(Γ,mem_const=mem_const)
     if n == 2
@@ -91,7 +91,7 @@ function draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black", grid=true,
     if isa(Γ,InvariantMeasure)
         n = Γ.spatial_dimension
     else
-        n = Γ.attractor.spatial_dimension
+        n = Γ.parent_measure.spatial_dimension
     end
     X = sketch_attractor(Γ,mem_const=mem_const)
     if n == 2

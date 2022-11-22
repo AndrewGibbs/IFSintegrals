@@ -64,7 +64,7 @@ function eval_green_single_integral_fixed_point(Γ::SelfSimilarFractal, t::Real,
     if isa(Γ,InvariantMeasure)
         μ = Γ.weights
     else
-        μ = Γ.attractor.weights
+        μ = Γ.parent_measure.weights
     end
     ηₙ = fixed_point(Γ.IFS[n]) # get fixed point, convert to standard vector type
     Φₜ_(x) = Φₜ(t,x,ηₙ)

@@ -13,7 +13,7 @@ function project(mesh::Vector{SubInvariantMeasure{V,M}}, f::Function, h_quad::Fl
         x,w = barycentre_rule(Γₙ, h_quad)
         F[n_count] = w'*f.(x)
     end
-    return Projection(mesh[1].attractor,mesh,F)
+    return Projection(mesh[1].parent_measure,mesh,F)
 end
 
 function \(K::DiscreteSIO, f::Function)

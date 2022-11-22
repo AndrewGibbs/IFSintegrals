@@ -52,7 +52,7 @@ end
 """
     InvariantMeasure(sims::Array{Similarity}; measure::Real=1.0) = InvariantMeasure(sims, get_diameter(sims); measure=measure)
     
-Representation of an attractor of an iterated function system (IFS).
+Representation of an parent_measure of an iterated function system (IFS).
 Constructor requires only an IFS, which is of type Array{Similarity}, and diameter.
 All other essential properties can be deduced from this, including barycentre
 and dimension, which are approximated numerically.
@@ -81,7 +81,7 @@ any rotations.
 
 # InvariantMeasure(sims::Array{Similarity}; measure::Real=1.0) = InvariantMeasure(sims, get_diameter(sims); measure=measure)
 
-function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::Real=1.0, weights::Vector{<:Real}=[0.0], connectedness::Matrix{Bool}=Matrix(I(length(sims)))) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}# outer constructor for attractor type
+function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::Real=1.0, weights::Vector{<:Real}=[0.0], connectedness::Matrix{Bool}=Matrix(I(length(sims)))) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}# outer constructor for parent_measure type
     count = 1
     top_dims = zeros(Int64,length(sims))
     contractions = zeros(Float64,length(sims))
@@ -144,9 +144,9 @@ function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, me
 
 end
 
-# subcomponent of attractor, as a subclass of fractal
+# subcomponent of parent_measure, as a subclass of fractal
 struct SubInvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
-    invariant_measure::InvariantMeasure
+    parent_measure::InvariantMeasure
     IFS::Vector{Similarity{V,M}} # could be removed ?
     index::Vector{Int64}
     barycentre::V
@@ -157,7 +157,7 @@ end
 """
 Representation of a subcomponent of a fractal Γ, using standard vector index notatation.
 If Γ is a subattractor, then the vector indices are concatenated to produce a new subatractor,
-which stores the original attractor.
+which stores the original parent_measure.
 """
 function SubInvariantMeasure(Γ::InvariantMeasure{V,M}, index::Vector{<:Integer}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     #quick condition for trivial case:
@@ -203,8 +203,8 @@ function SubInvariantMeasure(Γ::SubInvariantMeasure{V,M}, index::Vector{<:Integ
             new_measure = Γ.measure
             # now adjust the diameter and measure for the smaller scale:
             for m = index
-                new_diam *= Γ.attractor.IFS[m].r
-                new_measure *= Γ.attractor.weights[m]
+                new_diam *= Γ.parent_measure.IFS[m].r
+                new_measure *= Γ.parent_measure.weights[m]
             end
     
             #start as old barycentre and map
@@ -213,7 +213,7 @@ function SubInvariantMeasure(Γ::SubInvariantMeasure{V,M}, index::Vector{<:Integ
             for m = index[end:-1:1]
                 new_IFS = sim_map(Γ.IFS[m], new_IFS)
             end
-            new_bary = get_barycentre(new_IFS, Γ.attractor.weights)
+            new_bary = get_barycentre(new_IFS, Γ.parent_measure.weights)
 
 
             # get new vector index and barycentre:
@@ -222,7 +222,7 @@ function SubInvariantMeasure(Γ::SubInvariantMeasure{V,M}, index::Vector{<:Integ
             end
     
     
-            return SubInvariantMeasure{V,M}(Γ.attractor,new_IFS, index, new_bary, new_diam, new_measure)
+            return SubInvariantMeasure{V,M}(Γ.parent_measure,new_IFS, index, new_bary, new_diam, new_measure)
         end
     end
 
@@ -237,12 +237,12 @@ getindex(Γ::SelfSimilarFractal, inds::Vector{<:Integer}) = SubInvariantMeasure(
 The middle-α Cantor set (default is α=1/3),
 formed by removing the middle α of the unit interval, and repeating on each sub interval.
 """
-getweights(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.weights : Γ.attractor.weights
+getweights(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.weights : Γ.parent_measure.weights
 
 changeweights(Γ::InvariantMeasure,μ::Vector{Float64}) = InvariantMeasure(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, Γ.Hausdorff_weights, Γ.barycentre, Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness)
-changeweights(Γ::SubInvariantMeasure,μ::Vector{Float64}) = SubInvariantMeasure(changeweights(Γ.attractor,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
+changeweights(Γ::SubInvariantMeasure,μ::Vector{Float64}) = SubInvariantMeasure(changeweights(Γ.parent_measure,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
 """
-attractor::InvariantMeasure
+parent_measure::InvariantMeasure
 IFS::Vector{Similarity{V,M}} # could be removed ?
 index::Vector{Int64}
 barycentre::V
