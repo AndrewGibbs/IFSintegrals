@@ -105,7 +105,7 @@ function check_for_ℓ_singular_integrals(Γ::SelfSimilarFractal, mcat::Vector{I
     return is_singular
 end
 
-function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::Vector{Float64} = getweights(Γ), G₁=TrivialGroup(Γ.spatial_dimension), G₂=TrivialGroup(Γ.spatial_dimension))
+function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::Vector{Float64} = getweights(Γ), G₂=TrivialGroup(Γ.spatial_dimension))
 
     # add optional third argument for the case when the second set of weights is different.
     # Need to add a method for computing p_\bm too.
@@ -114,7 +114,8 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
     S = [([0],[0])] # needs to be a collection of pairs of indices
     f = [false] # S hasn't been processed yet.
     R = Tuple{Vector{Int64}, Vector{Int64}}[] # blank version of S
-    μ₁ = Γ.weights
+    μ₁ = get_weights(Γ)
+    G₁ = get_symmetry_group(Γ)
     M = length(Γ.IFS)
     A = zeros(1,1)
     B = zeros(1,1)
@@ -226,16 +227,10 @@ Computes the s-energy of a fractal Γ, using the function quad_rule. This must b
 where A and B are SelfSimilarFractal.
 If quad_rule is replaced by some h::Number, the barycentre rule is used with meshwidth h.
 """
-function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function; μ₂::Vector{Float64} = getweights(Γ),
-     G::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension),
-     G₁::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension), G₂::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension))
+function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function;
+                μ₂::Vector{Float64} = getweights(Γ), G₂::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension))
 
-    if G!==TrivialGroup(Γ.spatial_dimension)
-        G₁ = G
-        G₂ = G
-    end
-
-    A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₁=G₁, G₂=G₂)
+    A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₂=G₂)
 
     μ₁ = getweights(Γ)
     if μ₁ == μ₂

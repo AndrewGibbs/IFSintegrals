@@ -69,6 +69,7 @@ struct InvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
     weights::Vector{Float64}
     disjoint::Bool
     connectedness::Matrix{Bool}
+    symmetry_group::Vector{AutomorphicMap}
 end
 
 # outer constructor, when diameter isn't given:
@@ -81,7 +82,9 @@ any rotations.
 
 # InvariantMeasure(sims::Array{Similarity}; measure::Real=1.0) = InvariantMeasure(sims, get_diameter(sims); measure=measure)
 
-function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::Real=1.0, weights::Vector{<:Real}=[0.0], connectedness::Matrix{Bool}=Matrix(I(length(sims)))) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}# outer constructor for parent_measure type
+function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::Real=1.0,
+        weights::Vector{<:Real}=[0.0], connectedness::Matrix{Bool}=Matrix(I(length(sims))),
+        symmetry_group::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}# outer constructor for parent_measure type
     count = 1
     top_dims = zeros(Int64,length(sims))
     contractions = zeros(Float64,length(sims))
@@ -140,7 +143,8 @@ function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, me
     # disjointness
     connectedness==Matrix(I(length(sims))) ? disjoint=false : disjoint=true
 
-    return InvariantMeasure(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary, Float64(diameter), Float64(measure), weights, disjoint, connectedness)
+    return InvariantMeasure(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary,
+            Float64(diameter), Float64(measure), weights, disjoint, connectedness, symmetry_group)
 
 end
 

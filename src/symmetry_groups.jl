@@ -57,3 +57,5 @@ function DihedralGroup(n::Integer; centre = [0.0,0.0], angle_offest=0.0)
     end
     return get_group_operations(GroupGenerator(n,reflections,centre))
 end
+
+get_symmetry_group(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? InvariantMeasure.symmetry_group : InvariantMeasure.parent_measure.symmetry_group
