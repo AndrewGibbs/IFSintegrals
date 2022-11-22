@@ -2,7 +2,7 @@
 function sketch_attractor(Γ::SelfSimilarFractal; mem_const = 10000, start_count = 10)
     if isa(Γ,InvariantMeasure)
         N = Γ.spatial_dimension
-    elseif isa(Γ,SubAttractor)
+    elseif isa(Γ,SubInvariantMeasure)
         N = Γ.attractor.spatial_dimension
     end
     X = [Γ.barycentre]

@@ -35,7 +35,7 @@ function get_quadrature_from_partition(γ::partition_data, M::Int64, S::Vector{S
 end
 
 """
-    x,w = barycentre_rule(Γ::Union{InvariantMeasure,SubAttractor},h::Real) 
+    x,w = barycentre_rule(Γ::Union{InvariantMeasure,SubInvariantMeasure},h::Real) 
 
 returns a vector of N weights wⱼ>0 and nodes xⱼ ∈ Rⁿ, for approximation of integrals defined on an IFS Γ⊂Rⁿ.
 """
@@ -47,7 +47,7 @@ function barycentre_rule(Γ::InvariantMeasure{T,M_},h::Float64) where {T<:Union{
     end
 end
 
-function barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} 
+function barycentre_rule(Γ::SubInvariantMeasure{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}} 
     if Γ.attractor.homogeneous
         return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.attractor.weights, h)
     else
@@ -56,7 +56,7 @@ function barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real
 end
 
 """
-    x,y,w = barycentre_rule(Γ₁::Union{InvariantMeasure,SubAttractor},Γ₂::Union{InvariantMeasure,SubAttractor},h::Real)
+    x,y,w = barycentre_rule(Γ₁::Union{InvariantMeasure,SubInvariantMeasure},Γ₂::Union{InvariantMeasure,SubInvariantMeasure},h::Real)
 
 returns N weights wⱼ>0 and nodes x,y ∈ Rⁿ, for approximation of double integrals over Γ₁,Γ₂⊂Rⁿ.
 Uses Barycentre rule quadrature, the fractal Γ will be subdivided until each subcomponent has a diameter of
@@ -143,7 +143,7 @@ end
 # Bodged function below.
 # I think there's a scaling issue when applying Mantica's algorithm to subcomonents.
  # A₀ = μ₁ does not seem to hold in that case. Need to understand why.
-function gauss_quad(Γ::SubAttractor{V,M}, N::Int64) where {V<:Real, M<:Real}
+function gauss_quad(Γ::SubInvariantMeasure{V,M}, N::Int64) where {V<:Real, M<:Real}
     x, w = gauss_quad(Γ.attractor,N)
     sₘ = sim_comp(Γ.IFS, Γ.index)
     return [sim_map(sₘ,x[n]) for n=1:length(x)], w*Γ.measure/Γ.attractor.measure

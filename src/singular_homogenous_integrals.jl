@@ -1,5 +1,5 @@
 """
-    eval_green_double_integral(Γ::Union{InvariantMeasure,SubAttractor}, t::Float64, h::Float64; μ::Vector{Float64} = Γ.weights)
+    eval_green_double_integral(Γ::Union{InvariantMeasure,SubInvariantMeasure}, t::Float64, h::Float64; μ::Vector{Float64} = Γ.weights)
 
 Approximates the integral ∫_Γ∫_Γ Φ_t(x,y) dμ₁(y)dμ₂(x), where Φ_t is the Green's function for
 the n-dimensional Laplace problem, and the integrals are with respect to Hausdorff measure.
@@ -55,7 +55,7 @@ function eval_green_double_integral(Γ::SelfSimilarFractal, t::Real, h::Real; μ
 end
 
 """
-    eval_green_single_integral_fixed_point(Γ::Union{InvariantMeasure,SubAttractor}, t::Float64, h::Float64, n::Int64)
+    eval_green_single_integral_fixed_point(Γ::Union{InvariantMeasure,SubInvariantMeasure}, t::Float64, h::Float64, n::Int64)
     
 Approximates the integral ∫_Γ Φ_t(x,y) dμ(x), where Φ_t is the Green's function for
 the n-dimensional Laplace equation, and the integrals are with respect to Hausdorff measure.

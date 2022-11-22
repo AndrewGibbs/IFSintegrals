@@ -1,11 +1,11 @@
 struct Projection{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} # onto the coefficient space of piecewise constants on the fractal
     domain::SelfSimilarFractal{V,M}
     #Lₕ::Vector{Vector{Int64}} # subindices list
-    mesh::Vector{SubAttractor{V,M}}
+    mesh::Vector{SubInvariantMeasure{V,M}}
     coeffs::Vector{Complex{Float64}}
 end
 
-function project(mesh::Vector{SubAttractor{V,M}}, f::Function, h_quad::Float64) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function project(mesh::Vector{SubInvariantMeasure{V,M}}, f::Function, h_quad::Float64) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     F = zeros(Complex{Float64},length(mesh))
     n_count = 0
     for Γₙ in mesh
@@ -71,7 +71,7 @@ function embed(f::Projection,g::Projection)
     return Projection(f.domain,g.mesh,new_coeffs)
 end
 
-function embed(f::Projection,mesh::Vector{SubAttractor{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function embed(f::Projection,mesh::Vector{SubInvariantMeasure{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     if length(mesh) == length(f.coeffs)
         return f
     elseif length(mesh) > length(f.coeffs)
@@ -115,7 +115,7 @@ function get_H_minus_half_norm_function(Γ::SelfSimilarFractal; h_mesh::Real=1.0
     return norm
 end
 
-function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64},mesh::Vector{SubAttractor{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64},mesh::Vector{SubInvariantMeasure{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     #embed
     norm(ϕ::Projection) = sqrt((2*abs(embed(ϕ,mesh).coeffs'*Gᵢ*embed(ϕ,mesh).coeffs)))
     return norm

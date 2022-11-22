@@ -28,7 +28,7 @@ struct DiscreteSIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     SIO::SIO{V,M}
     h_mesh::Float64
     h_quad::Float64
-    mesh::Vector{SubAttractor{V,M}}
+    mesh::Vector{SubInvariantMeasure{V,M}}
     Lₕ::Vector{Vector{Int64}} # subindices list
     Galerkin_matrix::Matrix{<:Complex{<:Float64}} # not sure how to parametrise this as subtype of Array{<:Complex{<:Real},2}
 end
@@ -41,7 +41,7 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
     Γ = K.domain
     Lₕ = subdivide_indices(K.domain,h_mesh) #get vector indices for subcomponents
     N = length(Lₕ)
-    mesh = [SubAttractor(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
+    mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
     M = length(Γ.IFS)
 
     # create blank matrix of flags, describing if the matrix entry has been filled
@@ -197,14 +197,14 @@ end
 
 function singular_elliptic_double_integral(K::SIO, h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
     # if there are many wavelengths, use the more complicated approximation, which has better rates for high frequencies
-    if real(K.wavenumber)*SubAttractor(K.domain,index).diameter > Cosc
+    if real(K.wavenumber)*SubInvariantMeasure(K.domain,index).diameter > Cosc
         return singular_elliptic_double_integral_full(K::SIO,h_quad::Real,index; Cosc = Cosc)
     else
         return singular_elliptic_double_integral_basic(K::SIO,h_quad::Real,index)
     end
 end
 
-function singular_elliptic_double_integral(Γ::Union{InvariantMeasure,SubAttractor},k::Number,h_quad::Real; Cosc = 2π)
+function singular_elliptic_double_integral(Γ::Union{InvariantMeasure,SubInvariantMeasure},k::Number,h_quad::Real; Cosc = 2π)
     K = SingleLayer(Γ, k)
     return singular_elliptic_double_integral(K, h_quad; Cosc = Cosc)
 end
@@ -212,7 +212,7 @@ end
 function singular_elliptic_double_integral_full(K::SIO,h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
     # following the procedure in the paper, to avoid errors in far-field.
     # notation agrees with quadrature paper here, rather than BEM paper.
-    Γ = SubAttractor(K.domain,index)
+    Γ = SubInvariantMeasure(K.domain,index)
     h_star = Cosc/real(K.wavenumber) # new quadrature parameter introduced for this routine
     h = min(h_star,h_quad)
     L_h_star = subdivide_indices(Γ,h_star)
@@ -220,9 +220,9 @@ function singular_elliptic_double_integral_full(K::SIO,h_quad::Real,index::Array
 
     I = zero(Complex{Float64})
     for n in L_h_star
-        Γₙ = SubAttractor(Γ,n)
+        Γₙ = SubInvariantMeasure(Γ,n)
         for m in L_h_star
-            Γₘ = SubAttractor(Γ,m)
+            Γₘ = SubInvariantMeasure(Γ,m)
             x,y,w = barycentre_rule(Γₙ,Γₘ,h)
             Npts += length(w) # these points will get used at 
             if m == n # diagonal quadrature element
@@ -237,7 +237,7 @@ function singular_elliptic_double_integral_full(K::SIO,h_quad::Real,index::Array
 end
 
 function singular_elliptic_double_integral_basic(K::SIO,h::Real,index::Array{Int64}=[0])
-    Γ = SubAttractor(K.domain,index)
+    Γ = SubInvariantMeasure(K.domain,index)
     x,y,w = barycentre_rule(Γ,Γ,h)
     if K.domain.disjoint
         I = K.singularity_scale*eval_green_double_integral(Γ,K.singularity_strength,h) + w'*K.Lipschitz_part_of_kernel.(x,y)
@@ -258,9 +258,9 @@ function get_quad_scales(K::SIO,Lₕ::Vector{Vector{Int64}})
     F_upper = ones(Float64,length(Lₕ),length(Lₕ))
     F_lower = ones(Float64,length(Lₕ),length(Lₕ))
     for m_count = 1:length(Lₕ)
-        Γₘ = SubAttractor(Γ,Lₕ[m_count])
+        Γₘ = SubInvariantMeasure(Γ,Lₕ[m_count])
         for n_count = m_count:length(Lₕ)
-            Γₙ = SubAttractor(Γ,Lₕ[n_count])
+            Γₙ = SubInvariantMeasure(Γ,Lₕ[n_count])
             if n_count!=m_count
                 dist_upper = norm(Γₙ.barycentre-Γₘ.barycentre)
                 dist_lower = max(dist_upper - Γₙ.diameter - Γₘ.diameter,0)

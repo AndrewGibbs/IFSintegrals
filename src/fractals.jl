@@ -159,10 +159,10 @@ Representation of a subcomponent of a fractal Γ, using standard vector index no
 If Γ is a subattractor, then the vector indices are concatenated to produce a new subatractor,
 which stores the original attractor.
 """
-function SubAttractor(Γ::InvariantMeasure{V,M}, index::Vector{<:Integer}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function SubInvariantMeasure(Γ::InvariantMeasure{V,M}, index::Vector{<:Integer}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     #quick condition for trivial case:
     if index == [0]
-        return SubAttractor{V,M}(Γ, Γ.IFS, [0], Γ.barycentre, Γ.diameter, Γ.measure)
+        return SubInvariantMeasure{V,M}(Γ, Γ.IFS, [0], Γ.barycentre, Γ.diameter, Γ.measure)
     else #non-trivial case
 
         # get new measure and diameter. First initialise:
@@ -187,12 +187,12 @@ function SubAttractor(Γ::InvariantMeasure{V,M}, index::Vector{<:Integer}) where
         #     new_bary = sim_map(Γ.IFS[m], new_bary)
         # end
 
-        return SubAttractor{V,M}(Γ,new_IFS,   index, new_bary, new_diam, new_measure)
+        return SubInvariantMeasure{V,M}(Γ,new_IFS,   index, new_bary, new_diam, new_measure)
         
     end
 end
 
-function SubAttractor(Γ::SubAttractor{V,M}, index::Vector{<:Integer}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function SubInvariantMeasure(Γ::SubInvariantMeasure{V,M}, index::Vector{<:Integer}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
         #quick condition for trivial case:
         if index == [0]
             return Γ
@@ -222,15 +222,15 @@ function SubAttractor(Γ::SubAttractor{V,M}, index::Vector{<:Integer}) where {V<
             end
     
     
-            return SubAttractor{V,M}(Γ.attractor,new_IFS, index, new_bary, new_diam, new_measure)
+            return SubInvariantMeasure{V,M}(Γ.attractor,new_IFS, index, new_bary, new_diam, new_measure)
         end
     end
 
-SubAttractor(Γ::SelfSimilarFractal, index::Integer) = SubAttractor(Γ, [index])
+SubInvariantMeasure(Γ::SelfSimilarFractal, index::Integer) = SubInvariantMeasure(Γ, [index])
 
 # overload the indexing function, so we can get neat vector subscripts
-getindex(Γ::SelfSimilarFractal, inds...) = SubAttractor(Γ,[i for i in inds])
-getindex(Γ::SelfSimilarFractal, inds::Vector{<:Integer}) = SubAttractor(Γ,inds)
+getindex(Γ::SelfSimilarFractal, inds...) = SubInvariantMeasure(Γ,[i for i in inds])
+getindex(Γ::SelfSimilarFractal, inds::Vector{<:Integer}) = SubInvariantMeasure(Γ,inds)
 
 # now define attractors of popular fractals
 """
@@ -240,7 +240,7 @@ formed by removing the middle α of the unit interval, and repeating on each sub
 getweights(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.weights : Γ.attractor.weights
 
 changeweights(Γ::InvariantMeasure,μ::Vector{Float64}) = InvariantMeasure(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, Γ.Hausdorff_weights, Γ.barycentre, Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness)
-changeweights(Γ::SubAttractor,μ::Vector{Float64}) = SubAttractor(changeweights(Γ.attractor,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
+changeweights(Γ::SubInvariantMeasure,μ::Vector{Float64}) = SubInvariantMeasure(changeweights(Γ.attractor,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
 """
 attractor::InvariantMeasure
 IFS::Vector{Similarity{V,M}} # could be removed ?

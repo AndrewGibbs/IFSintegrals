@@ -8,7 +8,7 @@ import Roots: find_zero, Bisection
 import LinearAlgebra: norm, I, UniformScaling, eigvals, eigvecs
 import StaticArrays: SVector, SMatrix
 import LazySets: VPolygon, Singleton
-export Similarity, InvariantMeasure, SubAttractor, SelfSimilarFractal, sketch_attractor, CantorSet,
+export Similarity, InvariantMeasure, SubInvariantMeasure, SelfSimilarFractal, sketch_attractor, CantorSet,
         Sierpinski, SquareFlake, KochFlake, CantorN, Carpet,
         sim_map, full_map,
         barycentre_rule, subdivide_indices, eval_green_double_integral,
