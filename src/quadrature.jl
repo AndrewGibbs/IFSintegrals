@@ -35,11 +35,11 @@ function get_quadrature_from_partition(γ::partition_data, M::Int64, S::Vector{S
 end
 
 """
-    x,w = barycentre_rule(Γ::Union{Attractor,SubAttractor},h::Real) 
+    x,w = barycentre_rule(Γ::Union{InvariantMeasure,SubAttractor},h::Real) 
 
 returns a vector of N weights wⱼ>0 and nodes xⱼ ∈ Rⁿ, for approximation of integrals defined on an IFS Γ⊂Rⁿ.
 """
-function barycentre_rule(Γ::Attractor{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+function barycentre_rule(Γ::InvariantMeasure{T,M_},h::Float64) where {T<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     if Γ.homogeneous
         return get_quadrature_from_partition(partition_data_unindexed{T}(Γ.barycentre,Γ.measure,Γ.diameter), length(Γ.IFS), Γ.IFS, Γ.weights, h)
     else
@@ -56,7 +56,7 @@ function barycentre_rule(Γ::SubAttractor{T,M_},h::Float64) where {T<:Union{Real
 end
 
 """
-    x,y,w = barycentre_rule(Γ₁::Union{Attractor,SubAttractor},Γ₂::Union{Attractor,SubAttractor},h::Real)
+    x,y,w = barycentre_rule(Γ₁::Union{InvariantMeasure,SubAttractor},Γ₂::Union{InvariantMeasure,SubAttractor},h::Real)
 
 returns N weights wⱼ>0 and nodes x,y ∈ Rⁿ, for approximation of double integrals over Γ₁,Γ₂⊂Rⁿ.
 Uses Barycentre rule quadrature, the fractal Γ will be subdivided until each subcomponent has a diameter of
@@ -132,7 +132,7 @@ Returns N Gaussian weights w ∈ Rᴺ and nodes x ∈ Rᴺˣᴺ.
 Here Γ must be an SelfSimilarFractal in one spatial dimension.
 N is the order of the Gauss rule, i.e. number of weights and nodes.
 """
-function gauss_quad(Γ::Attractor{V,M}, N::Int64) where {V<:Real, M<:Real}
+function gauss_quad(Γ::InvariantMeasure{V,M}, N::Int64) where {V<:Real, M<:Real}
     J = get_Jacobi_matrix(Γ,N-1)
     vv = real.(eigvecs(J))
     x = real.(eigvals(J))

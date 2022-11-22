@@ -10,7 +10,7 @@ end
 
 """
     CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
-Returns a Cantor Set as an Attractor (type) of an iterated function system.
+Returns a Cantor Set as an InvariantMeasure (type) of an iterated function system.
 """
 function CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
     S = [Similarity(contraction,0.0),Similarity(contraction,1-contraction)]
@@ -24,12 +24,12 @@ function CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
         disjoint = true
         connectedness_matrix = Matrix(I(2))
     end
-    return Attractor(S,1,d,true,are_weights_Hausdorff(weights,S,d),bary,1.0,1.0,weights, disjoint, connectedness_matrix)
+    return InvariantMeasure(S,1,d,true,are_weights_Hausdorff(weights,S,d),bary,1.0,1.0,weights, disjoint, connectedness_matrix)
 end
 
 """
     CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
-Returns a Cantor dust as an Attractor (type) of an iterated function system.
+Returns a Cantor dust as an InvariantMeasure (type) of an iterated function system.
 """
 function CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
     S = [Similarity(contraction,[0.0,0.0]),Similarity(contraction,[1-contraction,0.0]),Similarity(contraction,[0.0,1-contraction]),Similarity(contraction,[1-contraction,1-contraction])]
@@ -42,7 +42,7 @@ function CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
         disjoint = true
         connectedness_matrix = Matrix(I(4))
     end
-    return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0,weights,disjoint,connectedness_matrix)
+    return InvariantMeasure(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0,weights,disjoint,connectedness_matrix)
 end
 
 function RotatedDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
@@ -56,12 +56,12 @@ function RotatedDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
         disjoint = true
         connectedness_matrix = Matrix(I(4))
     end
-    return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0,weights,disjoint,connectedness_matrix)
+    return InvariantMeasure(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, sqrt(2), 1.0,weights,disjoint,connectedness_matrix)
 end
 
 """
     CantorN(N::Integer; contraction = 1/3)
-Returns the Cartesian product of N Cantor Sets, as an Attractor (type) of an iterated function system.
+Returns the Cartesian product of N Cantor Sets, as an InvariantMeasure (type) of an iterated function system.
 For example, when N=2, we obtain Cantor Dust.
 """
 function CantorN(N::Integer; contraction = 1/3)
@@ -81,12 +81,12 @@ function CantorN(N::Integer; contraction = 1/3)
     else
         error("Contraction must be <1/2")
     end
-    return Attractor(S, 2, d, true, true, bary, sqrt(N), 1.0, weights, true, adj_mat)
+    return InvariantMeasure(S, 2, d, true, true, bary, sqrt(N), 1.0, weights, true, adj_mat)
 end
 
 """
     Sierpinski(;weights=[1/3, 1/3, 1/3])
-Returns the Sierpinski triangle, as an Attractor (type) of an iterated function system.
+Returns the Sierpinski triangle, as an InvariantMeasure (type) of an iterated function system.
 """
 function Sierpinski(;weights=[1/3, 1/3, 1/3])
     courage = Similarity(1/2,[0,0])
@@ -95,7 +95,7 @@ function Sierpinski(;weights=[1/3, 1/3, 1/3])
     S = [courage,wisdom,power]
     d = log(3)/log(2)
     bary = default_bary(S,d,weights,[1/2,sqrt(3)/4])
-    return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)))
+    return InvariantMeasure(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)))
 end
 # function Sierpinski(;weights=[1/3, 1/3, 1/3])
 #     courage = Similarity(1/2,[0,1/6])
@@ -104,14 +104,14 @@ end
 #     S = [courage,wisdom,power]
 #     d = log(3)/log(2)
 #     bary = default_bary(S,d,weights,[0,(1-2*sqrt(2))/9])
-#     return Attractor(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)))
+#     return InvariantMeasure(S, 2, d, true, are_weights_Hausdorff(weights,S,d), bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)))
 # end
-#            Attractor(sims,top_dim,Hdim,uniform,get_barycentre(sims,Hdim),diameter,measure)
+#            InvariantMeasure(sims,top_dim,Hdim,uniform,get_barycentre(sims,Hdim),diameter,measure)
 
 
 """
     SquareFlake(;weights=ones(16)./16)
-Returns the Square Snowflake, sometimes referred to as the "Minkowski Island", as an Attractor (type) of an iterated function system.
+Returns the Square Snowflake, sometimes referred to as the "Minkowski Island", as an InvariantMeasure (type) of an iterated function system.
 See: https://en.wikipedia.org/wiki/Minkowski_sausage
 """
 function SquareFlake(;weights=ones(16)./16)
@@ -138,12 +138,12 @@ function SquareFlake(;weights=ones(16)./16)
     R = get_diameter(IFS) # I'm sure this can be calculated by hand... but not today.
     # also the 'measure' is not really 1 here. But it doesn't matter.
     bary = default_bary(IFS,2.0,weights,[0.0,0.0])
-    return Attractor(IFS, 2, 2.0, true, are_weights_Hausdorff(weights,IFS,2), bary, R, 1.0, weights)
+    return InvariantMeasure(IFS, 2, 2.0, true, are_weights_Hausdorff(weights,IFS,2), bary, R, 1.0, weights)
 end
 
 """
     KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
-Returns the Koch Snowflake as an Attractor (type) of an iterated function system.
+Returns the Koch Snowflake as an InvariantMeasure (type) of an iterated function system.
 """
 function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     IFS = [Similarity(sqrt(1/3),[0, 0], pi/6),
@@ -247,7 +247,7 @@ function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     #     end
     # end
     # more traditional diameter: 2*sqrt(3)/3
-    return Attractor(IFS, 2, 2.0, false, are_weights_Hausdorff(weights,IFS,2), bary, 2.0, 1.0, weights, false, connectedness)
+    return InvariantMeasure(IFS, 2, 2.0, false, are_weights_Hausdorff(weights,IFS,2), bary, 2.0, 1.0, weights, false, connectedness)
 end
 
 function Carpet(;weights = ones(8)/8)
@@ -282,5 +282,5 @@ function Carpet(;weights = ones(8)/8)
     end
     d = log(8)/log(3)
     bary = default_bary(IFS,d,weights,[0.5,0.5])
-    return Attractor(IFS, 2, d, true, are_weights_Hausdorff(weights,IFS,d), bary, sqrt(2), 1.0, weights, false, connectedness)
+    return InvariantMeasure(IFS, 2, d, true, are_weights_Hausdorff(weights,IFS,d), bary, sqrt(2), 1.0, weights, false, connectedness)
 end

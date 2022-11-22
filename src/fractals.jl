@@ -50,14 +50,14 @@ abstract type SelfSimilarFractal{V<:Union{Real,AbstractVector}, M<:Union{Real,Ab
 end
 
 """
-    Attractor(sims::Array{Similarity}; measure::Real=1.0) = Attractor(sims, get_diameter(sims); measure=measure)
+    InvariantMeasure(sims::Array{Similarity}; measure::Real=1.0) = InvariantMeasure(sims, get_diameter(sims); measure=measure)
     
 Representation of an attractor of an iterated function system (IFS).
 Constructor requires only an IFS, which is of type Array{Similarity}, and diameter.
 All other essential properties can be deduced from this, including barycentre
 and dimension, which are approximated numerically.
 """
-struct Attractor{V,M} <: SelfSimilarFractal{V,M}
+struct InvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
     IFS::Vector{Similarity{V,M}}
     spatial_dimension::Int64
     Hausdorff_dimension::Float64
@@ -79,9 +79,9 @@ construct an example where this is false yet, but I haven't considered
 any rotations.
 """
 
-# Attractor(sims::Array{Similarity}; measure::Real=1.0) = Attractor(sims, get_diameter(sims); measure=measure)
+# InvariantMeasure(sims::Array{Similarity}; measure::Real=1.0) = InvariantMeasure(sims, get_diameter(sims); measure=measure)
 
-function Attractor(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::Real=1.0, weights::Vector{<:Real}=[0.0], connectedness::Matrix{Bool}=Matrix(I(length(sims)))) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}# outer constructor for attractor type
+function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::Real=1.0, weights::Vector{<:Real}=[0.0], connectedness::Matrix{Bool}=Matrix(I(length(sims)))) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}# outer constructor for attractor type
     count = 1
     top_dims = zeros(Int64,length(sims))
     contractions = zeros(Float64,length(sims))
@@ -140,13 +140,13 @@ function Attractor(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::
     # disjointness
     connectedness==Matrix(I(length(sims))) ? disjoint=false : disjoint=true
 
-    return Attractor(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary, Float64(diameter), Float64(measure), weights, disjoint, connectedness)
+    return InvariantMeasure(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary, Float64(diameter), Float64(measure), weights, disjoint, connectedness)
 
 end
 
 # subcomponent of attractor, as a subclass of fractal
-struct SubAttractor{V,M} <: SelfSimilarFractal{V,M}
-    attractor::Attractor
+struct SubInvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
+    invariant_measure::InvariantMeasure
     IFS::Vector{Similarity{V,M}} # could be removed ?
     index::Vector{Int64}
     barycentre::V
@@ -159,7 +159,7 @@ Representation of a subcomponent of a fractal Γ, using standard vector index no
 If Γ is a subattractor, then the vector indices are concatenated to produce a new subatractor,
 which stores the original attractor.
 """
-function SubAttractor(Γ::Attractor{V,M}, index::Vector{<:Integer}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function SubAttractor(Γ::InvariantMeasure{V,M}, index::Vector{<:Integer}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     #quick condition for trivial case:
     if index == [0]
         return SubAttractor{V,M}(Γ, Γ.IFS, [0], Γ.barycentre, Γ.diameter, Γ.measure)
@@ -237,12 +237,12 @@ getindex(Γ::SelfSimilarFractal, inds::Vector{<:Integer}) = SubAttractor(Γ,inds
 The middle-α Cantor set (default is α=1/3),
 formed by removing the middle α of the unit interval, and repeating on each sub interval.
 """
-getweights(Γ::SelfSimilarFractal) = isa(Γ,Attractor) ? Γ.weights : Γ.attractor.weights
+getweights(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.weights : Γ.attractor.weights
 
-changeweights(Γ::Attractor,μ::Vector{Float64}) = Attractor(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, Γ.Hausdorff_weights, Γ.barycentre, Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness)
+changeweights(Γ::InvariantMeasure,μ::Vector{Float64}) = InvariantMeasure(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, Γ.Hausdorff_weights, Γ.barycentre, Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness)
 changeweights(Γ::SubAttractor,μ::Vector{Float64}) = SubAttractor(changeweights(Γ.attractor,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
 """
-attractor::Attractor
+attractor::InvariantMeasure
 IFS::Vector{Similarity{V,M}} # could be removed ?
 index::Vector{Int64}
 barycentre::V

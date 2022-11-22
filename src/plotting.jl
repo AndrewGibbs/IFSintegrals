@@ -1,6 +1,6 @@
 # provides a sketch of an attractor in N topological dimensions
 function sketch_attractor(Γ::SelfSimilarFractal; mem_const = 10000, start_count = 10)
-    if isa(Γ,Attractor)
+    if isa(Γ,InvariantMeasure)
         N = Γ.spatial_dimension
     elseif isa(Γ,SubAttractor)
         N = Γ.attractor.spatial_dimension
@@ -68,7 +68,7 @@ Provides a simple sketch of the attractor Γ, by repeatedly applying the IFS.
 See also: [`draw!`](@ref)
 """
 function draw(Γ::SelfSimilarFractal; markersize=0.1, color="black", grid=true, mem_const = 10000)
-    if isa(Γ,Attractor)
+    if isa(Γ,InvariantMeasure)
         n = Γ.spatial_dimension
     else
         n = Γ.attractor.spatial_dimension
@@ -88,7 +88,7 @@ end
 Similar to [`draw`](@ref), except it will draw on the current image.
 """
 function draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black", grid=true, mem_const = 100000)
-    if isa(Γ,Attractor)
+    if isa(Γ,InvariantMeasure)
         n = Γ.spatial_dimension
     else
         n = Γ.attractor.spatial_dimension

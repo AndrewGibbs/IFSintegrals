@@ -204,7 +204,7 @@ function singular_elliptic_double_integral(K::SIO, h_quad::Real,index::Array{Int
     end
 end
 
-function singular_elliptic_double_integral(Γ::Union{Attractor,SubAttractor},k::Number,h_quad::Real; Cosc = 2π)
+function singular_elliptic_double_integral(Γ::Union{InvariantMeasure,SubAttractor},k::Number,h_quad::Real; Cosc = 2π)
     K = SingleLayer(Γ, k)
     return singular_elliptic_double_integral(K, h_quad; Cosc = Cosc)
 end

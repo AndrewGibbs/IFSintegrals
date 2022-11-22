@@ -89,7 +89,7 @@ end
 
 function subdivide_indices(Γ::SelfSimilarFractal, h::Real; int_type::DataType=Int64)
     I = Vector{int_type}[]
-    if isa(Γ,Attractor)
+    if isa(Γ,InvariantMeasure)
         IFS = Γ.IFS
     else
         IFS = Γ.attractor.IFS

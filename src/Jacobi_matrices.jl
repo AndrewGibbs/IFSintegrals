@@ -115,7 +115,7 @@ function get_next_modified_coeffs_from_coeffs(Γⁿ⁻¹::Vector{T}, Γⁿ⁻²:
     return (getweights(Γ)'*big_sum)/(1-denominator)
 end
 
-function get_Jacobi_matrix(Γ::Attractor{V,M_}, N::Int64; T=Float64::DataType) where {V<:Real, M_<:Real}
+function get_Jacobi_matrix(Γ::InvariantMeasure{V,M_}, N::Int64; T=Float64::DataType) where {V<:Real, M_<:Real}
     # initialisation
     A = zeros(T,N+1)
     r = zeros(T,N+1)
