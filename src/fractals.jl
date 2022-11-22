@@ -236,20 +236,8 @@ SubInvariantMeasure(Γ::SelfSimilarFractal, index::Integer) = SubInvariantMeasur
 getindex(Γ::SelfSimilarFractal, inds...) = SubInvariantMeasure(Γ,[i for i in inds])
 getindex(Γ::SelfSimilarFractal, inds::Vector{<:Integer}) = SubInvariantMeasure(Γ,inds)
 
-# now define attractors of popular fractals
-"""
-The middle-α Cantor set (default is α=1/3),
-formed by removing the middle α of the unit interval, and repeating on each sub interval.
-"""
 getweights(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.weights : Γ.parent_measure.weights
+get_symmetry_group(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? InvariantMeasure.symmetry_group : InvariantMeasure.parent_measure.symmetry_group
 
 changeweights(Γ::InvariantMeasure,μ::Vector{Float64}) = InvariantMeasure(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, Γ.Hausdorff_weights, Γ.barycentre, Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness)
 changeweights(Γ::SubInvariantMeasure,μ::Vector{Float64}) = SubInvariantMeasure(changeweights(Γ.parent_measure,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
-"""
-parent_measure::InvariantMeasure
-IFS::Vector{Similarity{V,M}} # could be removed ?
-index::Vector{Int64}
-barycentre::V
-diameter::Float64
-measure::Float64
-"""

@@ -27,7 +27,7 @@ function CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
     if are_weights_Hausdorff(weights,S,d)
         return InvariantMeasure(S,1,d,true,true,bary,1.0,1.0,weights, disjoint, connectedness_matrix,TrivialGroup(1))
     else
-        return InvariantMeasure(S,1,d,true,false,bary,1.0,1.0,weights, disjoint, connectedness_matrix,DihedralGroup(1, centre = [1/2]))
+        return InvariantMeasure(S,1,d,true,false,bary,1.0,1.0,weights, disjoint, connectedness_matrix, D₂_in_1D(centre=0.5) )
     end
 end
 

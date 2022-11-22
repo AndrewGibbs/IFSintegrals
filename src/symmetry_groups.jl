@@ -1,13 +1,13 @@
 # General operations on rotations and reflections
-struct GroupGenerator
+struct GroupGenerator2D
     num_rotations :: Int64
     reflections :: Vector{Float64} # ∈ [0,π]
     centre :: Vector{Float64}  # ∈ R²
 end
 
-struct AutomorphicMap
-    A::Matrix{Float64}
-    δ::Vector{Float64}
+struct AutomorphicMap{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    A::M
+    δ::V
 end
 
 # Now define some preset groups:
@@ -24,7 +24,7 @@ rotation2(θ) = [cos(θ) -sin(θ); sin(θ) cos(θ)]
 reflection2(θ) = [cos(2θ) sin(2θ); sin(2θ) -cos(2θ)]
 
 # build full group, given the GroupGenerator object
-function get_group_operations(G::GroupGenerator)
+function get_group_operations(G::GroupGenerator2D)
     δθ = 2π/G.num_rotations
     num_reflections = length(G.reflections)
     
@@ -58,4 +58,4 @@ function DihedralGroup(n::Integer; centre = [0.0,0.0], angle_offest=0.0)
     return get_group_operations(GroupGenerator(n,reflections,centre))
 end
 
-get_symmetry_group(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? InvariantMeasure.symmetry_group : InvariantMeasure.parent_measure.symmetry_group
+D₂_in_1D(;centre::Float64=0.0) = [IdentityMap(1), AutomorphicMap(-1.0,centre)]
