@@ -195,7 +195,7 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
     end
 end
 
-function singular_elliptic_double_integral(K::SIO, h_quad::Real,index::Array{Int64}=[0]; Cosc = 2π)
+function singular_elliptic_double_integral(K::SIO, h_quad::Real, index::Array{Int64}=[0]; Cosc = 2π)
     # if there are many wavelengths, use the more complicated approximation, which has better rates for high frequencies
     if real(K.wavenumber)*SubInvariantMeasure(K.domain,index).diameter > Cosc
         return singular_elliptic_double_integral_full(K::SIO,h_quad::Real,index; Cosc = Cosc)
@@ -242,7 +242,7 @@ function singular_elliptic_double_integral_basic(K::SIO,h::Real,index::Array{Int
     if K.domain.disjoint
         I = K.singularity_scale*eval_green_double_integral(Γ,K.singularity_strength,h) + w'*K.Lipschitz_part_of_kernel.(x,y)
     else
-        I = K.singularity_scale*s_energy(Γ,s,h) + w'*K.Lipschitz_part_of_kernel.(x,y)
+        I = K.singularity_scale*s_energy(Γ,K.singularity_strength,h) + w'*K.Lipschitz_part_of_kernel.(x,y)
     end
     return I
 end

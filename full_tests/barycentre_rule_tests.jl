@@ -10,7 +10,7 @@ h = 0.05
         Similarity(ρ,[(1-ρ)/2,sqrt(3)*(1-ρ)/2])
         Similarity(ρ,[(1-ρ)/2,(1-ρ)/(2*sqrt(3))])
     ]
-Γ = Attractor(IFS)
+Γ = InvariantMeasure(IFS)
 
 threshold = 1E-14
 

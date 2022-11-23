@@ -84,7 +84,7 @@ any rotations.
 
 function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, measure::Real=1.0,
         weights::Vector{<:Real}=[0.0], connectedness::Matrix{Bool}=Matrix(I(length(sims))),
-        symmetry_group::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}# outer constructor for parent_measure type
+        symmetry_group::Vector{AutomorphicMap{V,M_}}=TrivialGroup(length(sims[1].δ))) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}# outer constructor for parent_measure type
     count = 1
     top_dims = zeros(Int64,length(sims))
     contractions = zeros(Float64,length(sims))

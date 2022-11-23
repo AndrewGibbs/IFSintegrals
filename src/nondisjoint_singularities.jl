@@ -107,7 +107,7 @@ function check_for_ℓ_singular_integrals(Γ::SelfSimilarFractal{V,M_}, mcat::Ve
     return is_singular
 end
 
-function construct_singularity_matrix(Γ::SelfSimilarFractal{V,M_}, s::Number; μ₂::Vector{Float64} = getweights(Γ), G₂=TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+function construct_singularity_matrix(Γ::SelfSimilarFractal{V,M_}, s::Number; μ₂::Vector{Float64} = getweights(Γ), G₂=get_symmetry_group(Γ)) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
 
     # add optional third argument for the case when the second set of weights is different.
     # Need to add a method for computing p_\bm too.
@@ -230,7 +230,7 @@ where A and B are SelfSimilarFractal.
 If quad_rule is replaced by some h::Number, the barycentre rule is used with meshwidth h.
 """
 function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, quad_rule::Function;
-                μ₂::Vector{Float64} = getweights(Γ), G₂::Vector{AutomorphicMap{V,M}}=TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+                μ₂::Vector{Float64} = getweights(Γ), G₂=get_symmetry_group(Γ)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₂=G₂)
 
     μ₁ = getweights(Γ)

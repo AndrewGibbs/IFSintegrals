@@ -94,6 +94,57 @@ function long_bary(Γ::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<
     return I, N
 end
 
+function long_bary(Γ₁::SelfSimilarFractal{V,U},Γ₂::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<:Union{Real,AbstractVector}, U<:Union{Real,AbstractMatrix}}
+    # note that the input Γ may be an parent_measure or a subcomponent of an parent_measure
+    I = 0.0 # value of integral which will be added to cumulatively
+    N = 0
+    M₁ = length(Γ₁.IFS)
+    M₂ = length(Γ₂.IFS)
+    if Γ₁.diameter>h && Γ₂.diameter>h
+        for m=1:M₁
+            for m_=1:M₂
+                I_,N_ = long_bary(Γ₁[m],Γ₂[m_],f,h) # Here Γ[m] represents the m'th subcomponent of Γ, m=1,...,M#
+                N += N_
+                I += I_
+            end
+        end
+    elseif Γ₁.diameter>h
+        for m=1:M₁
+            I_,N_ = long_bary(Γ₁[m],Γ₂,f,h) 
+            N += N_
+            I += I_
+        end
+    elseif Γ₂.diameter>h
+        for m=1:M₂
+            I_,N_ = long_bary(Γ₁,Γ₂[m],f,h)
+            N += N_
+            I += I_
+        end
+    else
+        I = f(Γ₁.barycentre,Γ₂.barycentre)*Γ₁.measure*Γ₂.measure # one point quadrature at the finest level
+        N = 1
+    end
+    return I, N
+end
+
+function long_bary_v2(Γ₁::SelfSimilarFractal{V,U},Γ₂::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<:Union{Real,AbstractVector}, U<:Union{Real,AbstractMatrix}}
+    # note that the input Γ may be an parent_measure or a subcomponent of an parent_measure
+    I = 0.0 # value of integral which will be added to cumulatively
+    N = 0
+    L₁ = subdivide_indices(Γ₁,h)
+    L₂ = subdivide_indices(Γ₂,h)
+    M₁ = [Γ₁[m] for m ∈ L₁]
+    M₂ = [Γ₂[m] for m ∈ L₂]
+    N₁ = length(M₁)
+    N₂ = length(M₂)
+    for n₁ = 1:N₁
+        for n₂ =1:N₂
+            I += f(M₁[n₁].barycentre, M₂[n₂].barycentre)*M₁[n₁].measure*M₂[n₂].measure
+        end
+    end
+    return I
+end
+
 """
     chaos_quad(Γ::SelfSimilarFractal{V,M},N::Int64;x₀=Γ.barycentre:::AbstractVector) where {V<:AbstractVector, M<:Union{Real,AbstractMatrix}}
 
