@@ -107,7 +107,7 @@ function check_for_ℓ_singular_integrals(Γ::SelfSimilarFractal{V,M_}, mcat::Ve
     return is_singular
 end
 
-function construct_singularity_matrix(Γ::SelfSimilarFractal{V,M_}, s::Number; μ₂::Vector{Float64} = getweights(Γ), G₂=get_symmetry_group(Γ)) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+function construct_singularity_matrix(Γ::SelfSimilarFractal{V,M_}, s::Number; μ₂::Vector{Float64} = getweights(Γ), G₂::Vector{AutomorphicMap{V,M_}}=get_symmetry_group(Γ)) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
 
     # add optional third argument for the case when the second set of weights is different.
     # Need to add a method for computing p_\bm too.
@@ -230,22 +230,24 @@ where A and B are SelfSimilarFractal.
 If quad_rule is replaced by some h::Number, the barycentre rule is used with meshwidth h.
 """
 function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, ∫∫::Function;
-                μ₂::Vector{Float64} = getweights(Γ), G₂=get_symmetry_group(Γ)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₂=G₂)
+                μ₂::Vector{Float64} = getweights(Γ),
+                G₂::Vector{AutomorphicMap{V,M}} = TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
 
-    μ₁ = getweights(Γ)
-    if μ₁ == μ₂
+    if getweights(Γ) == μ₂
+        G₂=get_symmetry_group(Γ)
         Γ_μ₂ = Γ
     else
         Γ_μ₂ = changeweights(Γ,μ₂)
     end
+
+    A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₂=G₂)
     
     r = zeros(length(R))
     for n=1:length(r)
         (m,m_) = R[n]
         # x,y,w = quad_rule(Γ[m],Γ_μ₂[m_])
         # r[n] = w'*Φₜ.(s,x,y)
-        r[n] = ∫∫(Γ[m],Γ_μ₂[m_],Φₜ.(s,x,y))
+        r[n] = ∫∫(Γ[m],Γ_μ₂[m_],(x,y)->Φₜ(s,x,y))
     end
 
     x = A\(B*r+L)
@@ -256,5 +258,5 @@ end
 # default to barycentre rule as follows: 
 function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, h::Real; μ₂::Vector{Float64}=getweights(Γ),
      G₂::Vector{AutomorphicMap{V,M}} = TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    return  s_energy(Γ, s, (A::SelfSimilarFractal{V,M}, B::SelfSimilarFractal{V,M}, f::Function)->bary_long(A,B,f,h); μ₂ = μ₂, G₂=G₂)
+    return  s_energy(Γ, s, (A::SelfSimilarFractal{V,M}, B::SelfSimilarFractal{V,M}, f::Function)->long_bary(A,B,f,h); μ₂ = μ₂, G₂=G₂)
 end

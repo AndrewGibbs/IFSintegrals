@@ -36,8 +36,7 @@ end
 #constructor:
 function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()),
           h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf),
-           vary_quad::Bool = true, repeat_blocks::Bool =true,
-           symmetry_group = TrivialGroup(K.domain.spatial_dimension))
+           vary_quad::Bool = true, repeat_blocks::Bool =true)
     Γ = K.domain
     Lₕ = subdivide_indices(K.domain,h_mesh) #get vector indices for subcomponents
     N = length(Lₕ)
@@ -75,7 +74,7 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
         prepared_singular_inds = [([0],[0])]
         prepared_singular_vals = eval_green_double_integral(Γ, s, h_high_scale)
     else #non-disjoint
-        A,B,prepared_singular_inds,R = construct_singularity_matrix(Γ, s, G₁ = symmetry_group, G₂ = symmetry_group)
+        A,B,prepared_singular_inds,R = construct_singularity_matrix(Γ, s)
         r = zeros(length(R))
         for n=1:length(r)
             (m,m_) = R[n]
