@@ -69,7 +69,7 @@ struct InvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
     weights::Vector{Float64}
     disjoint::Bool
     connectedness::Matrix{Bool}
-    symmetry_group::Vector{AutomorphicMap}
+    symmetry_group::Vector{AutomorphicMap{V,M}}
 end
 
 # outer constructor, when diameter isn't given:
@@ -237,7 +237,7 @@ getindex(Γ::SelfSimilarFractal, inds...) = SubInvariantMeasure(Γ,[i for i in i
 getindex(Γ::SelfSimilarFractal, inds::Vector{<:Integer}) = SubInvariantMeasure(Γ,inds)
 
 getweights(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.weights : Γ.parent_measure.weights
-get_symmetry_group(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? InvariantMeasure.symmetry_group : InvariantMeasure.parent_measure.symmetry_group
+get_symmetry_group(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.symmetry_group : Γ.parent_measure.symmetry_group
 
-changeweights(Γ::InvariantMeasure,μ::Vector{Float64}) = InvariantMeasure(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, Γ.Hausdorff_weights, Γ.barycentre, Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness)
+changeweights(Γ::InvariantMeasure,μ::Vector{Float64}) = InvariantMeasure(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, Γ.Hausdorff_weights, Γ.barycentre, Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness, Γ.symmetry_group)
 changeweights(Γ::SubInvariantMeasure,μ::Vector{Float64}) = SubInvariantMeasure(changeweights(Γ.parent_measure,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)

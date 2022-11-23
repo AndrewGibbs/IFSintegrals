@@ -25,9 +25,9 @@ function CantorSet(;contraction = 1/3, weights=[1/2, 1/2])
         connectedness_matrix = Matrix(I(2))
     end
     if are_weights_Hausdorff(weights,S,d)
-        return InvariantMeasure(S,1,d,true,true,bary,1.0,1.0,weights, disjoint, connectedness_matrix,TrivialGroup(1))
+        return InvariantMeasure(S,1,d,true,true,bary,1.0,1.0,weights, disjoint, connectedness_matrix, D₂_in_1D(centre=0.5))
     else
-        return InvariantMeasure(S,1,d,true,false,bary,1.0,1.0,weights, disjoint, connectedness_matrix, D₂_in_1D(centre=0.5) )
+        return InvariantMeasure(S,1,d,true,false,bary,1.0,1.0,weights, disjoint, connectedness_matrix, TrivialGroup(1))
     end
 end
 
@@ -48,9 +48,9 @@ function CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
     end
 
     if are_weights_Hausdorff(weights,S,d)
-        return InvariantMeasure(S, 2, d, true, true, bary, sqrt(2), 1.0,weights,disjoint,connectedness_matrix,TrivialGroup(1))
+        return InvariantMeasure(S, 2, d, true, true, bary, sqrt(2), 1.0,weights,disjoint,connectedness_matrix,DihedralGroup(4, centre = [0.5,0.5]))
     else
-        return InvariantMeasure(S, 2, d, true, false, bary, sqrt(2), 1.0,weights,disjoint,connectedness_matrix,DihedralGroup(1, centre = [1/2]))
+        return InvariantMeasure(S, 2, d, true, false, bary, sqrt(2), 1.0,weights,disjoint,connectedness_matrix,TrivialGroup(2))
     end
 end
 
@@ -105,9 +105,9 @@ function Sierpinski(;weights=[1/3, 1/3, 1/3])
     d = log(3)/log(2)
     bary = default_bary(S,d,weights,[1/2,sqrt(3)/4])
     if are_weights_Hausdorff(weights,S,d)
-        return InvariantMeasure(S, 2, d, true, true, bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)), TrivialGroup(2))
+        return InvariantMeasure(S, 2, d, true, true, bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)), DihedralGroup(3, centre = [1/2,sqrt(3)/4], angle_offest=π/2))
     else
-        return InvariantMeasure(S, 2, d, true, false, bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)), DihedralGroup(3, centre = [1/2,sqrt(3)/4]), angle_offest=π/2)
+        return InvariantMeasure(S, 2, d, true, false, bary, 1.0, 1.0, weights,false,Matrix(ones(Bool,3,3)), TrivialGroup(2))
     end
     
 end
@@ -157,9 +157,9 @@ function SquareFlake(;weights=ones(16)./16)
     connectedness_matrix = Matrix(I(4))
 
     if are_weights_Hausdorff(weights,IFS,2)
-        return InvariantMeasure(IFS, 2, 2.0, true, true, bary, R, 1.0, weights, connectedness_matrix,TrivialGroup(2))
+        return InvariantMeasure(IFS, 2, 2.0, true, true, bary, R, 1.0, weights, connectedness_matrix,DihedralGroup(4))
     else
-        return InvariantMeasure(IFS, 2, 2.0, true, false, bary, R, 1.0, weights, connectedness_matrix,DihedralGroup(4))
+        return InvariantMeasure(IFS, 2, 2.0, true, false, bary, R, 1.0, weights, connectedness_matrix,TrivialGroup(2))
     end
 end
 
@@ -270,9 +270,9 @@ function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     # end
     # more traditional diameter: 2*sqrt(3)/3
     if are_weights_Hausdorff(weights,IFS,2)
-        return InvariantMeasure(IFS, 2, 2.0, false, true, bary, 2.0, 1.0, weights, false, connectedness, TrivialGroup(2))
+        return InvariantMeasure(IFS, 2, 2.0, false, true, bary, 2.0, 1.0, weights, false, connectedness, DihedralGroup(6))
     else
-        return InvariantMeasure(IFS, 2, 2.0, false, false, bary, 2.0, 1.0, weights, false, connectedness, DihedralGroup(6))
+        return InvariantMeasure(IFS, 2, 2.0, false, false, bary, 2.0, 1.0, weights, false, connectedness, TrivialGroup(2))
     end
 end
 
@@ -310,8 +310,8 @@ function Carpet(;weights = ones(8)/8)
     bary = default_bary(IFS,d,weights,[0.5,0.5])
 
     if are_weights_Hausdorff(weights,IFS,d)
-        return InvariantMeasure(IFS, 2, d, true, true, bary, sqrt(2), 1.0, weights, false, connectedness, TrivialGroup(2))
+        return InvariantMeasure(IFS, 2, d, true, true, bary, sqrt(2), 1.0, weights, false, connectedness, DihedralGroup(4,centre=[0.5,0.5]))
     else
-        return InvariantMeasure(IFS, 2, d, true, false, bary, sqrt(2), 1.0, weights, false, connectedness, DihedralGroup(4,centre=[0.5,0.5]))
+        return InvariantMeasure(IFS, 2, d, true, false, bary, sqrt(2), 1.0, weights, false, connectedness, TrivialGroup(2))
     end
 end

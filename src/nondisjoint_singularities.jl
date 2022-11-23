@@ -2,9 +2,9 @@
 vcat_(x,y) = vcat(x[x .!= 0],y[y .!= 0])
 hcat_(x,y) = hcat(x[x .!= 0],y[y .!= 0])
 
-function check_if_similar(Γ::SelfSimilarFractal,
+function check_if_similar(Γ::SelfSimilarFractal{V,M},
     m::Vector{Int64},n::Vector{Int64},m_::Vector{Int64},n_::Vector{Int64},
-    G::Vector{AutomorphicMap}, G_::Vector{AutomorphicMap})
+    G::Vector{AutomorphicMap{V,M}}, G_::Vector{AutomorphicMap{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     # get shorthand for IFS
     S = Γ.IFS
     test_one = false
@@ -14,7 +14,7 @@ function check_if_similar(Γ::SelfSimilarFractal,
     ρ = 0.0 # initialise
 
     # define identity similarity, which is a workaround for index [0]
-    s₀ = Similarity(1.0,zeros(Γ.spatial_dimension))
+    s₀ = Similarity(1.0,zero(V),one(M),one(M))
 
     m != [0] ? sₘ = sim_comp(S,m) : sₘ = s₀
     n != [0] ? sₙ = sim_comp(S,n) : sₙ = s₀
@@ -27,35 +27,37 @@ function check_if_similar(Γ::SelfSimilarFractal,
         test_one = true
     end
 
-    for T ∈ G, T_ ∈ G_
-        # second test (7)
-        if isapprox(sₘ.A*T.A*inv(sₙ.A) , sₘ_.A*T_.A*inv(sₙ_.A), atol=100*eps())
-            test_two = true
-        else
-            test_two = false
-        end
-        
-        # third test (8)
-        if isapprox(sₘ.δ .- sₘ_.δ .- sₘ.r*sₘ.A*(T.A/sₙ.r*inv(sₙ.A)*sₙ.δ .- T.δ), .- sₘ_.r*sₘ_.A*(T_.A/sₙ_.r*inv(sₙ_.A)*sₙ_.δ .- T_.δ), atol=100*eps())
-            test_three = true
-        else
-            test_three = false
-        end
+    if test_one
+        for T ∈ G, T_ ∈ G_
+            # second test (7)
+            if isapprox(sₘ.A*T.A*inv(sₙ.A) , sₘ_.A*T_.A*inv(sₙ_.A), atol=100*eps())
+                test_two = true
+            else
+                test_two = false
+            end
+            
+            # third test (8)
+            if isapprox(sₘ.δ .- sₘ_.δ .- sₘ.r*sₘ.A*(T.A/sₙ.r*inv(sₙ.A)*sₙ.δ .- T.δ), .- sₘ_.r*sₘ_.A*(T_.A/sₙ_.r*inv(sₙ_.A)*sₙ_.δ .- T_.δ), atol=100*eps())
+                test_three = true
+            else
+                test_three = false
+            end
 
-        # if tests are satisfies for some particular group element, can break loop early:
-        if test_two && test_three
-            break
+            # if tests are satisfies for some particular group element, can break loop early:
+            if test_two && test_three
+                break
+            end
         end
+        is_similar = test_one && test_two && test_three
     end
-    is_similar = test_one && test_two && test_three
     return is_similar, ρ
 end
 
-function check_for_similar_integrals(Γ::SelfSimilarFractal,
-    X::Vector{Tuple{Vector{Int64}, Vector{Int64}}},
+function check_for_similar_integrals(Γ::SelfSimilarFractal{V,M},
+    X::Vector{Tuple{Vector{Int64}, Vector{Int64}}}, 
     mcat::Vector{Int64}, mcat_::Vector{Int64},
-    G₁::Vector{AutomorphicMap}, G₂::Vector{AutomorphicMap},
-    fubini_flag::Bool) # here X is some set of indices... leave abstract for now
+    G₁::Vector{AutomorphicMap{V,M}}, G₂::Vector{AutomorphicMap{V,M}},
+    fubini_flag::Bool) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     is_X_similar = false
     similar_index = nothing
     proportionality_const = 0.0
@@ -81,7 +83,7 @@ function check_for_similar_integrals(Γ::SelfSimilarFractal,
     return is_X_similar, proportionality_const, similar_index
 end
 
-function check_for_ℓ_singular_integrals(Γ::SelfSimilarFractal, mcat::Vector{Int64}, mcat_::Vector{Int64})
+function check_for_ℓ_singular_integrals(Γ::SelfSimilarFractal{V,M_}, mcat::Vector{Int64}, mcat_::Vector{Int64}) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     is_singular = false
 
     # get important bits
@@ -105,7 +107,7 @@ function check_for_ℓ_singular_integrals(Γ::SelfSimilarFractal, mcat::Vector{I
     return is_singular
 end
 
-function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::Vector{Float64} = getweights(Γ), G₂=TrivialGroup(Γ.spatial_dimension))
+function construct_singularity_matrix(Γ::SelfSimilarFractal{V,M_}, s::Number; μ₂::Vector{Float64} = getweights(Γ), G₂=TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
 
     # add optional third argument for the case when the second set of weights is different.
     # Need to add a method for computing p_\bm too.
@@ -114,7 +116,7 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal, s::Number; μ₂::
     S = [([0],[0])] # needs to be a collection of pairs of indices
     f = [false] # S hasn't been processed yet.
     R = Tuple{Vector{Int64}, Vector{Int64}}[] # blank version of S
-    μ₁ = get_weights(Γ)
+    μ₁ = getweights(Γ)
     G₁ = get_symmetry_group(Γ)
     M = length(Γ.IFS)
     A = zeros(1,1)
@@ -227,9 +229,8 @@ Computes the s-energy of a fractal Γ, using the function quad_rule. This must b
 where A and B are SelfSimilarFractal.
 If quad_rule is replaced by some h::Number, the barycentre rule is used with meshwidth h.
 """
-function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function;
-                μ₂::Vector{Float64} = getweights(Γ), G₂::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension))
-
+function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, quad_rule::Function;
+                μ₂::Vector{Float64} = getweights(Γ), G₂::Vector{AutomorphicMap{V,M}}=TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₂=G₂)
 
     μ₁ = getweights(Γ)
@@ -252,4 +253,7 @@ function s_energy(Γ::SelfSimilarFractal, s::Number, quad_rule::Function;
 end
 
 # default to barycentre rule as follows: 
-s_energy(Γ::SelfSimilarFractal, s::Number, h::Real;μ₂::Vector{Float64} = getweights(Γ), G::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension),G₁::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension), G₂::Vector{AutomorphicMap}=TrivialGroup(Γ.spatial_dimension))= s_energy(Γ, s, (A::SelfSimilarFractal, B::SelfSimilarFractal)->barycentre_rule(A,B,h);μ₂ = μ₂, G=G, G₁=G₁, G₂=G₂)
+function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, h::Real; μ₂::Vector{Float64}=getweights(Γ),
+     G₂::Vector{AutomorphicMap{V,M}} = TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    return  s_energy(Γ, s, (A::SelfSimilarFractal{V,M}, B::SelfSimilarFractal{V,M})->barycentre_rule(A,B,h);μ₂ = μ₂, G₂=G₂)
+end

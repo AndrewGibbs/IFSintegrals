@@ -11,8 +11,8 @@ end
 ss = rand(10)
 ss[1] = 0.0
 
-Γs = [CantorSet(contraction = 1/2, weights = rand_weights(2)),
-        CantorSet(weights = rand_weights(2)),
+Γs = [#CantorSet(contraction = 1/2, weights = rand_weights(2)),
+       # CantorSet(weights = rand_weights(2)),
         KochFlake(),
         Sierpinski(),
         CantorDust()]

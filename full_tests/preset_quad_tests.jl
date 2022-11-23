@@ -39,7 +39,7 @@ for (n,Γ) ∈ enumerate(Γs)
     end
 
     x,w = chaos_quad(Γ, Npts)
-    # if Γ.spatial_dimension == 1
-    #     x,w = gauss_quad(Γ, Npts)
-    # end
+    if Γ.spatial_dimension == 1
+        x,w = gauss_quad(Γ, Npts)
+    end
 end
