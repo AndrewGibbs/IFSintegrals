@@ -94,7 +94,7 @@ function long_bary(Γ::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<
     return I, N
 end
 
-function long_bary(Γ₁::SelfSimilarFractal{V,U},Γ₂::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<:Union{Real,AbstractVector}, U<:Union{Real,AbstractMatrix}}
+function long_bary_v2(Γ₁::SelfSimilarFractal{V,U},Γ₂::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<:Union{Real,AbstractVector}, U<:Union{Real,AbstractMatrix}}
     # note that the input Γ may be an parent_measure or a subcomponent of an parent_measure
     I = 0.0 # value of integral which will be added to cumulatively
     N = 0
@@ -127,7 +127,7 @@ function long_bary(Γ₁::SelfSimilarFractal{V,U},Γ₂::SelfSimilarFractal{V,U}
     return I, N
 end
 
-function long_bary_v2(Γ₁::SelfSimilarFractal{V,U},Γ₂::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<:Union{Real,AbstractVector}, U<:Union{Real,AbstractMatrix}}
+function long_bary(Γ₁::SelfSimilarFractal{V,U},Γ₂::SelfSimilarFractal{V,U},f::Function,h::Float64) where {V<:Union{Real,AbstractVector}, U<:Union{Real,AbstractMatrix}}
     # note that the input Γ may be an parent_measure or a subcomponent of an parent_measure
     I = 0.0 # value of integral which will be added to cumulatively
     N = 0

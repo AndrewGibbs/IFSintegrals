@@ -224,12 +224,12 @@ G₁ and G₂ are groups describing the symmetries of the inner and outer measur
 If G is defined, both measures are assigned this symmetry.
 Computes the s-energy of a fractal Γ, using the function quad_rule. This must be of the form:
 
-    quad_rule = (A,B) -> f(A,B),
+    quad_rule = (e,j,f) -> I ≈ ∫ₑ∫ⱼ f(x,y) μ₁(x)μ₂(y)
 
 where A and B are SelfSimilarFractal.
 If quad_rule is replaced by some h::Number, the barycentre rule is used with meshwidth h.
 """
-function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, quad_rule::Function;
+function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, ∫∫::Function;
                 μ₂::Vector{Float64} = getweights(Γ), G₂=get_symmetry_group(Γ)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₂=G₂)
 
@@ -243,8 +243,9 @@ function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, quad_rule::Function;
     r = zeros(length(R))
     for n=1:length(r)
         (m,m_) = R[n]
-        x,y,w = quad_rule(Γ[m],Γ_μ₂[m_])
-        r[n] = w'*Φₜ.(s,x,y)
+        # x,y,w = quad_rule(Γ[m],Γ_μ₂[m_])
+        # r[n] = w'*Φₜ.(s,x,y)
+        r[n] = ∫∫(Γ[m],Γ_μ₂[m_],Φₜ.(s,x,y))
     end
 
     x = A\(B*r+L)
@@ -255,5 +256,5 @@ end
 # default to barycentre rule as follows: 
 function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, h::Real; μ₂::Vector{Float64}=getweights(Γ),
      G₂::Vector{AutomorphicMap{V,M}} = TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    return  s_energy(Γ, s, (A::SelfSimilarFractal{V,M}, B::SelfSimilarFractal{V,M})->barycentre_rule(A,B,h);μ₂ = μ₂, G₂=G₂)
+    return  s_energy(Γ, s, (A::SelfSimilarFractal{V,M}, B::SelfSimilarFractal{V,M}, f::Function)->bary_long(A,B,f,h); μ₂ = μ₂, G₂=G₂)
 end
