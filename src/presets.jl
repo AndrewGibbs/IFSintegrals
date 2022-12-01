@@ -54,6 +54,46 @@ function CantorDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
     end
 end
 
+function Vicsek(;weights=1/5*ones(5))
+    contraction = 1/3 # not sure if this should be generalised...
+    S = [Similarity(contraction,[0.0,0.0]),Similarity(contraction,[1-contraction,0.0]),
+        Similarity(contraction,[0.0,1-contraction]),Similarity(contraction,[1-contraction,1-contraction]),
+        Similarity(contraction,[contraction,contraction])]
+    d = log(1/5)/log(contraction)
+    bary = default_bary(S,d,weights,[0.5,0.5])
+
+    disjoint = false
+
+    # if contraction ≈ 1/2
+    #     connectedness_matrix = Matrix(ones(Bool,4,4))
+    # else
+    connectedness_matrix = Matrix(I(5))
+    for j=1:5
+        connectedness_matrix[5,j] = true
+        connectedness_matrix[j,5] = true
+        d
+    end
+    # end
+
+    if are_weights_Hausdorff(weights,S,d)
+        return InvariantMeasure(S, 2, d, true, true, bary, sqrt(2), 1.0, weights, disjoint, connectedness_matrix,DihedralGroup(4, centre = [0.5,0.5]))
+    else
+        return InvariantMeasure(S, 2, d, true, false, bary, sqrt(2), 1.0, weights, disjoint, connectedness_matrix,TrivialGroup(2))
+    end
+end
+
+function Dragon(weights = [1/2, 1/2])
+    IFS = [Similarity(1/sqrt(2), [0.0,0.0], pi/4),Similarity(1/sqrt(2),[1.0,0.0],3π/4)]
+    d = 2.0
+    # connectedness = Matrix(I(2))
+    @warn("Having double-checked adjacency matrix for Heighway Dragon yet, quadrature may be inaccurate")
+    adjacency_matrix = Matrix(I(4))
+    adjacency_matrix[3,2] = true
+    adjacency_matrix[2,3] = true
+
+    InvariantMeasure(IFS, weights = weights, connectedness = adjacency_matrix)
+end
+
 # function RotatedDust(;contraction = 1/3, weights=[1/4, 1/4, 1/4, 1/4])
 #     S = [Similarity(contraction,[contraction,contraction],π),Similarity(contraction,[1-contraction,0.0]),Similarity(contraction,[0.0,1-contraction]),Similarity(contraction,[1-contraction,1-contraction])]
 #     d = log(1/4)/log(contraction)
@@ -153,8 +193,8 @@ function SquareFlake(;weights=ones(16)./16)
     # also the 'measure' is not really 1 here. But it doesn't matter.
     bary = default_bary(IFS,2.0,weights,[0.0,0.0])
 
-    warning("Haven't coded the adjacency matrix for the square snowflake yet")
-    connectedness_matrix = Matrix(I(4))
+    @warn("Haven't coded the adjacency matrix for the square snowflake just yet")
+    connectedness_matrix = Matrix(I(16))
 
     if are_weights_Hausdorff(weights,IFS,2)
         return InvariantMeasure(IFS, 2, 2.0, true, true, bary, R, 1.0, weights, connectedness_matrix,DihedralGroup(4))

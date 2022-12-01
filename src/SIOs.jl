@@ -42,7 +42,7 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
     N = length(Lₕ)
     mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
     M = length(Γ.IFS)
-
+    symmetry_group = get_symmetry_group(Γ)
     # create blank matrix of flags, describing if the matrix entry has been filled
     BEM_filled = zeros(Bool,N,N)
     m_count = 0
@@ -104,6 +104,11 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
             if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
                 n = Lₕ[n_count]
                 Γₙ = mesh[n_count] # mesh element
+    #             check_for_similar_integrals(Γ::SelfSimilarFractal{V,M},
+    # X::Vector{Tuple{Vector{Int64}, Vector{Int64}}}, 
+    # mcat::Vector{Int64}, mcat_::Vector{Int64},
+    # G₁::Vector{AutomorphicMap{V,M}}, G₂::Vector{AutomorphicMap{V,M}},
+    # fubini_flag::Bool)
                 is_similar, ρ, similar_index = check_for_similar_integrals(Γ, prepared_singular_inds, n, m, symmetry_group, symmetry_group, true)
                 if is_similar # TO DO: add some disjointness condition here
                     similar_indices = prepared_singular_inds[similar_index]

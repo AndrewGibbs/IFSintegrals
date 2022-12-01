@@ -67,7 +67,7 @@ Provides a simple sketch of the parent_measure Γ, by repeatedly applying the IF
 
 See also: [`draw!`](@ref)
 """
-function draw(Γ::SelfSimilarFractal; markersize=0.1, color="black", grid=true, mem_const = 10000)
+function draw(Γ::SelfSimilarFractal; markersize=1.0, color="black", grid=true, mem_const = 100000)
     if isa(Γ,InvariantMeasure)
         n = Γ.spatial_dimension
     else
@@ -87,7 +87,7 @@ end
     draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
 Similar to [`draw`](@ref), except it will draw on the current image.
 """
-function draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black", grid=true, mem_const = 100000)
+function draw!(Γ::SelfSimilarFractal; markersize=1.0, color="black", grid=true, mem_const = 100000)
     if isa(Γ,InvariantMeasure)
         n = Γ.spatial_dimension
     else
