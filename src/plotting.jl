@@ -1,5 +1,5 @@
 # provides a sketch of an parent_measure in N topological dimensions
-function sketch_attractor(Γ::SelfSimilarFractal; mem_const = 10000, start_count = 10)
+function sketch_attractor(Γ::SelfSimilarFractal; mem_const = 100000, start_count = 10)
     if isa(Γ,InvariantMeasure)
         N = Γ.spatial_dimension
     elseif isa(Γ,SubInvariantMeasure)
