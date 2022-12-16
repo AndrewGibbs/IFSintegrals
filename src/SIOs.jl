@@ -33,6 +33,26 @@ struct DiscreteSIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     Galerkin_matrix::Matrix{<:Complex{<:Float64}} # not sure how to parametrise this as subtype of Array{<:Complex{<:Real},2}
 end
 
+function check_for_similar_singular_integrals(Γ, prepared_singular_inds, n, n_)
+    symmetry_group = get_symmetry_group(Γ)
+    if Γ.disjoint
+        # then we can immediately decide if integral is singular
+        if n==n_
+            is_similar_to_singular_integral = true
+            # m  != [0] ? pₘ = prod(Γ.weights[m]) : pₘ = 1.0
+            n  != [0] ? ρ = 1/prod([Γ.IFS[nᵢ].r for nᵢ∈n]) : ρ = 1.0
+            similar_index = 1
+        else
+            is_similar_to_singular_integral = false
+            similar_index = Int64[]
+            ρ = Float64[]
+        end
+    else # need to check if integral is similar to a singular integral, slightly longer process
+        is_similar_to_singular_integral, ρ, similar_index = check_for_similar_integrals(Γ, prepared_singular_inds, n, n_, symmetry_group, symmetry_group, true)
+    end
+    return is_similar_to_singular_integral, ρ, similar_index
+end
+
 #constructor:
 function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()),
           h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf),
@@ -42,7 +62,7 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
     N = length(Lₕ)
     mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
     M = length(Γ.IFS)
-    symmetry_group = get_symmetry_group(Γ)
+    # symmetry_group = get_symmetry_group(Γ)
     # create blank matrix of flags, describing if the matrix entry has been filled
     BEM_filled = zeros(Bool,N,N)
     m_count = 0
@@ -104,23 +124,15 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
             if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
                 n = Lₕ[n_count]
                 Γₙ = mesh[n_count] # mesh element
-    #             check_for_similar_integrals(Γ::SelfSimilarFractal{V,M},
-    # X::Vector{Tuple{Vector{Int64}, Vector{Int64}}}, 
-    # mcat::Vector{Int64}, mcat_::Vector{Int64},
-    # G₁::Vector{AutomorphicMap{V,M}}, G₂::Vector{AutomorphicMap{V,M}},
-    # fubini_flag::Bool)
-                is_similar, ρ, similar_index = check_for_similar_integrals(Γ, prepared_singular_inds, n, m, symmetry_group, symmetry_group, true)
-                if is_similar # TO DO: add some disjointness condition here
+                is_similar_to_singular_integral, ρ, similar_index = check_for_similar_singular_integrals(Γ, prepared_singular_inds, n, m)
+                if is_similar_to_singular_integral # TO DO: add some disjointness condition here
                     similar_indices = prepared_singular_inds[similar_index]
                     scale_adjust = 1/scaler(ρ, similar_indices[1], similar_indices[2], n, m)
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad)
-                    Galerkin_matrix[m_count,n_count] = K.singularity_scale*prepared_singular_vals[similar_index]*scale_adjust+ w'*K.Lipschitz_part_of_kernel.(x,y)
+                     Galerkin_matrix[m_count,n_count] = K.singularity_scale*prepared_singular_vals[similar_index]*scale_adjust+ w'*K.Lipschitz_part_of_kernel.(x,y)
                     if K.singularity_strength == 0
                         Galerkin_matrix[m_count,n_count] += Γ.measure^2*log(1/ρ)*prod(Γ.weights[n])*prod(Γ.weights[m]) # log constant adjustment
                    end
-                elseif n==m
-                    # compute the right scaling for the singular matrices, and reuse ingredients
-                    Galerkin_matrix[m_count,n_count] = singular_elliptic_double_integral(K,h_quad_diag,n;Cosc=Cosc)
                 else
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad*h_quad_adjust[m_count,n_count]) # get quadrature
                     Galerkin_matrix[m_count,n_count] = w'*K.kernel.(x,y) # evaluate non-diagonal Galerkin integral

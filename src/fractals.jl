@@ -238,6 +238,8 @@ getindex(Γ::SelfSimilarFractal, inds::Vector{<:Integer}) = SubInvariantMeasure(
 
 getweights(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.weights : Γ.parent_measure.weights
 get_symmetry_group(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.symmetry_group : Γ.parent_measure.symmetry_group
+get_spatial_dimension(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.spatial_dimension : Γ.parent_measure.spatial_dimension
+get_connectedness(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.connectedness : Γ.parent_measure.connectedness
 
 changeweights(Γ::InvariantMeasure,μ::Vector{Float64}) = InvariantMeasure(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, Γ.Hausdorff_weights, Γ.barycentre, Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness, Γ.symmetry_group)
 changeweights(Γ::SubInvariantMeasure,μ::Vector{Float64}) = SubInvariantMeasure(changeweights(Γ.parent_measure,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)

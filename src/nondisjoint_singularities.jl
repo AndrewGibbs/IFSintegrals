@@ -83,31 +83,64 @@ function check_for_similar_integrals(Γ::SelfSimilarFractal{V,M},
     return is_X_similar, proportionality_const, similar_index
 end
 
-function check_for_ℓ_singular_integrals(Γ::SelfSimilarFractal{V,M_}, mcat::Vector{Int64}, mcat_::Vector{Int64}) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+function convert_vector_index_to_integer_index(m::Vector{Int64},M::Int64)
+    ℓ=length(m)
+    m_integer = 0
+    for ℓ_=1:(ℓ-1)
+        m_integer += M^(ℓ-ℓ_)*(m[ℓ_]-1)
+    end
+    m_integer += m[end]
+    return m_integer
+end
+
+function check_for_ℓ_singular_integrals(Γ::SelfSimilarFractal{V,M_}, m::Vector{Int64}, n::Vector{Int64}) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
     is_singular = false
 
-    # get important bits
-    M = length(Γ.IFS)
-    Γ_singularities = Γ.connectedness
-    ℓ_depth = Int64(round(log(size(Γ_singularities)[1])/log(M)))
+    if m==n || m==[0] || n==[0]
+        is_singular = true
+    else
+        # get important bits
+        M = length(Γ.IFS)
+        Γ_singularities = get_connectedness(Γ)
+        ℓ_depth = Int64(round(log(size(Γ_singularities)[1])/log(M)))
 
-    if length(mcat) == length(mcat_) <= ℓ_depth
-        ℓ = length(mcat)
-        mentry = 0
-        m_entry = 0
-        for ℓ_=1:(ℓ-1)
-            mentry += M^(ℓ-ℓ_)*(mcat[ℓ_]-1)
-            m_entry += M^(ℓ-ℓ_)*(mcat_[ℓ_]-1)
+        m_ℓ_remainder_depth = ℓ_depth-length(m)
+
+        if m_ℓ_remainder_depth>=0
+            m_start = convert_vector_index_to_integer_index([m; ones(Int64,m_ℓ_remainder_depth)], M::Int64)
+            m_end = convert_vector_index_to_integer_index([m; M*ones(Int64,m_ℓ_remainder_depth)], M::Int64)
+            m_range = m_start:m_end
+
+            n_ℓ_remainder_depth = ℓ_depth-length(n)
+            n_start = convert_vector_index_to_integer_index([n; ones(Int64,n_ℓ_remainder_depth)], M::Int64)
+            n_end = convert_vector_index_to_integer_index([n; M*ones(Int64,n_ℓ_remainder_depth)], M::Int64)
+            n_range = n_start:n_end
+            
+            # look for any signs of ones in the singularity matrix
+            sum(Γ_singularities[m_range,n_range])>0 ? is_singular = true : is_singular = false
         end
-        mentry += mcat[end]
-        m_entry += mcat_[end]
-        Γ_singularities[mentry,m_entry] ? is_singular = true : nothing
+
     end
+
+    # if length(mcat) == length(mcat_) <= ℓ_depth
+    #     ℓ = length(mcat)
+    #     mentry = 0
+    #     m_entry = 0
+    #     for ℓ_=1:(ℓ-1)
+    #         mentry += M^(ℓ-ℓ_)*(mcat[ℓ_]-1)
+    #         m_entry += M^(ℓ-ℓ_)*(mcat_[ℓ_]-1)
+    #     end
+    #     mentry += mcat[end]
+    #     m_entry += mcat_[end]
+    #     Γ_singularities[mentry,m_entry] ? is_singular = true : nothing
+    # end
 
     return is_singular
 end
 
-function construct_singularity_matrix(Γ::SelfSimilarFractal{V,M_}, s::Number; μ₂::Vector{Float64} = getweights(Γ), G₂::Vector{AutomorphicMap{V,M_}}=get_symmetry_group(Γ)) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
+function construct_singularity_matrix(Γ::SelfSimilarFractal{V,M_}, s::Number; μ₂::Vector{Float64} = getweights(Γ),
+                                     G₂::Vector{AutomorphicMap{V,M_}}=get_symmetry_group(Γ), use_strategy_two::Bool = true
+                                     ) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
 
     # add optional third argument for the case when the second set of weights is different.
     # Need to add a method for computing p_\bm too.
@@ -144,7 +177,24 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal{V,M_}, s::Number; �
                 a_row[∫∫_count] = 1.0
                 b_row = zeros(length(R))
                 ∫∫_indices = S[∫∫_count]
-                for m=1:M, m_=1:M
+                if use_strategy_two # subdivide the largest subfractal
+                    ∫∫_indices[1]==[0] ? diam_m = Γ.diameter : diam_m = Γ.diameter*prod([Γ.IFS[m].r for m ∈ ∫∫_indices[1]])
+                    ∫∫_indices[2]==[0] ? diam_m_ = Γ.diameter : diam_m_ = Γ.diameter*prod([Γ.IFS[m].r for m ∈ ∫∫_indices[2]])
+                    if diam_m ≈ diam_m_
+                        mrange = 1:M
+                        m_range = 1:M
+                    elseif diam_m > diam_m_
+                        mrange = 1:M
+                        m_range = [Int64[]]
+                    else
+                        mrange = [Int64[]]
+                        m_range = 1:M
+                    end
+                else # subdivide both
+                    mrange = 1:M
+                    m_range = 1:M
+                end
+                for m=mrange, m_=m_range
                     mcat = vcat_(∫∫_indices[1],m)
                     mcat_ = vcat_(∫∫_indices[2],m_)
                     is_S_similar, ρ, similar_index = check_for_similar_integrals(Γ, S, mcat, mcat_, G₁, G₂, fubuni_flag)
@@ -230,8 +280,8 @@ where A and B are SelfSimilarFractal.
 If quad_rule is replaced by some h::Number, the barycentre rule is used with meshwidth h.
 """
 function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, ∫∫::Function;
-                μ₂::Vector{Float64} = getweights(Γ),
-                G₂::Vector{AutomorphicMap{V,M}} = TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+                μ₂::Vector{Float64} = getweights(Γ), G₂::Vector{AutomorphicMap{V,M}} = TrivialGroup(get_spatial_dimension(Γ)),
+                use_strategy_two::Bool = true) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
 
     if getweights(Γ) == μ₂
         G₂=get_symmetry_group(Γ)
@@ -240,7 +290,7 @@ function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, ∫∫::Function;
         Γ_μ₂ = changeweights(Γ,μ₂)
     end
 
-    A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₂=G₂)
+    A,B,_,R,L = construct_singularity_matrix(Γ, s, μ₂=μ₂, G₂=G₂, use_strategy_two = use_strategy_two)
     
     r = zeros(length(R))
     for n=1:length(r)
@@ -249,7 +299,7 @@ function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, ∫∫::Function;
         # r[n] = w'*Φₜ.(s,x,y)
         r[n] = ∫∫(Γ[m],Γ_μ₂[m_],(x,y)->Φₜ(s,x,y))
     end
-
+    # println(r)
     x = A\(B*r+L)
 
     return x[1]
@@ -257,6 +307,8 @@ end
 
 # default to barycentre rule as follows: 
 function s_energy(Γ::SelfSimilarFractal{V,M}, s::Number, h::Real; μ₂::Vector{Float64}=getweights(Γ),
-     G₂::Vector{AutomorphicMap{V,M}} = TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    return  s_energy(Γ, s, (A::SelfSimilarFractal{V,M}, B::SelfSimilarFractal{V,M}, f::Function)->long_bary(A,B,f,h); μ₂ = μ₂, G₂=G₂)
+     G₂::Vector{AutomorphicMap{V,M}} = TrivialGroup(get_spatial_dimension(Γ)), use_strategy_two::Bool = true
+     ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    return  s_energy(Γ, s, (A::SelfSimilarFractal{V,M}, B::SelfSimilarFractal{V,M}, f::Function)->long_bary(A,B,f,h);
+                     μ₂ = μ₂, G₂=G₂, use_strategy_two = use_strategy_two)
 end
