@@ -24,7 +24,7 @@ TrivialGroup(n::Int64) = [IdentityMap(n)]
 # T₁(T₂x) = A₁(T₂x)+δ₁ = A₁(A₂x+δ₂)+δ₁ = A₁A₂x + A₁δ₂+δ₁
 ∘(T₁::AutomorphicMap, T₂::AutomorphicMap) = AutomorphicMap(T₁.A*T₂.A, T₁.A*T₁.δ+T₂.δ)
 
-apply_automorphic_map(T::AutomorphicMap,x::Vector{Float64}) = T.A*x+T.δ
+apply_automorphic_map(T::AutomorphicMap,x::Vector{Float64}) = T.A*x .+ T.δ
 
 # stuff which constructs these group elements, using an angular argument
 rotation2(θ) = [cos(θ) -sin(θ); sin(θ) cos(θ)]
@@ -66,4 +66,4 @@ function DihedralGroup(n::Integer; centre = [0.0,0.0], angle_offest=0.0)
     return get_group_operations2D(GroupGenerator2D(n,reflections,centre))
 end
 
-D₂_in_1D(;centre::Float64=0.0) = [IdentityMap(1), AutomorphicMap(-1.0, centre)]
+D₂_in_1D(;centre::Float64=0.0) = [IdentityMap(1), AutomorphicMap(-1.0, 2*centre)]
