@@ -1,7 +1,41 @@
+abstract type DomainOperator{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+end
+
+"""
+Define identity operator
+"""
+struct IdentityOperator{V,M} <: DomainOperator{V,M}# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    domain::SelfSimilarFractal{V,M}
+    λ::Number
+end
+
+# scalar multiplication of identity
+function *(c::Number, K::IdentityOperator{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    return IdentityOperator{V,M}(K.domain, c*K.λ)
+end
+
+# simplified constructor of identity operator
+function Id(Γ::SelfSimilarFractal{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    return IdentityOperator(Γ,1.0)
+end
+
+function get_mass_matrix(I_Γ::IdentityOperator{V,M}, h_mesh::Float64) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    Γ = I_Γ.domain
+    Lₕ = subdivide_indices(Γ,h_mesh) #get vector indices for subcomponents
+    N = length(Lₕ)
+    # mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
+    mass_matrix = zeros(N,N)
+    for n=1:N
+        mass_matrix[n,n] = SubInvariantMeasure(Γ,Lₕ[n]).measure
+    end
+
+    return I_Γ.λ * mass_matrix
+end
+
 """
 SIO is the type for singular integral operators.
 """
-struct SIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+struct SIO{V,M} <: DomainOperator{V,M}
     domain::SelfSimilarFractal{V,M}
     kernel::Function
     Lipschitz_part_of_kernel::Function
@@ -24,8 +58,9 @@ h_mesh is the meshwidth parameter for the discretisation of the underlying fract
 h_quad denotes the discretisation parameter for the integrals in the stiffness matrix.
 h_quad_diag is the parameter used to compute the diagonal elements of the matrix
 """
-struct DiscreteSIO{V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    SIO::SIO{V,M}
+struct DiscreteSIO{V,M} <: DomainOperator{V,M}
+    domain::SelfSimilarFractal{V,M}
+    SIO::DomainOperator{V,M}
     h_mesh::Float64
     h_quad::Float64
     mesh::Vector{SubInvariantMeasure{V,M}}
@@ -131,7 +166,7 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad)
                      Galerkin_matrix[m_count,n_count] = K.singularity_scale*prepared_singular_vals[similar_index]*scale_adjust+ w'*K.Lipschitz_part_of_kernel.(x,y)
                     if K.singularity_strength == 0
-                        Galerkin_matrix[m_count,n_count] += Γ.measure^2*log(1/ρ)*prod(Γ.weights[n])*prod(Γ.weights[m]) # log constant adjustment
+                        Galerkin_matrix[m_count,n_count] += K.singularity_scale*Γ.measure^2*log(1/ρ)*prod(Γ.weights[n])*prod(Γ.weights[m]) # log constant adjustment
                    end
                 else
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad*h_quad_adjust[m_count,n_count]) # get quadrature
@@ -156,7 +191,7 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
             end
         end
     end
-    DiscreteSIO(K, h_mesh, h_quad, mesh, Lₕ, Galerkin_matrix)
+    DiscreteSIO(Γ, K, h_mesh, h_quad, mesh, Lₕ, Galerkin_matrix)
 end
 
 """
@@ -235,15 +270,72 @@ function VolumePotential(Γ::SelfSimilarFractal{V,M}, k::Number) where {V<:Union
     end
 end
 
-function *(c::Number, K::SIO{V,M})
+function *(c::Number, K::SIO{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     return SIO{V,M}(K.domain,
-    c*K.kernel,
-    c*Lipschitz_part_of_kernel,
-    singularity_strength,
-    c*singularity_scale,
-    self_adjoint,
-    wavenumber
+    (x,y) -> c*K.kernel(x,y),
+    (x,y) -> c*K.Lipschitz_part_of_kernel(x,y),
+    K.singularity_strength,
+    c*K.singularity_scale,
+    K.self_adjoint,
+    K.wavenumber
     )
+end
+
+struct OperatorSum{V,M} <: DomainOperator{V,M}# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    domain::SelfSimilarFractal{V,M}
+    operators::Vector{<:DomainOperator{V,M}}
+end
+
+function +(F::DomainOperator{V,M}, G::DomainOperator{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    F.domain == G.domain ? nothing : error("domains of operators must match")
+    return OperatorSum(F.domain, [F,G])
+end
+
+function +(F::DomainOperator{V,M}, G::OperatorSum{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    F.domain == G.domain ? nothing : error("domains of operators must match")
+    return OperatorSum(F.domain, vcat([F],G.operators))
+end
+
+function +(G::OperatorSum{V,M},F::DomainOperator{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    F.domain == G.domain ? nothing : error("domains of operators must match")
+    return OperatorSum(F.domain, vcat(G.operators,[F]))
+end
+
+function DiscreteSIO(K::OperatorSum; h_mesh::Real=-1,
+    h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf),
+    vary_quad::Bool = true, repeat_blocks::Bool =true)
+
+    if h_mesh <0
+        use_h_mesh_defualt = true
+    else
+        use_h_mesh_defualt = false
+    end
+
+    Γ = K.domain
+    Lₕ = subdivide_indices(Γ,h_mesh) # get vector indices for subcomponents
+    N = length(Lₕ)
+    mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
+
+    # construct stiffness_matrix by summing together matrices from different discrete IOs and mass matrices
+    stiffness_matrix = zeros(ComplexF64,N,N)
+
+    for J ∈ K.operators
+        if isa(J,SIO) # stiffness matrix
+            if use_h_mesh_defualt
+                h_mesh = max(2π/(10.0*K.wavenumber),J.domain.diameter+eps())
+            end
+            stiffness_matrix += DiscreteSIO(J, h_mesh=h_mesh, h_quad=h_quad,
+                                            h_quad_diag=h_quad_diag, Cosc=Cosc,
+                                            vary_quad=vary_quad, repeat_blocks=repeat_blocks).Galerkin_matrix
+        elseif isa(J,IdentityOperator) # mass matrix
+            if use_h_mesh_defualt
+                h_mesh = max(2π/(10.0*K.wavenumber))
+            end
+            stiffness_matrix += get_mass_matrix(J, h_mesh)
+        end
+    end
+
+    return DiscreteSIO(Γ, K, h_mesh, h_quad, mesh, Lₕ, stiffness_matrix)
 end
 
 function singular_elliptic_double_integral(K::SIO, h_quad::Real, index::Array{Int64}=[0]; Cosc = 2π)

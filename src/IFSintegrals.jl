@@ -3,7 +3,7 @@ module IFSintegrals
 using Base: Float64
 using ProgressMeter
 import Plots: scatter!, scatter
-import Base: -, \, *, getindex, isapprox
+import Base: -, \, *, +, getindex, isapprox
 import Roots: find_zero, Bisection
 import LinearAlgebra: norm, I, UniformScaling, eigvals, eigvecs
 import StaticArrays: SVector, SMatrix
@@ -19,7 +19,8 @@ export Similarity, InvariantMeasure, SubInvariantMeasure, SelfSimilarFractal, sk
         chaos_quad, barycentre_uniform, long_bary, gauss_quad,
         slice, box, draw, draw!,
         get_H_minus_half_norm_function, get_H_minus_half_norm_function_from_matrix,
-        s_energy, DihedralGroup
+        s_energy, DihedralGroup,
+        VolumePotential, Id
 include("similarities.jl")
 include("symmetry_groups.jl")
 include("fractals.jl")
