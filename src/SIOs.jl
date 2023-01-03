@@ -129,14 +129,14 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
         prepared_singular_inds = [([0],[0])]
         prepared_singular_vals = eval_green_double_integral(Γ, s, h_high_scale)
     else #non-disjoint
-        A,B,prepared_singular_inds,R = construct_singularity_matrix(Γ, s)
+        A,B,prepared_singular_inds,R,log_stuff = construct_singularity_matrix(Γ, s)
         r = zeros(length(R))
         for n=1:length(r)
             (m,m_) = R[n]
             x,y,w = barycentre_rule(Γ[m],Γ[m_],h_high_scale)
             r[n] = w'*Φₜ.(s,x,y)
         end
-        prepared_singular_vals = A\(B*r) # vector of 'singular values'
+        prepared_singular_vals = A\(B*r + log_stuff) # vector of 'singular values'
     end
 
     function scaler(ρ::Float64, m::Vector{<:Int64},m_::Vector{<:Int64},n::Vector{<:Int64},n_::Vector{<:Int64})
@@ -166,7 +166,9 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad)
                      Galerkin_matrix[m_count,n_count] = K.singularity_scale*prepared_singular_vals[similar_index]*scale_adjust+ w'*K.Lipschitz_part_of_kernel.(x,y)
                     if K.singularity_strength == 0
-                        Galerkin_matrix[m_count,n_count] += K.singularity_scale*Γ.measure^2*log(1/ρ)*prod(Γ.weights[n])*prod(Γ.weights[m]) # log constant adjustment
+                        m  != [0] ? pₘ = prod(Γ.weights[m]) : pₘ = 1.0
+                        n  != [0] ? pₙ = prod(Γ.weights[n]) : pₙ = 1.0
+                        Galerkin_matrix[m_count,n_count] += K.singularity_scale*Γ.measure^2*log(1/ρ)*pₙ*pₘ # log constant adjustment
                    end
                 else
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad*h_quad_adjust[m_count,n_count]) # get quadrature
