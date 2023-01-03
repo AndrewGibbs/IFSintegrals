@@ -211,6 +211,41 @@ function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union
     end
 end
 
+function VolumePotential(Γ::SelfSimilarFractal{V,M}, k::Number) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    if Γ.spatial_dimension == 2       
+        K = SIO{V,M}(Γ, #fractal domain
+        (x,y)->HelhmoltzGreen2D(k,x,y), # Hankel function
+        (x,y)->HelhmoltzGreen2D_Lipschitz_part(k,x,y), # kernel minus singularity
+        0.0, # strength of singularity, corresponding to log singularity
+        -1/(2π), # scaling of singularity
+        true, #self-adjoint
+        k #wavenumber
+        )
+    elseif Γ.spatial_dimension == 3    
+        K = SIO{V,M}(Γ, #fractal domain
+        (x,y)->HelhmoltzGreen3D(k,x,y), # Green's function
+        (x,y)->HelhmoltzGreen3D_Lipschitz_part(k,x,y), # kernel minus singularity
+        1.0, # strength of singularity, corresponding to 1/|x-y|
+        1/(4π), # scaling of singularity
+        true, #self-adjoint
+        k #wavenumber
+        )
+    else
+        error("Haven't coded single layer SIO for this many dimensions")
+    end
+end
+
+function *(c::Number, K::SIO{V,M})
+    return SIO{V,M}(K.domain,
+    c*K.kernel,
+    c*Lipschitz_part_of_kernel,
+    singularity_strength,
+    c*singularity_scale,
+    self_adjoint,
+    wavenumber
+    )
+end
+
 function singular_elliptic_double_integral(K::SIO, h_quad::Real, index::Array{Int64}=[0]; Cosc = 2π)
     # if there are many wavelengths, use the more complicated approximation, which has better rates for high frequencies
     if real(K.wavenumber)*SubInvariantMeasure(K.domain,index).diameter > Cosc
