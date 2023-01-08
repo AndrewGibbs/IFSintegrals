@@ -94,10 +94,10 @@ function convert_vector_index_to_integer_index(m::Vector{Int64},M::Int64)
 end
 
 function check_for_ℓ_singular_integrals(Γ::SelfSimilarFractal{V,M_}, m::Vector{Int64}, n::Vector{Int64}) where {V<:Union{Real,AbstractVector}, M_<:Union{Real,AbstractMatrix}}
-    is_singular = false
+    is_singular = -1
 
     if m==n || m==[0] || n==[0]
-        is_singular = true
+        is_singular = 1
     else
         # get important bits
         M = length(Γ.IFS)
@@ -105,21 +105,24 @@ function check_for_ℓ_singular_integrals(Γ::SelfSimilarFractal{V,M_}, m::Vecto
         ℓ_depth = Int64(round(log(size(Γ_singularities)[1])/log(M)))
 
         m_ℓ_remainder_depth = ℓ_depth-length(m)
-
-        if m_ℓ_remainder_depth>=0
+        n_ℓ_remainder_depth = ℓ_depth-length(n)
+        if m_ℓ_remainder_depth>=0 && n_ℓ_remainder_depth>=0
+            # println()
+            # println(m)
+            # println(n)
             m_start = convert_vector_index_to_integer_index([m; ones(Int64,m_ℓ_remainder_depth)], M::Int64)
             m_end = convert_vector_index_to_integer_index([m; M*ones(Int64,m_ℓ_remainder_depth)], M::Int64)
             m_range = m_start:m_end
-
-            n_ℓ_remainder_depth = ℓ_depth-length(n)
+            
+            # look for any signs of ones in the singularity matrix
+            # sum(Γ_singularities[m_range,n_range])>0 ? is_singular = true : is_singular = fractal_names
+            
             n_start = convert_vector_index_to_integer_index([n; ones(Int64,n_ℓ_remainder_depth)], M::Int64)
             n_end = convert_vector_index_to_integer_index([n; M*ones(Int64,n_ℓ_remainder_depth)], M::Int64)
             n_range = n_start:n_end
-            
-            # look for any signs of ones in the singularity matrix
-            sum(Γ_singularities[m_range,n_range])>0 ? is_singular = true : is_singular = false
-        end
 
+            sum(Γ_singularities[m_range,n_range])>0 ? is_singular = 1 : is_singular = 0
+        end
     end
 
     # if length(mcat) == length(mcat_) <= ℓ_depth
@@ -198,7 +201,7 @@ function construct_singularity_matrix(Γ::SelfSimilarFractal{V,M_}, s::Number; �
                     mcat = vcat_(∫∫_indices[1],m)
                     mcat_ = vcat_(∫∫_indices[2],m_)
                     is_S_similar, ρ, similar_index = check_for_similar_integrals(Γ, S, mcat, mcat_, G₁, G₂, fubuni_flag)
-                    is_ℓ_singular = check_for_ℓ_singular_integrals(Γ, mcat, mcat_)
+                    is_ℓ_singular = (check_for_ℓ_singular_integrals(Γ, mcat, mcat_) == 1)
 
                     # only need to check for R similarities if regular integral.
                     is_singular = is_S_similar || is_ℓ_singular
