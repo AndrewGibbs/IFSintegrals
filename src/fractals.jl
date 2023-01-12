@@ -240,6 +240,11 @@ getweights(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.weights : Γ.
 get_symmetry_group(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.symmetry_group : Γ.parent_measure.symmetry_group
 get_spatial_dimension(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.spatial_dimension : Γ.parent_measure.spatial_dimension
 get_connectedness(Γ::SelfSimilarFractal) = isa(Γ,InvariantMeasure) ? Γ.connectedness : Γ.parent_measure.connectedness
-
-changeweights(Γ::InvariantMeasure,μ::Vector{Float64}) = InvariantMeasure(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, Γ.Hausdorff_weights, Γ.barycentre, Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness, Γ.symmetry_group)
-changeweights(Γ::SubInvariantMeasure,μ::Vector{Float64}) = SubInvariantMeasure(changeweights(Γ.parent_measure,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
+#get_barycentre(new_IFS, Γ.parent_measure.weights)
+function changeweights(Γ::InvariantMeasure, μ::Vector{Float64}; G::Vector{AutomorphicMap{V,M}}=TrivialGroup(Γ.spatial_dimension)) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    return InvariantMeasure(Γ.IFS, Γ.spatial_dimension, Γ.Hausdorff_dimension, Γ.homogeneous, are_weights_Hausdorff(μ,Γ.IFS,Γ.Hausdorff_dimension), get_barycentre(Γ.IFS, μ), Γ.diameter, Γ.measure, μ, Γ.disjoint, Γ.connectedness, G)
+end
+function changeweights(Γ::SubInvariantMeasure, μ::Vector{Float64}; G::Vector{AutomorphicMap{V,M}}=TrivialGroup(length(sims[1].δ))) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    return changeweights(Γ.parent_measure,μ,G=G)[Γ.index]
+end
+#SubInvariantMeasure(changeweights(Γ.parent_measure,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
