@@ -197,9 +197,9 @@ function SquareFlake(;weights=ones(16)./16)
     connectedness_matrix = Matrix(I(16))
 
     if are_weights_Hausdorff(weights,IFS,2)
-        return InvariantMeasure(IFS, 2, 2.0, true, true, bary, R, 1.0, weights, connectedness_matrix,false,DihedralGroup(4))
+        return InvariantMeasure(IFS, 2, 2.0, true, true, bary, R, 1.0, weights, false, connectedness_matrix,DihedralGroup(4))
     else
-        return InvariantMeasure(IFS, 2, 2.0, true, false, bary, R, 1.0, weights, connectedness_matrix,false,TrivialGroup(2))
+        return InvariantMeasure(IFS, 2, 2.0, true, false, bary, R, 1.0, weights,false, connectedness_matrix,TrivialGroup(2))
     end
 end
 
