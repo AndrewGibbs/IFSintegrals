@@ -61,44 +61,41 @@ function slice(c1::Vector{Float64},c2::Vector{Float64},z::Float64,Nx::Int64,Ny::
     return M,x,y
 end
 
+function fractal_pre_plot(Γ::SelfSimilarFractal, mem_const)
+    if isa(Γ,InvariantMeasure)
+        n = Γ.spatial_dimension
+    else
+        n = Γ.parent_measure.spatial_dimension
+    end
+    X = sketch_attractor(Γ,mem_const=mem_const)
+    if n == 2
+        x = [X[j][1] for j=1:length(X)]
+        y = [X[j][2] for j=1:length(X)]
+    elseif n == 1
+        x = X
+        y = zeros(length(X))
+    else
+        error("Can only plot in one and two spatial dimensions")
+    end
+    return x,y
+end
+
 """
     draw(Γ::SelfSimilarFractal; markersize=0.1, color="black")
 Provides a simple sketch of the parent_measure Γ, by repeatedly applying the IFS.
 
 See also: [`draw!`](@ref)
 """
-function draw(Γ::SelfSimilarFractal; markersize=1.0, color="black", grid=true, mem_const = 100000)
-    if isa(Γ,InvariantMeasure)
-        n = Γ.spatial_dimension
-    else
-        n = Γ.parent_measure.spatial_dimension
-    end
-    X = sketch_attractor(Γ,mem_const=mem_const)
-    if n == 2
-        scatter([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color, grid=grid)
-    elseif n == 1
-        scatter(X,zeros(length(X)),legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color, grid=grid)
-    else
-        error("Can only plot in one and two spatial dimensions")
-    end
+function plot(Γ::SelfSimilarFractal; mem_const = 100000, kwargs...)
+    x,y = fractal_pre_plot(Γ,mem_const)
+    scatter(x,y;kwargs...)
 end
 
 """
-    draw!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+    plot!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
 Similar to [`draw`](@ref), except it will draw on the current image.
 """
-function draw!(Γ::SelfSimilarFractal; markersize=1.0, color="black", grid=true, mem_const = 100000)
-    if isa(Γ,InvariantMeasure)
-        n = Γ.spatial_dimension
-    else
-        n = Γ.parent_measure.spatial_dimension
-    end
-    X = sketch_attractor(Γ,mem_const=mem_const)
-    if n == 2
-        scatter!([X[j][1] for j=1:length(X)],[X[j][2] for j=1:length(X)],legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color, grid=grid)
-    elseif n == 1
-        scatter!(X,zeros(length(X)),legend=:false,markerstrokewidth=0, markersize=markersize, markercolor=color, grid=grid)
-    else
-        error("Can only plot in one and two spatial dimensions")
-    end
+function plot!(Γ::SelfSimilarFractal; mem_const = 100000, kwargs...)
+    x,y = fractal_pre_plot(Γ,mem_const)
+    scatter!(x,y;kwargs...)
 end
