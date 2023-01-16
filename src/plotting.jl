@@ -80,6 +80,13 @@ function fractal_pre_plot(Γ::SelfSimilarFractal, mem_const)
     return x,y
 end
 
+function adjust_defaults(kwargs)
+    kwargs_dict = Dict(kwargs)
+    !haskey(kwargs,:markersize) ? merge(kwargs_dict,Dict("markersize"=>0.1)) : nothing
+    !haskey(kwargs,:color) ? merge(kwargs_dict,Dict("color"=>"black")) : nothing
+    return kwargs_dict
+end
+
 """
     draw(Γ::SelfSimilarFractal; markersize=0.1, color="black")
 Provides a simple sketch of the parent_measure Γ, by repeatedly applying the IFS.
@@ -87,8 +94,11 @@ Provides a simple sketch of the parent_measure Γ, by repeatedly applying the IF
 See also: [`draw!`](@ref)
 """
 function plot(Γ::SelfSimilarFractal; mem_const = 100000, kwargs...)
+    # println(kwargs)
     x,y = fractal_pre_plot(Γ,mem_const)
-    scatter(x,y;kwargs...)
+    # scatter(x,y;kwargs...)
+    # kwargs = adjust_defaults(kwargs)
+    scatter(x,y;adjust_defaults(kwargs)...)
 end
 
 """
