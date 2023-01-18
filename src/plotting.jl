@@ -181,7 +181,7 @@ function unify_polygons(P₁::Vector{Vector{Float64}},P₂::Vector{Vector{Float6
                     push!(P₂_intersection_point_indices[index2],intersection_point_index)
                 end
             end
-            if yn_edges || yn_points ## if there's been any intersection for these two edges
+            if yn_points ## if there's been any intersection for these two edges
                 push!(P₁_intersection_edge_indices[index1],index2)
                 push!(P₂_intersection_edge_indices[index2],index1)
             end
@@ -425,7 +425,7 @@ end
 
 function plot(ϕₕ::Projection, vals::Vector{Float64};
         color_map = :jet, levels::Int64 = 3, mem_const = 100000, 
-        prefractal_guess::Vector{Float64} = sketch_attractor_boundary(Γ::SelfSimilarFractal, levels, mem_const=mem_const),
+        prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(ϕₕ.domain::SelfSimilarFractal, levels, mem_const=mem_const),
         kwargs...)
 
     # housekeeping
@@ -447,12 +447,15 @@ function plot(ϕₕ::Projection, vals::Vector{Float64};
     end
 
     for (n,mesh_el) ∈ enumerate(ϕₕ.mesh)
-        Y .= copy.(prefractal_guess)
+        Y = [x for x∈prefractal_guess] # init Y
+        # Y .= copy.(prefractal_guess)
         for mᵢ ∈ reverse(mesh_el.index)
             Y = [sim_map(Γ.IFS[mᵢ],y) for y∈Y]
         end
         Yshape = Shape([y[1] for y ∈ Y], [y[2] for y ∈ Y])
-        colour = CGmap[scaled_val(vals[n])]
+        colour_RGBA = CGmap[scaled_val(vals[n])]
+        colour = [colour_RGBA.r colour_RGBA.g colour_RGBA.b]
+        println(colour)
         plot!([Yshape],fill_z=colour,kwargs...)
     end
 
