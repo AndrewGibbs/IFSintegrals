@@ -446,6 +446,7 @@ function plot(ϕₕ::Projection, vals::Vector{Float64};
         error("plotting only defined for fractals with two spatial dimensions")
     end
 
+    gr()
     for (n,mesh_el) ∈ enumerate(ϕₕ.mesh)
         Y = [x for x∈prefractal_guess] # init Y
         # Y .= copy.(prefractal_guess)
@@ -458,5 +459,6 @@ function plot(ϕₕ::Projection, vals::Vector{Float64};
         println(colour)
         plot!([Yshape],fill_z=colour,kwargs...)
     end
+    display(current())
 
 end
