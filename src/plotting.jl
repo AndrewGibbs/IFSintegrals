@@ -402,11 +402,11 @@ function sketch_attractor_boundary(Γ::SelfSimilarFractal, levels::Int64; mem_co
 
     for ℓ_=1:levels
         S□ = [Vector{Vector{Float64}}([sim_map(s,x) for x∈K ]) for s∈Γ.IFS]
-        println(ℓ_)
+        # println(ℓ_)
         count = 1
         while length(S□) > 1
             count +=1
-            println("\t",count)
+            # println("\t",count)
             for n=2:length(S□)
                 is_intersection, US□ = unify_polygons(S□[1],S□[n])
                 if is_intersection
@@ -424,7 +424,7 @@ function sketch_attractor_boundary(Γ::SelfSimilarFractal, levels::Int64; mem_co
 end
 
 function plot(ϕₕ::Projection, vals::Vector{Float64};
-        color_map = :jet, levels::Int64 = 3, mem_const = 100000, 
+        colour_map = :jet, levels::Int64 = 3, mem_const = 100000, 
         prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(ϕₕ.domain::SelfSimilarFractal, levels, mem_const=mem_const),
         kwargs...)
 
@@ -433,12 +433,13 @@ function plot(ϕₕ::Projection, vals::Vector{Float64};
     length(ϕₕ.mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
     Γ.spatial_dimension != 2 ? error("plotting only defined for fractals with two spatial dimensions") : nothing
     
+    N = length(ϕₕ.coeffs)
     # first scale the values to [0,1], for colour mapping
-    maxV = maximum(vals)
-    minV = minimum(vals)
-    rangeV = maxV-minV
-    scaled_val(x::Float64) = (x-minV)/rangeV
-    CGmap = cgrad(color_map)
+    # maxV = maximum(vals)
+    # minV = minimum(vals)
+    # rangeV = maxV-minV
+    # scaled_val(x::Float64) = (x-minV)/rangeV
+    # CGmap = cgrad(color_map)
 
     # now get a sketch of the attractor
 
@@ -446,19 +447,21 @@ function plot(ϕₕ::Projection, vals::Vector{Float64};
         error("plotting only defined for fractals with two spatial dimensions")
     end
 
-    gr()
+    # gr()
+    mesh_shapes = [Shape([(0.0,0.0)]) for _=1:N]
     for (n,mesh_el) ∈ enumerate(ϕₕ.mesh)
         Y = [x for x∈prefractal_guess] # init Y
         # Y .= copy.(prefractal_guess)
         for mᵢ ∈ reverse(mesh_el.index)
             Y = [sim_map(Γ.IFS[mᵢ],y) for y∈Y]
         end
-        Yshape = Shape([y[1] for y ∈ Y], [y[2] for y ∈ Y])
-        colour_RGBA = CGmap[scaled_val(vals[n])]
-        colour = [colour_RGBA.r colour_RGBA.g colour_RGBA.b]
-        println(colour)
-        plot!([Yshape],fill_z=colour,kwargs...)
+        mesh_shapes[n] = Shape([y[1] for y ∈ Y], [y[2] for y ∈ Y])
+        # colour_RGBA = CGmap[scaled_val(vals[n])]
+        # colour = [colour_RGBA.r colour_RGBA.g colour_RGBA.b]
+        # println(colour)
     end
-    display(current())
+
+    plot(mesh_shapes, c=colour_map, mc=colour_map, fill_z=vals, labels=:none, kwargs...)
+    # display(current())
 
 end
