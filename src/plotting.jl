@@ -424,7 +424,8 @@ function sketch_attractor_boundary(Γ::SelfSimilarFractal, levels::Int64; mem_co
 end
 
 function plot(ϕₕ::Projection, vals::Vector{Float64};
-        colour_map = :jet, levels::Int64 = 3, mem_const = 100000, 
+        colour_map = :jet, linewidth =0.0,
+        levels::Int64 = 3, mem_const = 100000, 
         prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(ϕₕ.domain::SelfSimilarFractal, levels, mem_const=mem_const),
         kwargs...)
 
@@ -461,7 +462,7 @@ function plot(ϕₕ::Projection, vals::Vector{Float64};
         # println(colour)
     end
 
-    plot(mesh_shapes, c=colour_map, mc=colour_map, fill_z=vals, labels=:none, kwargs...)
+    plot(mesh_shapes, c=colour_map, mc=colour_map, fill_z=vals, labels=:none, linewidth=linewidth, kwargs...)
     # display(current())
 
 end
