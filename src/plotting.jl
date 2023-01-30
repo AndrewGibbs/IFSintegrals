@@ -434,12 +434,17 @@ function polygonise_mesh(mesh::Vector{SubInvariantMeasure{V,M}}, prefractal_gues
     N = length(mesh)
 
     mesh_shapes = [Shape([(0.0,0.0)]) for _=1:N]
-    for (n,mesh_el) ∈ enumerate(mesh)
-        Y = [x for x∈prefractal_guess]
-        for mᵢ ∈ reverse(mesh_el.index)
-            Y = [sim_map(Γ.IFS[mᵢ],y) for y∈Y]
+
+    if N == 1
+        mesh_shapes[1] = Shape([y[1] for y ∈ prefractal_guess], [y[2] for y ∈ prefractal_guess])
+    else
+        for (n,mesh_el) ∈ enumerate(mesh)
+            Y = [x for x∈prefractal_guess]
+            for mᵢ ∈ reverse(mesh_el.index)
+                Y = [sim_map(Γ.IFS[mᵢ],y) for y∈Y]
+            end
+            mesh_shapes[n] = Shape([y[1] for y ∈ Y], [y[2] for y ∈ Y])
         end
-        mesh_shapes[n] = Shape([y[1] for y ∈ Y], [y[2] for y ∈ Y])
     end
     return mesh_shapes
 end
@@ -447,7 +452,7 @@ end
 function plot(mesh::Vector{SubInvariantMeasure{V,M}}, vals::Vector{Float64};
         colour_map = :jet, linewidth =0.0,
         levels::Int64 = 3, mem_const = 100000, 
-        prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(mesh[1].parent_measure.domain::SelfSimilarFractal, levels, mem_const=mem_const),
+        prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(mesh[1].parent_measure::SelfSimilarFractal, levels, mem_const=mem_const),
         kwargs...) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
 
     length(mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
@@ -460,7 +465,7 @@ end
 function plot!(mesh::Vector{SubInvariantMeasure{V,M}}, vals::Vector{Float64};
     colour_map = :jet, linewidth =0.0,
     levels::Int64 = 3, mem_const = 100000, 
-    prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(mesh[1].parent_measure.domain::SelfSimilarFractal, levels, mem_const=mem_const),
+    prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(mesh[1].parent_measure::SelfSimilarFractal, levels, mem_const=mem_const),
     kwargs...) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
 
 length(mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
