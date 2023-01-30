@@ -396,6 +396,8 @@ end
 
 function sketch_attractor_boundary(Γ::SelfSimilarFractal, levels::Int64; mem_const = 100000)
 
+    Γ.spatial_dimension != 2 ? error("plotting only defined for fractals with two spatial dimensions") : nothing
+
     unit_square = [[-1/2,-1/2],[-1/2,1/2],[1/2,1/2],[1/2,-1/2]]
     stretched_square = (1.1)*Γ.diameter.*unit_square
     K = [x + Γ.barycentre for x∈ stretched_square]
@@ -423,46 +425,47 @@ function sketch_attractor_boundary(Γ::SelfSimilarFractal, levels::Int64; mem_co
     return push!(K,K[1])
 end
 
+function polygonise_mesh(mesh::Vector{SubInvariantMeasure{V,M}}, prefractal_guess::Vector{Vector{Float64}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    
+    Γ = mesh[1].parent_measure
+
+    # prefractal_guess = sketch_attractor_boundary(Γ, levels, mem_const=mem_const)
+
+    N = length(mesh)
+
+    mesh_shapes = [Shape([(0.0,0.0)]) for _=1:N]
+    for (n,mesh_el) ∈ enumerate(mesh)
+        Y = [x for x∈prefractal_guess]
+        for mᵢ ∈ reverse(mesh_el.index)
+            Y = [sim_map(Γ.IFS[mᵢ],y) for y∈Y]
+        end
+        mesh_shapes[n] = Shape([y[1] for y ∈ Y], [y[2] for y ∈ Y])
+    end
+    return mesh_shapes
+end
+
 function plot(ϕₕ::Projection, vals::Vector{Float64};
         colour_map = :jet, linewidth =0.0,
         levels::Int64 = 3, mem_const = 100000, 
         prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(ϕₕ.domain::SelfSimilarFractal, levels, mem_const=mem_const),
         kwargs...)
 
-    # housekeeping
-    Γ = ϕₕ.domain
     length(ϕₕ.mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
-    Γ.spatial_dimension != 2 ? error("plotting only defined for fractals with two spatial dimensions") : nothing
-    
-    N = length(ϕₕ.coeffs)
-    # first scale the values to [0,1], for colour mapping
-    # maxV = maximum(vals)
-    # minV = minimum(vals)
-    # rangeV = maxV-minV
-    # scaled_val(x::Float64) = (x-minV)/rangeV
-    # CGmap = cgrad(color_map)
 
-    # now get a sketch of the attractor
+    plot(polygonise_mesh(ϕₕ.mesh, prefractal_guess),
+        c=colour_map, mc=colour_map, fill_z=permutedims(vals), labels=:none, linewidth=linewidth, kwargs...)
 
-    if Γ.spatial_dimension != 2
-        error("plotting only defined for fractals with two spatial dimensions")
-    end
+end
 
-    # gr()
-    mesh_shapes = [Shape([(0.0,0.0)]) for _=1:N]
-    for (n,mesh_el) ∈ enumerate(ϕₕ.mesh)
-        Y = [x for x∈prefractal_guess] # init Y
-        # Y .= copy.(prefractal_guess)
-        for mᵢ ∈ reverse(mesh_el.index)
-            Y = [sim_map(Γ.IFS[mᵢ],y) for y∈Y]
-        end
-        mesh_shapes[n] = Shape([y[1] for y ∈ Y], [y[2] for y ∈ Y])
-        # colour_RGBA = CGmap[scaled_val(vals[n])]
-        # colour = [colour_RGBA.r colour_RGBA.g colour_RGBA.b]
-        # println(colour)
-    end
+function plot!(ϕₕ::Projection, vals::Vector{Float64};
+    colour_map = :jet, linewidth =0.0,
+    levels::Int64 = 3, mem_const = 100000, 
+    prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(ϕₕ.domain::SelfSimilarFractal, levels, mem_const=mem_const),
+    kwargs...)
 
-    plot(mesh_shapes, c=colour_map, mc=colour_map, fill_z=vals, labels=:none, linewidth=linewidth, kwargs...)
-    # display(current())
+length(ϕₕ.mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
+
+plot!(polygonise_mesh(ϕₕ.mesh, prefractal_guess),
+    c=colour_map, mc=colour_map, fill_z=permutedims(vals), labels=:none, linewidth=linewidth, kwargs...)
 
 end
