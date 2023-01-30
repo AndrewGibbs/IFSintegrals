@@ -457,7 +457,7 @@ function plot(mesh::Vector{SubInvariantMeasure{V,M}}, vals::Vector{Float64};
 
     length(mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
 
-    plot(polygonise_mesh(mesh, prefractal_guess),
+    plot(polygonise_mesh(mesh, prefractal_guess);
         c=colour_map, mc=colour_map, fill_z=permutedims(vals), labels=:none, linewidth=linewidth, kwargs...)
 
 end
@@ -470,7 +470,7 @@ function plot!(mesh::Vector{SubInvariantMeasure{V,M}}, vals::Vector{Float64};
 
 length(mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
 
-plot!(polygonise_mesh(mesh, prefractal_guess),
+plot!(polygonise_mesh(mesh, prefractal_guess);
     c=colour_map, mc=colour_map, fill_z=permutedims(vals), labels=:none, linewidth=linewidth, kwargs...)
 
 end
