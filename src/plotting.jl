@@ -444,28 +444,28 @@ function polygonise_mesh(mesh::Vector{SubInvariantMeasure{V,M}}, prefractal_gues
     return mesh_shapes
 end
 
-function plot(ϕₕ::Projection, vals::Vector{Float64};
+function plot(mesh::Vector{SubInvariantMeasure{V,M}}, vals::Vector{Float64};
         colour_map = :jet, linewidth =0.0,
         levels::Int64 = 3, mem_const = 100000, 
-        prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(ϕₕ.domain::SelfSimilarFractal, levels, mem_const=mem_const),
-        kwargs...)
+        prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(mesh[1].parent_measure.domain::SelfSimilarFractal, levels, mem_const=mem_const),
+        kwargs...) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
 
-    length(ϕₕ.mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
+    length(mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
 
-    plot(polygonise_mesh(ϕₕ.mesh, prefractal_guess),
+    plot(polygonise_mesh(mesh, prefractal_guess),
         c=colour_map, mc=colour_map, fill_z=permutedims(vals), labels=:none, linewidth=linewidth, kwargs...)
 
 end
 
-function plot!(ϕₕ::Projection, vals::Vector{Float64};
+function plot!(mesh::Vector{SubInvariantMeasure{V,M}}, vals::Vector{Float64};
     colour_map = :jet, linewidth =0.0,
     levels::Int64 = 3, mem_const = 100000, 
-    prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(ϕₕ.domain::SelfSimilarFractal, levels, mem_const=mem_const),
-    kwargs...)
+    prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(mesh[1].parent_measure.domain::SelfSimilarFractal, levels, mem_const=mem_const),
+    kwargs...) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
 
-length(ϕₕ.mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
+length(mesh) != length(vals) ? error("values vector and mesh need to be same size") : nothing
 
-plot!(polygonise_mesh(ϕₕ.mesh, prefractal_guess),
+plot!(polygonise_mesh(mesh, prefractal_guess),
     c=colour_map, mc=colour_map, fill_z=permutedims(vals), labels=:none, linewidth=linewidth, kwargs...)
 
 end
