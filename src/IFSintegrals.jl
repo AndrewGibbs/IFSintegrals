@@ -2,12 +2,13 @@ module IFSintegrals
 
 using Base: Float64
 using ProgressMeter
-import Plots: scatter!, scatter
+import Plots: scatter!, scatter, plot, plot!, cgrad, Shape, gr, current
 import Base: -, \, *, +, getindex, isapprox
 import Roots: find_zero, Bisection
-import LinearAlgebra: norm, I, UniformScaling, eigvals, eigvecs
+import LinearAlgebra: norm, I, UniformScaling, eigvals, eigvecs, dot, cross
 import StaticArrays: SVector, SMatrix
-import LazySets: VPolygon, Singleton
+import LazySets: VPolygon, Singleton, LineSegment
+import PolygonInbounds: inpoly2
 export Similarity, InvariantMeasure, SubInvariantMeasure, SelfSimilarFractal, sketch_attractor, CantorSet,
         Sierpinski, SquareFlake, KochFlake, CantorN, Carpet, Vicsek, Dragon,
         sim_map, full_map,

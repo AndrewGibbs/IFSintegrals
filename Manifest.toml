@@ -710,6 +710,11 @@ git-tree-sha1 = "71d65e9242935132e71c4fbf084451579491166a"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.25.4"
 
+[[deps.PolygonInbounds]]
+git-tree-sha1 = "8d50c96f4ba5e1e2fd524116b4ef97b29d5f77da"
+uuid = "e4521ec6-8c1d-418e-9da2-b3bc4ae105d6"
+version = "0.2.0"
+
 [[deps.Preferences]]
 deps = ["TOML"]
 git-tree-sha1 = "47e5f437cc0e7ef2ce8406ce1e7e24d44915f88d"
