@@ -91,7 +91,7 @@ end
 #constructor:
 function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()),
           h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf),
-           vary_quad::Bool = true, repeat_blocks::Bool =true)
+           vary_quad::Bool = true, repeat_blocks::Bool =true, adjacency_function::Function=nothing)
     Γ = K.domain
     Lₕ = subdivide_indices(K.domain,h_mesh) #get vector indices for subcomponents
     N = length(Lₕ)
@@ -101,6 +101,15 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
     # create blank matrix of flags, describing if the matrix entry has been filled
     BEM_filled = zeros(Bool,N,N)
     m_count = 0
+
+    # Josh's stuff. Check if adjacency_function has been provided, if so, use it:
+    if adjacency_function != nothing
+        use_users_adj_fn = true
+        quad_type, quad_scale = adjacency_function(mesh)
+    else
+        use_users_adj_fn = false
+    end
+
 
     # now get matrix of how much we can adjust the h_quad parameter for far away elements
     if vary_quad
@@ -159,12 +168,21 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
             if !BEM_filled[m_count,n_count] # check matrix entry hasn't been filled already
                 n = Lₕ[n_count]
                 Γₙ = mesh[n_count] # mesh element
-                is_similar_to_singular_integral, ρ, similar_index = check_for_similar_singular_integrals(Γ, prepared_singular_inds, n, m)
-                if is_similar_to_singular_integral # TO DO: add some disjointness condition here
+
+                # TO DO: add some disjointness condition here
+                if use_users_adj_fn
+                    similar_index = quad_type[n_count,m_count]
+                    similar_index>0 ? is_similar_to_singular_integral = true : is_similar_to_singular_integral = false
+                    ρ = quad_scale[n_count, m_count]
+                else
+                    is_similar_to_singular_integral, ρ, similar_index = check_for_similar_singular_integrals(Γ, prepared_singular_inds, n, m)
+                end
+
+                if is_similar_to_singular_integral
                     similar_indices = prepared_singular_inds[similar_index]
                     scale_adjust = 1/scaler(ρ, similar_indices[1], similar_indices[2], n, m)
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad)
-                     Galerkin_matrix[m_count,n_count] = K.singularity_scale*prepared_singular_vals[similar_index]*scale_adjust+ w'*K.Lipschitz_part_of_kernel.(x,y)
+                    Galerkin_matrix[m_count,n_count] = K.singularity_scale*prepared_singular_vals[similar_index]*scale_adjust+ w'*K.Lipschitz_part_of_kernel.(x,y)
                     if K.singularity_strength == 0
                         m  != [0] ? pₘ = prod(Γ.weights[m]) : pₘ = 1.0
                         n  != [0] ? pₙ = prod(Γ.weights[n]) : pₙ = 1.0
