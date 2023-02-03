@@ -91,7 +91,7 @@ end
 #constructor:
 function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()),
           h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf),
-           vary_quad::Bool = true, repeat_blocks::Bool =true, adjacency_function::Function=nothing)
+           vary_quad::Bool = true, repeat_blocks::Bool =true, adjacency_function::Union{Function,Nothing}=nothing)
     Γ = K.domain
     Lₕ = subdivide_indices(K.domain,h_mesh) #get vector indices for subcomponents
     N = length(Lₕ)
@@ -174,6 +174,7 @@ function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.d
                     similar_index = quad_type[n_count,m_count]
                     similar_index>0 ? is_similar_to_singular_integral = true : is_similar_to_singular_integral = false
                     ρ = quad_scale[n_count, m_count]
+                    _, ρ_, _ = check_for_similar_singular_integrals(Γ, prepared_singular_inds, n, m)
                 else
                     is_similar_to_singular_integral, ρ, similar_index = check_for_similar_singular_integrals(Γ, prepared_singular_inds, n, m)
                 end

@@ -309,7 +309,7 @@ function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     #     end
     # end
     # more traditional diameter: 2*sqrt(3)/3
-    Koch_area =  2*1.5^2/5
+    Koch_area =  2*3*sqrt(3)/5
     if are_weights_Hausdorff(weights,IFS,2)
         return InvariantMeasure(IFS, 2, 2.0, false, true, bary, 2.0, Koch_area, weights, false, connectedness, DihedralGroup(6))
     else
