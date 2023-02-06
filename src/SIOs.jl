@@ -19,14 +19,14 @@ function Id(Γ::SelfSimilarFractal{V,M}) where {V<:Union{Real,AbstractVector},M<
     return IdentityOperator(Γ,1.0)
 end
 
-function get_mass_matrix(I_Γ::IdentityOperator{V,M}, h_mesh::Float64) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    Γ = I_Γ.domain
-    Lₕ = subdivide_indices(Γ,h_mesh) #get vector indices for subcomponents
-    N = length(Lₕ)
+function get_mass_matrix(I_Γ::IdentityOperator{V,M}, mesh::Vector{SubInvariantMeasure{V,M}}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    # Γ = I_Γ.domain
+    # Lₕ = subdivide_indices(Γ,h_mesh) #get vector indices for subcomponents
+    N = length(mesh)
     # mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
     mass_matrix = zeros(N,N)
     for n=1:N
-        mass_matrix[n,n] = SubInvariantMeasure(Γ,Lₕ[n]).measure
+        mass_matrix[n,n] = mesh[n].measure
     end
 
     return I_Γ.λ * mass_matrix
@@ -88,14 +88,23 @@ function check_for_similar_singular_integrals(Γ, prepared_singular_inds, n, n_)
     return is_similar_to_singular_integral, ρ, similar_index
 end
 
-#constructor:
-function DiscreteSIO(K::SIO; h_mesh::Real=max(2π/(10.0*K.wavenumber),K.domain.diameter+eps()),
-          h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf),
-           vary_quad::Bool = true, repeat_blocks::Bool =true, adjacency_function::Union{Function,Nothing}=nothing)
-    Γ = K.domain
+#constructor:#
+function DiscreteSIO(K::SIO{V,M}; h_mesh::Real=max(2π/(10.0*K.wavenumber)), kwargs...) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     Lₕ = subdivide_indices(K.domain,h_mesh) #get vector indices for subcomponents
     N = length(Lₕ)
-    mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
+    mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N]
+    return DiscreteSIO(K, mesh, Lₕ, h_mesh=h_mesh)
+end
+
+function DiscreteSIO(K::SIO{V,M_}, mesh::Vector{SubInvariantMeasure{V,M_}}, Lₕ::Vector{Vector{Int64}};
+        h_mesh::Real= maximum([m.diameter for m∈mesh]),#max(2π/(10.0*K.wavenumber),K.domain.diameter+eps(),
+        h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf),
+        vary_quad::Bool = true, repeat_blocks::Bool =true,
+        adjacency_function::Union{Function,Nothing}=nothing) where {V<:Union{Real,AbstractVector},M_<:Union{Real,AbstractMatrix}}
+    Γ = K.domain
+    # Lₕ = subdivide_indices(K.domain,h_mesh) #get vector indices for subcomponents
+    N = length(Lₕ)
+    # mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
     M = length(Γ.IFS)
     # symmetry_group = get_symmetry_group(Γ)
     # create blank matrix of flags, describing if the matrix entry has been filled
@@ -322,15 +331,20 @@ function +(G::OperatorSum{V,M},F::DomainOperator{V,M}) where {V<:Union{Real,Abst
     return OperatorSum(F.domain, vcat(G.operators,[F]))
 end
 
-function DiscreteSIO(K::OperatorSum; h_mesh::Real=-1,
-    h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf),
-    vary_quad::Bool = true, repeat_blocks::Bool =true)
+function DiscreteSIO(K::OperatorSum; h_mesh::Real=K.domain.diameter, kwargs...)
 
-    if h_mesh <0
-        use_h_mesh_defualt = true
-    else
-        use_h_mesh_defualt = false
-    end
+    # if h_mesh <0
+    #     use_h_mesh_defualt = true
+    # else
+    #     use_h_mesh_defualt = false
+    # end
+
+    # if h_quad < 0        
+    #     use_h_quad_defualt = true
+    # else
+    #     use_h_quad_defualt = false
+    # end
+
 
     Γ = K.domain
     Lₕ = subdivide_indices(Γ,h_mesh) # get vector indices for subcomponents
@@ -342,18 +356,25 @@ function DiscreteSIO(K::OperatorSum; h_mesh::Real=-1,
 
     for J ∈ K.operators
         if isa(J,SIO) # stiffness matrix
-            if use_h_mesh_defualt
-                h_mesh = max(2π/(10.0*K.wavenumber),J.domain.diameter+eps())
-            end
-            stiffness_matrix += DiscreteSIO(J, h_mesh=h_mesh, h_quad=h_quad,
-                                            h_quad_diag=h_quad_diag, Cosc=Cosc,
-                                            vary_quad=vary_quad, repeat_blocks=repeat_blocks).Galerkin_matrix
+            # if use_h_mesh_defualt
+            #     h_mesh = max(2π/(10.0*K.wavenumber),J.domain.diameter+eps())
+            # end
+            # if use_h_quad_defualt
+            #     h_quad = h_mesh
+            # end
+            stiffness_matrix += DiscreteSIO(J, mesh, Lₕ; kwargs...).Galerkin_matrix
         elseif isa(J,IdentityOperator) # mass matrix
-            if use_h_mesh_defualt
-                h_mesh = max(2π/(10.0*K.wavenumber))
-            end
-            stiffness_matrix += get_mass_matrix(J, h_mesh)
+            # if use_h_mesh_defualt
+            #     h_mesh = max(2π/(10.0*K.wavenumber))
+            # end
+            stiffness_matrix += get_mass_matrix(J, mesh)
         end
+    end
+
+    if haskey(kwargs,"h_quad")
+        h_quad = kwargs["h_quad"]
+    else
+        h_quad = h_mesh
     end
 
     return DiscreteSIO(Γ, K, h_mesh, h_quad, mesh, Lₕ, stiffness_matrix)
