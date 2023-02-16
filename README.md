@@ -14,6 +14,12 @@ To install, type the following into Julia:
 
 `Pkg.add("https://github.com/AndrewGibbs/IFSintegrals.git")`
 
+Some users have had issues with the GR backend during installation. If this occurs, install manually with
+
+`Pkg.add("gr")`
+
+and try again.
+
 ## Quadrature:
 Weights and nodes for the evaluation of integrals with respect to Hausdorff (or equivalent) measure can be obtained using `barycentre_rule`, which is a generalisation of the midpoint rule to IFS attractors.
 
