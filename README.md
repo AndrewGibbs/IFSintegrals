@@ -33,7 +33,8 @@ Boundary Integral operators can be defined and discretised on attractors, using 
 There are examples of these problems being solved in the notebook files, where the boundary integral equation for the Helmholtz equation is solved.
 
 ## Bibliography
-* [**Numerical Quadrature for Singular Integrals on Fractals**](http://arxiv.org/abs/2112.11793), A. Gibbs, D. P. Hewett, A. Moiola.
-* [**A Stable Stieltjes Technique for Computing Orthogonal Polynomials and Jacobi Matrices Associated with a
-Class of Singular Measures**](https://link.springer.com/article/10.1007/BF02437506) G. Mantica
+* **Numerical Quadrature for Singular Integrals on Fractals**, A. Gibbs, D. P. Hewett, A. Moiola, [published article](https://link.springer.com/article/10.1007/s11075-022-01378-9), [arxiv preprint](http://arxiv.org/abs/2112.11793).
+* **A Hausdorff-measure boundary element method for acoustic scattering by fractal screens**, António M. Caetano, Simon N. Chandler-Wilde, Andrew Gibbs, David P. Hewett, Andrea Moiola, [arxiv preprint](https://arxiv.org/abs/2212.06594)
+* **A Stable Stieltjes Technique for Computing Orthogonal Polynomials and Jacobi Matrices Associated with a
+Class of Singular Measures**, G. Mantica, [published article](https://link.springer.com/article/10.1007/BF02437506).
 
