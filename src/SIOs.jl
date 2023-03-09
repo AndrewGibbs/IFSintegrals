@@ -92,7 +92,7 @@ end
 function DiscreteSIO(K::SIO{V,M}; h_mesh::Real=max(2π/(10.0*K.wavenumber)), kwargs...) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     Lₕ = subdivide_indices(K.domain,h_mesh) #get vector indices for subcomponents
     N = length(Lₕ)
-    mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N]
+    mesh = [SubInvariantMeasure(K.domain,Lₕ[n]) for n=1:N]
     return DiscreteSIO(K, mesh, Lₕ, h_mesh=h_mesh)
 end
 
