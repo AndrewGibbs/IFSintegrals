@@ -113,7 +113,7 @@ end
 Returns the Cartesian product of N Cantor Sets, as an InvariantMeasure (type) of an iterated function system.
 For example, when N=2, we obtain Cantor Dust.
 """
-function CantorN(N::Integer; contraction = 1/3, weights = ones(2^N))
+function CantorN(N::Integer; contraction = 1/3, weights = ones(2^N)./(2^N))
     M = 2^N
     S = Similarity{SVector{N,Float64},SMatrix{N,N,Float64,N^2}}[]
     for m=1:M

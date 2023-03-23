@@ -66,7 +66,7 @@ end
 FF2D_kernel(θ::Float64, x::Float64,k::Float64) = exp(-im*k*(cos(θ)*x))
 
 # far-field kernel 3D:
-FF3D_kernel(θ::Float64, ψ::Float64, x::Vector{Float64}, k::Float64) = exp.(-im*k*(sin(θ)*cos(ψ)*x[1]+sin(θ)*sin(ψ)*x[2]))
+FF3D_kernel(θ::Float64, ψ::Float64, x::Vector{Float64}, k::Float64) = exp(-im*k*(sin(θ)*cos(ψ)*x[1]+sin(θ)*sin(ψ)*x[2]))
 
 """
 Returns a function which is the far-field pattern in Rⁿ⁺¹, from a density on the screen Γ ∈ Rⁿ.
