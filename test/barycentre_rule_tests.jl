@@ -1,20 +1,19 @@
-using IFSintegrals, LinearAlgebra
+function get_test_fractal()
+    ρ = 0.41 # uniform contraction
+        IFS = [
+            Similarity(ρ,[0,0])
+            Similarity(ρ,[1-ρ,0])
+            Similarity(ρ,[(1-ρ)/2,sqrt(3)*(1-ρ)/2])
+            Similarity(ρ,[(1-ρ)/2,(1-ρ)/(2*sqrt(3))])
+        ]
+    return InvariantMeasure(IFS)
+end
 
-# don't change these parameters - these are specific to the benchmarks below
-h = 0.05
 
-ρ = 0.41 # uniform contraction
-    IFS = [
-        Similarity(ρ,[0,0])
-        Similarity(ρ,[1-ρ,0])
-        Similarity(ρ,[(1-ρ)/2,sqrt(3)*(1-ρ)/2])
-        Similarity(ρ,[(1-ρ)/2,(1-ρ)/(2*sqrt(3))])
-    ]
-Γ = InvariantMeasure(IFS)
-
-threshold = 1E-14
-
-function test1(h)
+function test1(threshold = 1E-14)
+    # don't change these parameters - these are specific to the benchmarks below
+    h = 0.05
+    Γ = get_test_fractal()
     y, w = barycentre_rule(Γ,h)
 
     f(x) = sin.(norm.(x)) # define integrand
@@ -27,7 +26,10 @@ function test1(h)
     end
 end
 
-function test2(h)
+function test2(threshold = 1E-14)
+    # don't change these parameters - these are specific to the benchmarks below
+    h = 0.05
+    Γ = get_test_fractal()
     Γ₁ = CantorSet(contraction = 1/3)
     Γ₂ = CantorSet(contraction = 3/8)
     f(x,y) = (sin.(abs.(x)).*cos.(abs.(y)))
@@ -42,7 +44,10 @@ function test2(h)
     end
 end
 
-function test3(h)
+function test3(threshold = 1E-14)
+    # don't change these parameters - these are specific to the benchmarks below
+    h = 0.05
+    Γ = get_test_fractal()
     t = 1/2 # singularity strength
     n = 2 #fixed point index, must be an integer
     Ih = eval_green_single_integral_fixed_point(Γ, t, h, n)
@@ -54,7 +59,10 @@ function test3(h)
     end
 end
 
-function test4(h)
+function test4(threshold = 1E-14)
+    # don't change these parameters - these are specific to the benchmarks below
+    h = 0.05
+    Γ = get_test_fractal()
     t = 1.0
     Ih = eval_green_double_integral(Γ, t, h)
     I_bm = 4.738268418342183
@@ -65,7 +73,10 @@ function test4(h)
     end
 end
 
-function test5(h)
+function test5(threshold = 1E-14)
+    # don't change these parameters - these are specific to the benchmarks below
+    h = 0.05
+    Γ = get_test_fractal()
     k = 1.96
     Ih = singular_elliptic_double_integral(Γ, k, h)
     I_bm = 0.3206113688339223 + 0.13651121576163053im
@@ -76,15 +87,11 @@ function test5(h)
     end
 end
 
-println(test1(h))
-println(test2(h))
-println(test3(h))
-println(test4(h))
-println(test5(h))
+function test6(threshold = 1E-14)
+    # don't change these parameters - these are specific to the benchmarks below
+    h = 0.05
+    Γ = CantorSet()
 
-Γ = CantorSet()
-
-function test6(h)
     t = 0.0 # singularity strength
     n = 1 #fixed point index, must be an integer
     Ih = eval_green_single_integral_fixed_point(Γ, t, h, n)
@@ -96,7 +103,11 @@ function test6(h)
     end
 end
 
-function test7(h)
+function test7(threshold = 1E-14)
+    # don't change these parameters - these are specific to the benchmarks below
+    h = 0.05
+
+    Γ = CantorSet()
     γ = Γ[1]
     t = 0.0 # singularity strength
     n = 1 #fixed point index, must be an integer
@@ -109,12 +120,10 @@ function test7(h)
     end
 end
 
-println(test6(h))
-println(test7(h))
-
-Γ = CantorDust()
-
-function test8(h)
+function test8(threshold = 1E-14)
+    # don't change these parameters - these are specific to the benchmarks below
+    h = 0.05
+    Γ = CantorDust()
     γ = Γ[1]
     t = 0.0 # singularity strength
     n = 1 #fixed point index, must be an integer
@@ -126,5 +135,3 @@ function test8(h)
         return true
     end
 end
-
-test8(h)
