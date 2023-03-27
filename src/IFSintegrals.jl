@@ -1,4 +1,5 @@
 module IFSintegrals
+#@doc read(joinpath(dirname(@__DIR__), "README.md"), String) IFSintegrals
 
 using Base: Float64
 using ProgressMeter

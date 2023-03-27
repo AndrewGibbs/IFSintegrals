@@ -88,10 +88,10 @@ function adjust_defaults(kwargs)
 end
 
 """
-    draw(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+    plot(Γ::SelfSimilarFractal; markersize=0.1, color="black")
 Provides a simple sketch of the parent_measure Γ, by repeatedly applying the IFS.
 
-See also: [`draw!`](@ref)
+See also: [`plot!`](@ref)
 """
 function plot(Γ::SelfSimilarFractal; mem_const = 100000, kwargs...)
     # println(kwargs)
@@ -449,6 +449,16 @@ function polygonise_mesh(mesh::Vector{SubInvariantMeasure{V,M}}, prefractal_gues
     return mesh_shapes
 end
 
+"""
+    plot(mesh::Vector{SubInvariantMeasure{V,M}}, vals::Vector{Float64};
+            colour_map = :jet, linewidth =0.0,
+            levels::Int64 = 3, mem_const = 100000, 
+            prefractal_guess::Vector{Vector{Float64}} = sketch_attractor_boundary(mesh[1].parent_measure::SelfSimilarFractal, levels, mem_const=mem_const),
+            kwargs...) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+
+Provides a colourmap-style plot of a fractal ```mesh````,
+where the colours are determined by ```vals```
+"""
 function plot(mesh::Vector{SubInvariantMeasure{V,M}}, vals::Vector{Float64};
         colour_map = :jet, linewidth =0.0,
         levels::Int64 = 3, mem_const = 100000, 
