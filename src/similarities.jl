@@ -1,3 +1,22 @@
+""""
+    struct Similarity{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+        r::Float64 # contraction
+        δ::V # translation
+        A::M # rotation
+        rA::M # contraction * rotation
+    end
+
+Constructs a similarity map. 
+The third input (rotation matrix) is optional, and the fourth is created automatically.
+
+
+Can be treated as a function, for example
+```julia-repl
+    julia> s = Similarity(1/2,0) # creates contraction s(x)=x/2+0
+    julia> s(π)
+    1.5707963267948966
+```
+"""
 struct Similarity{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     r::Float64 # contraction
     δ::V # translation
@@ -55,7 +74,12 @@ function sim_map(s::Similarity{V,M}, IFS::Vector{Similarity{V,M}}) where {V<:Uni
     return [Similarity{V,M}(IFS[m].r, (I-rAchain[m])*s.δ + s.rA*IFS[m].δ, Achain[m], rAchain[m]) for m=1:length(IFS)]
 end
 
+function (s::Similarity{V,M})(x::Union{Real,AbstractVector{<:Real}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    return sim_map(s,x)
+end 
+
 ∘(s₁::Similarity{V,M},s₂::Similarity{V,M}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} = Similarity(s₁.r*s₂.r, s₁.δ+s₁.rA*s₂.δ, s₁.A*s₂.A, s₁.rA*s₂.rA)
+
 """   
 r::Float64 # contraction
 δ::V # translation

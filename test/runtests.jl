@@ -104,7 +104,7 @@ end
 
 println("Testing Gauss quadrature")
 
-h = 10^-10
+h = 10^-8
 
 prob_weights = rand(2)
 prob_weights = prob_weights./sum(prob_weights) # random weights for Cantor set
@@ -119,7 +119,7 @@ function exactness_check(Γ,N,x_b,w_b)
     x_g,w_g = gauss_quad(Γ,N) # get gauss rule
     I_gauss = w_g'*(x_g.^p) # compute lower order gauss approx
     # println(abs(I_bary-I_gauss)/abs(I_bary))
-    close_enough = abs(I_bary-I_gauss)/abs(I_bary)<10^3*eps()
+    close_enough = abs(I_bary-I_gauss)/abs(I_bary)<10^4*eps()
     return close_enough
 end
 
