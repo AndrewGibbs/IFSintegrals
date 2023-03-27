@@ -1,9 +1,12 @@
 push!(LOAD_PATH,"../src/")
-using IFSintegrals Documentermakedocs(
+using IFSintegrals
+using Documenter
+Documentermakedocs(
          sitename = "IFSintegrals.jl",
          modules  = [IFSintegrals],
          pages=[
                 "Home" => "index.md"
-               ])deploydocs(;
+               ])
+deploydocs(;
     repo="github.com/AndrewGibbs/IFSintegrals.jl",
 )
