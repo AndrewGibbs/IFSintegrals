@@ -1,4 +1,5 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/AndrewGibbs/IFSintegrals/HEAD)
+[![Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://andrewgibbs.github.io/IFSintegrals/dev/)
 
 # IFSintegrals
 
