@@ -1,7 +1,8 @@
 push!(LOAD_PATH,"../src/")
 using IFSintegrals
 using Documenter
-Documentermakedocs(
+
+makedocs(
          sitename = "IFSintegrals.jl",
          modules  = [IFSintegrals],
          pages=[
