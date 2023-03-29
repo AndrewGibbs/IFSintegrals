@@ -55,7 +55,9 @@ end
 
 # define similarity as a map
 sim_map(s::Similarity, x) = s.rA*x + s.δ
-(s::Similarity{V,M})(x::V) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} = sim_map(s,x)
+(s::Similarity{V,M})(x::Real) where {V<:Real, M<:Real} = sim_map(s,x)
+(s::Similarity{V,M})(x::AbstractVector) where {V<:AbstractVector, M<:Union{Real,AbstractMatrix}} = sim_map(s,x)
+
 #inverse map
 sim_map_inv(s::Similarity, x) = s.rA/(x-s.δ)
 
