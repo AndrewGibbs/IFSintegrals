@@ -52,7 +52,7 @@ end
 """
     InvariantMeasure(sims::Array{Similarity}; measure::Real=1.0) = InvariantMeasure(sims, get_diameter(sims); measure=measure)
     
-Representation of an parent_measure of an iterated function system (IFS).
+Representation of a measure, whose support is an iterated function system (IFS).
 Constructor requires only an IFS, which is of type Array{Similarity}, and diameter.
 All other essential properties can be deduced from this, including barycentre
 and dimension, which are approximated numerically.
