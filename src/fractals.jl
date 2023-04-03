@@ -50,12 +50,30 @@ abstract type SelfSimilarFractal{V<:Union{Real,AbstractVector}, M<:Union{Real,Ab
 end
 
 """
-    InvariantMeasure(sims::Array{Similarity}; measure::Real=1.0) = InvariantMeasure(sims, get_diameter(sims); measure=measure)
+    struct InvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
+        IFS::Vector{Similarity{V,M}}
+        spatial_dimension::Int64
+        Hausdorff_dimension::Float64
+        homogeneous::Bool
+        Hausdorff_weights::Bool
+        barycentre::V
+        diameter::Float64
+        measure::Float64
+        weights::Vector{Float64}
+        disjoint::Bool
+        connectedness::Matrix{Bool}
+        symmetry_group::Vector{AutomorphicMap{V,M}}
+    end
     
-Representation of a measure, whose support is an iterated function system (IFS).
+Representation of a invariant measure, whose support is an iterated function system (IFS).
 Constructor requires only an IFS, which is of type Array{Similarity}, and diameter.
 All other essential properties can be deduced from this, including barycentre
 and dimension, which are approximated numerically.
+
+Has the outer constructor, which only requires IFS (a vector of Similarity type) as an input.
+
+    InvariantMeasure(sims::Vector{Similarity}; measure::Real=1.0) = InvariantMeasure(sims, get_diameter(sims); measure=measure)
+    
 """
 struct InvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
     IFS::Vector{Similarity{V,M}}
@@ -71,14 +89,6 @@ struct InvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
     connectedness::Matrix{Bool}
     symmetry_group::Vector{AutomorphicMap{V,M}}
 end
-
-# outer constructor, when diameter isn't given:
-"""
-This rests on the assumption that the convex hull of the fractal
-is the convex hull of its fixed points. I haven't been able to 
-construct an example where this is false yet, but I haven't considered
-any rotations.
-"""
 
 # InvariantMeasure(sims::Array{Similarity}; measure::Real=1.0) = InvariantMeasure(sims, get_diameter(sims); measure=measure)
 
