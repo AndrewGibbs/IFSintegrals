@@ -15,7 +15,7 @@ To install, type the following into Julia:
 
 `using Pkg`
 
-`Pkg.add("https://github.com/AndrewGibbs/IFSintegrals.git")`
+`Pkg.add(url="https://github.com/AndrewGibbs/IFSintegrals.git")`
 
 Some users have had issues with the GR backend during installation. If this occurs, install manually with
 
