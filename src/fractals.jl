@@ -151,7 +151,7 @@ function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, me
     end
 
     # disjointness
-    connectedness==Matrix(I(length(sims))) ? disjoint=false : disjoint=true
+    connectedness==Matrix(I(length(sims))) ? disjoint=true : disjoint=false
 
     return InvariantMeasure(sims, top_dim, Hdim, homogeneous, Hausdorff_weights, Sbary,
             Float64(diameter), Float64(measure), weights, disjoint, connectedness, symmetry_group)
