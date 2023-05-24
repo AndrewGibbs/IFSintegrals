@@ -136,5 +136,8 @@ end
     end
 end
 
-# test the notebook example files all run correctly 
+println("Testing notebook example files") 
 include("nb_egs_test.jl")
+
+println("Testing values of 2D Cantor set scattering")
+include("far_field_test.jl")
