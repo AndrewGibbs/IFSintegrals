@@ -26,7 +26,7 @@ end
 represents the single layer boundary integral operator for Laplace, Sϕ(x) = ∫_Γ Φ(x,y) ϕ(x) dHᵈ(y),
 where Φ is the fundamental solution for the underlying PDE.
 """
-function SingleLayerOperatorLaplace(Γ::SelfSimilarFractal{V,M}; ambient_dimension = Γ.spatial_dimension) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+function SingleLayerOperatorLaplace(Γ::SelfSimilarFractal{V,M}; ambient_dimension = Γ.spatial_dimension::Int64) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     if ambient_dimension == 2
         K = SIO{V,M}(Γ, #fractal domain
         (x,y)->Φₜ(0.0,x,y), # log kernel
@@ -56,7 +56,7 @@ end
 represents the single layer boundary integral operator for Helmholtz, Sϕ(x) = ∫_Γ Φ(x,y) ϕ(x) dHᵈ(y),
 where Φ is the fundamental solution for the underlying PDE.
 """
-function SingleLayerOperatorHelmholtz(Γ::SelfSimilarFractal{V,M}, k::Number; ambient_dimension = Γ.spatial_dimension) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+function SingleLayerOperatorHelmholtz(Γ::SelfSimilarFractal{V,M}, k::Number; ambient_dimension = Γ.spatial_dimension::Int64) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     if ambient_dimension == 2      
         K = SIO{V,M}(Γ, #fractal domain
         (x,y)->HelhmoltzGreen2D(k,x,y), # Hankel function
@@ -86,28 +86,20 @@ end
     single_layer_potential(density::Projection, wavenumber::Real; h_quad::Float64=0.1/k)
 Returns a function which is the single layer potential in Rⁿ⁺¹, from a density on the screen Γ ∈ Rⁿ.
 """
-function get_layer_potential(density::Projection{V,M}, Φᵣ::Function, h_quad::Float64
-                            #ambient_dimension = density.domain.spatial_dimension
-                            ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function get_layer_potential(density::Projection{V,M}, Φᵣ::Function, h_quad) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     # get points on surface of Γ
     Y, W = full_surface_quad(density,h_quad)
     vec_length = length(W)
-    # if ambient_dimension == 2
-    #     Φᵣ = HelhmoltzGreen2D
-    # elseif ambient_dimension == 3
-    #     Φᵣ = HelhmoltzGreen3D
-    # else
-    #     error("ambient_dimension must be 2 or 3")
-    # end
+    spatial_dims = density.domain.spatial_dimension
+
     function Sϕ(x::Vector{Float64})
         R = zeros(Float64, vec_length)
         # first get contributions from additional spatial dimensions, if any
-        for j=(density.domain.spatial_dimension+1):length(x)
+        for j=(spatial_dims+1):length(x)
             R .+=x[j]^2
         end
-        # next get contributions from ambeient planar dimensions of surface
         for n=1:vec_length
-            for j = 1:density.domain.spatial_dimension
+            for j = 1:spatial_dims
                 R[n] += (x[j]-Y[n][j]).^2
             end
         end
@@ -115,4 +107,22 @@ function get_layer_potential(density::Projection{V,M}, Φᵣ::Function, h_quad::
         return transpose(W::Vector{Complex{Float64}})*(Φᵣ.(R))
     end
     return Sϕ
+end
+
+function SingleLayerPotentialHelmholtz(density::Projection{V,M}, k::T;
+                            ambient_dimension = Γ.spatial_dimension::Int64,
+                            h_quad = 0.1/abs(k)
+                            ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}, T<:Number}
+
+    # choose appropriate Green's kernel
+    if ambient_dimension == 2
+        Φₖ(r::Float64) = IFSintegrals.HelhmoltzGreen2D(k::T,r)
+    elseif ambient_dimension == 3
+        Φₖ(r::Float64) = IFSintegrals.HelhmoltzGreen3D(k::T,r)
+    else
+        error("Cannot compute single layer potential for this number of spatial dimensions")
+    end
+    # return the potential function
+    return get_layer_potential(density, Φₖ, h_quad)
+
 end
