@@ -17,7 +17,7 @@ export Similarity, InvariantMeasure, SubInvariantMeasure, SelfSimilarFractal, sk
         CantorDust, eval_green_single_integral_fixed_point, fixed_point,
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,
         SIO, DiscreteSIO, SingleLayerOperatorLaplace, SingleLayerOperatorHelmholtz,
-        Projection, get_layer_potential,
+        Projection, get_layer_potential, SingleLayerPotentialHelmholtz,
         single_layer_potential, far_field_pattern,
         chaos_quad, barycentre_uniform, long_bary, gauss_quad,
         slice, box, draw, draw!,

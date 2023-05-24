@@ -109,20 +109,19 @@ function get_layer_potential(density::Projection{V,M}, Φᵣ::Function, h_quad) 
     return Sϕ
 end
 
-function SingleLayerPotentialHelmholtz(density::Projection{V,M}, k::T;
-                            ambient_dimension = Γ.spatial_dimension::Int64,
-                            h_quad = 0.1/abs(k)
+function SingleLayerPotentialHelmholtz(density::Projection{V,M}, k::T; ambient_dimension::Int64 = density.domain.spatial_dimension,
+                            h_quad::Float64 = 0.1/abs(k)
                             ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}, T<:Number}
 
     # choose appropriate Green's kernel
     if ambient_dimension == 2
-        Φₖ(r::Float64) = IFSintegrals.HelhmoltzGreen2D(k::T,r)
+        K = (r::Float64)-> HelhmoltzGreen2D(k::T,r)
     elseif ambient_dimension == 3
-        Φₖ(r::Float64) = IFSintegrals.HelhmoltzGreen3D(k::T,r)
+        K = (r::Float64)-> HelhmoltzGreen3D(k::T,r)
     else
         error("Cannot compute single layer potential for this number of spatial dimensions")
     end
     # return the potential function
-    return get_layer_potential(density, Φₖ, h_quad)
+    return get_layer_potential(density, K, h_quad)
 
 end
