@@ -135,3 +135,6 @@ end
 
     end
 end
+
+# test the notebook example files all run correctly 
+include("nb_egs_test.jl")
