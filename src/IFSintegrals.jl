@@ -16,7 +16,8 @@ export Similarity, InvariantMeasure, SubInvariantMeasure, SelfSimilarFractal, sk
         barycentre_rule, subdivide_indices, eval_green_double_integral,
         CantorDust, eval_green_single_integral_fixed_point, fixed_point,
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,
-        SIO, DiscreteSIO, SingleLayer, Projection,
+        SIO, DiscreteSIO, SingleLayerOperatorLaplace, SingleLayerOperatorHelmholtz,
+        Projection, get_layer_potential, SingleLayerPotentialHelmholtz,
         single_layer_potential, far_field_pattern,
         chaos_quad, barycentre_uniform, long_bary, gauss_quad,
         slice, box, draw, draw!,
@@ -34,7 +35,8 @@ include("nondisjoint_singularities.jl")
 include("SIOs.jl")
 include("projections.jl")
 include("diam_approx.jl")
-include("presets.jl")
+include("fractal_presets.jl")
+include("operator_presets.jl")
 include("screen_scattering.jl")
 include("plotting.jl")
 include("Jacobi_matrices.jl")
