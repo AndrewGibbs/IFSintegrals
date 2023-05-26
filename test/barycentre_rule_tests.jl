@@ -9,8 +9,7 @@ function get_test_fractal()
     return InvariantMeasure(IFS)
 end
 
-
-function test1(threshold = 1E-14)
+function bary_test1(threshold = 1E-14)
     # don't change these parameters - these are specific to the benchmarks below
     h = 0.05
     Γ = get_test_fractal()
@@ -26,7 +25,7 @@ function test1(threshold = 1E-14)
     end
 end
 
-function test2(threshold = 1E-14)
+function bary_test2(threshold = 1E-14)
     # don't change these parameters - these are specific to the benchmarks below
     h = 0.05
     Γ = get_test_fractal()
@@ -44,7 +43,7 @@ function test2(threshold = 1E-14)
     end
 end
 
-function test3(threshold = 1E-14)
+function bary_test3(threshold = 1E-14)
     # don't change these parameters - these are specific to the benchmarks below
     h = 0.05
     Γ = get_test_fractal()
@@ -59,7 +58,7 @@ function test3(threshold = 1E-14)
     end
 end
 
-function test4(threshold = 1E-14)
+function bary_test4(threshold = 1E-14)
     # don't change these parameters - these are specific to the benchmarks below
     h = 0.05
     Γ = get_test_fractal()
@@ -73,7 +72,7 @@ function test4(threshold = 1E-14)
     end
 end
 
-function test5(threshold = 1E-14)
+function bary_test5(threshold = 1E-14)
     # don't change these parameters - these are specific to the benchmarks below
     h = 0.05
     Γ = get_test_fractal()
@@ -87,7 +86,7 @@ function test5(threshold = 1E-14)
     end
 end
 
-function test6(threshold = 1E-14)
+function bary_test6(threshold = 1E-14)
     # don't change these parameters - these are specific to the benchmarks below
     h = 0.05
     Γ = CantorSet()
@@ -103,7 +102,7 @@ function test6(threshold = 1E-14)
     end
 end
 
-function test7(threshold = 1E-14)
+function bary_test7(threshold = 1E-14)
     # don't change these parameters - these are specific to the benchmarks below
     h = 0.05
 
@@ -120,7 +119,7 @@ function test7(threshold = 1E-14)
     end
 end
 
-function test8(threshold = 1E-14)
+function bary_test8(threshold = 1E-14)
     # don't change these parameters - these are specific to the benchmarks below
     h = 0.05
     Γ = CantorDust()
