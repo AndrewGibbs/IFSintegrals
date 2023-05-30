@@ -19,14 +19,17 @@ function Id(Γ::SelfSimilarFractal{V,M}) where {V<:Union{Real,AbstractVector},M<
     return IdentityOperator(Γ,1.0)
 end
 
-function get_mass_matrix(I_Γ::IdentityOperator{V,M}, mesh::Vector{SubInvariantMeasure{V,M}}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+function get_mass_matrix(I_Γ::IdentityOperator{V,M}, meshes::Vector{Vector{SubInvariantMeasure{V,M}}}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     # Γ = I_Γ.domain
     # Lₕ = subdivide_indices(Γ,h_mesh) #get vector indices for subcomponents
-    N = length(mesh)
+    N = sum([length(mesh) for mesh ∈ meshes])
+    cum_mesh_size, total_num_els, _ = get_multi_mesh_sizes(meshes)
     # mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
-    mass_matrix = zeros(N,N)
-    for n=1:N
-        mass_matrix[n,n] = mesh[n].measure
+    mass_matrix = zeros(total_num_els,total_num_els)
+    for m=1:length(meshes)
+        for n=1:cum_mesh_size[m]
+            mass_matrix[cum_mesh_size[m]+n,cum_mesh_size[m]+n] = meshes[m][n].measure
+        end
     end
 
     return I_Γ.λ * mass_matrix
@@ -35,20 +38,31 @@ end
 """
 SIO is the type for singular integral operators.
 """
-struct SIO{V,M} <: DomainOperator{V,M}
-    domain::SelfSimilarFractal{V,M}
+struct SIO{V,M} <: DomainOperator{V,M} where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    domain::Vector{SelfSimilarFractal{V,M}}
     kernel::Function
     Lipschitz_part_of_kernel::Function
-    singularity_strength::Real
-    singularity_scale::Complex{<:Real}
+    singularity_strength::Float64
+    singularity_scale::Complex{<:Float64}
     self_adjoint::Bool
     wavenumber::Number
 end
 
+SIO(domain::Vector{SelfSimilarFractal{V,M}},
+    kernel::Function,
+    Lipschitz_part_of_kernel::Function,
+    singularity_strength::Float64,
+    singularity_scale::Complex{<:Float64},
+    self_adjoint::Bool,
+    wavenumber::Number
+    ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} = SIO(
+        [domain], kernel, Lipschitz_part_of_kernel, singularity_strength,
+        singularity_scale, self_adjoint, wavenumber)
+
 #constructor for zero wavenumber case
-SIO(domain::SelfSimilarFractal{V,M},kernel::Function,Lipschitz_part_of_kernel::Function,singularity_strength::Real,
-singularity_scale::Complex{<:Real},self_adjoint::Bool) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}} =
-SIO{V,M}(domain,kernel,Lipschitz_part_of_kernel,singularity_strength,singularity_scale,self_adjoint,0.0)
+# SIO(domain::SelfSimilarFractal{V,M},kernel::Function,Lipschitz_part_of_kernel::Function,singularity_strength::Real,
+# singularity_scale::Complex{<:Real},self_adjoint::Bool) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}} =
+# SIO{V,M}(domain,kernel,Lipschitz_part_of_kernel,singularity_strength,singularity_scale,self_adjoint,0.0)
 
 """
     DiscreteSIO(SIO::SIO; h_mesh::Real, h_quad::Real, h_quad_diag::Real)
@@ -58,14 +72,14 @@ h_mesh is the meshwidth parameter for the discretisation of the underlying fract
 h_quad denotes the discretisation parameter for the integrals in the stiffness matrix.
 h_quad_diag is the parameter used to compute the diagonal elements of the matrix
 """
-struct DiscreteSIO{V,M} <: DomainOperator{V,M}
+struct DiscreteSIO{V,M} <: DomainOperator{V,M} where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     domain::SelfSimilarFractal{V,M}
     SIO::DomainOperator{V,M}
     h_mesh::Float64
     h_quad::Float64
-    mesh::Vector{SubInvariantMeasure{V,M}}
-    Lₕ::Vector{Vector{Int64}} # subindices list
-    Galerkin_matrix::Matrix{<:Complex{<:Float64}} # not sure how to parametrise this as subtype of Array{<:Complex{<:Real},2}
+    mesh::Vector{Vector{SubInvariantMeasure{V,M}}} # one mesh per attractor
+    Lₕ::Vector{Vector{Vector{Int64}}} # one set of subindices per attractor
+    Galerkin_matrix::Matrix{<:Complex{<:Float64}} # eventually this type should be generalised
 end
 
 function check_for_similar_singular_integrals(Γ, prepared_singular_inds, n, n_)
@@ -74,7 +88,6 @@ function check_for_similar_singular_integrals(Γ, prepared_singular_inds, n, n_)
         # then we can immediately decide if integral is singular
         if n==n_
             is_similar_to_singular_integral = true
-            # m  != [0] ? pₘ = prod(Γ.weights[m]) : pₘ = 1.0
             n  != [0] ? ρ = 1/prod([Γ.IFS[nᵢ].r for nᵢ∈n]) : ρ = 1.0
             similar_index = 1
         else
@@ -98,7 +111,7 @@ end
 
 function DiscreteSIO(K::SIO{V,M_}, mesh::Vector{SubInvariantMeasure{V,M_}}, Lₕ::Vector{Vector{Int64}};
         h_mesh::Real= maximum([m.diameter for m∈mesh]),#max(2π/(10.0*K.wavenumber),K.domain.diameter+eps(),
-        h_quad::Real=h_mesh, h_quad_diag::Real = h_quad, Cosc::Number = Float64(Inf),
+        h_quad::Real=h_mesh, h_quad_diag::Real = h_quad,
         vary_quad::Bool = true, repeat_blocks::Bool =true,
         adjacency_function::Union{Function,Nothing}=nothing) where {V<:Union{Real,AbstractVector},M_<:Union{Real,AbstractMatrix}}
     Γ = K.domain
@@ -112,7 +125,7 @@ function DiscreteSIO(K::SIO{V,M_}, mesh::Vector{SubInvariantMeasure{V,M_}}, Lₕ
     m_count = 0
 
     # Josh's stuff. Check if adjacency_function has been provided, if so, use it:
-    if adjacency_function != nothing
+    if adjacency_function !== nothing
         use_users_adj_fn = true
         quad_type, quad_scale = adjacency_function(mesh)
     else
@@ -224,83 +237,127 @@ function DiscreteSIO(K::SIO{V,M_}, mesh::Vector{SubInvariantMeasure{V,M_}}, Lₕ
     DiscreteSIO(Γ, K, h_mesh, h_quad, mesh, Lₕ, Galerkin_matrix)
 end
 
+function get_multi_mesh_sizes(meshes::Vector{Vector{SubInvariantMeasure{V,M_}}})
+    cum_mesh_size = vcat(0,cumsum([length(mesh) for mesh ∈ meshes]))
+    num_meshes = length(meshes)
+    mesh_el_indices = [(cum_mesh_size[n]+1):cum_mesh_size[n+1] for n=1:num_meshes]
+    total_num_els = mesh_el_indices[end][end]
+    return cum_mesh_size, total_num_els, mesh_el_indices
+end
+# cum_mesh_size, total_num_els, mesh_el_indices = get_multi_mesh_sizes(meshes)
+
+# multiple scattering
+function DiscreteSIO(K::SIO{V,M_}, meshes::Vector{Vector{SubInvariantMeasure{V,M_}}}, Lₕs::Vector{Vector{Vector{Int64}}};
+    h_mesh::Real= maximum([m.diameter for m∈mesh]),#max(2π/(10.0*K.wavenumber),K.domain.diameter+eps(),
+    h_quad::Real=h_mesh, h_quad_diag::Real = h_quad,
+    vary_quad::Bool = true, repeat_blocks::Bool =true,
+    adjacency_function::Union{Function,Nothing}=nothing) where {V<:Union{Real,AbstractVector},M_<:Union{Real,AbstractMatrix}}
+    
+    # get mesh indices and related numbers
+    cum_mesh_size, total_num_els, mesh_el_indices = get_multi_mesh_sizes(meshes)
+
+    Galerkin_matrix = zeros(ComplexF64,total_num_els,total_num_els)
+    
+    for (i,mesh_i) ∈ enumerate(meshes)
+        for (j,mesh_j) ∈ enumerate(meshes)
+            if i==j # diagonal entry
+                diag_DSIO = DiscreteSIO(K, mesh_i, Lₕs[i])
+                Galerkin_matrix[mesh_el_indices[i], mesh_el_indices[j]] = diag_DSIO.Galerkin_matrix
+            else # compute from scratch, simple quadrature
+                for (𝙈ₘᵢ, m_count) ∈ enumerate(mesh_i)
+                    for (𝙈ₙⱼ, n_count) ∈ enumerate(mesh_j)
+                        x,y,w = barycentre_rule(𝙈ₘᵢ, 𝙈ₙⱼ, h_quad) # get quadrature
+                        Galerkin_matrix[cum_mesh_size[i]+m_count, cum_mesh_size[j]+n_count] = w'*K.kernel.(x,y) # evaluate non-diagonal Galerkin integral
+                    end
+                end
+            end
+        end
+    end
+    DiscreteSIO(Γ, K, h_mesh, h_quad, mesh, Lₕ, Galerkin_matrix)
+end
+
 """
     SingleLayer(Γ::SelfSimilarFractal, wavenumber::Real=0.0)
 
 represents the single layer boundary integral operator, Sϕ(x) = ∫_Γ Φ(x,y) ϕ(x) dHᵈ(y),
 where Φ is the fundamental solution for the underlying PDE.
 """
-function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    if Γ.spatial_dimension == 1
-        if k==0.0 #2D Laplace case
-            K = SIO{V,M}(Γ, #fractal domain
-            (x,y)->Φₜ(0.0,x,y), # log kernel
-            (x,y)->zero_kernel(x,y), # kernel minus singularity
-            0.0, # strength of singularity, corresponding to log singularity
-            -1/(2π), # scaling of singularity
-            true, #self-adjoint
-            k #wavenumber
-            )
-        else #2D Helmholtz case        
-            K = SIO{V,M}(Γ, #fractal domain
-            (x,y)->HelhmoltzGreen2D(k,x,y), # Hankel function
-            (x,y)->HelhmoltzGreen2D_Lipschitz_part(k,x,y), # kernel minus singularity
-            0.0, # strength of singularity, corresponding to log singularity
-            -1/(2π), # scaling of singularity
-            true, #self-adjoint
-            k #wavenumber
-            )
-        end
-    elseif Γ.spatial_dimension == 2
-        if k==0.0 #3D Laplace case
-            K = SIO{V,M}(Γ, #fractal domain
-            (x,y)-> Φₜ(1.0,x,y), # Green's function
-            (x,y)-> zero_kernel(x,y), # kernel minus singularity
-            1.0, # strength of singularity, corresponding to 1/|x-y|
-            1/(4π), # scaling of singularity
-            true, #self-adjoint
-            k #wavenumber
-            )
-        else #3D Helmholtz case        
-            K = SIO{V,M}(Γ, #fractal domain
-            (x,y)->HelhmoltzGreen3D(k,x,y), # Green's function
-            (x,y)->HelhmoltzGreen3D_Lipschitz_part(k,x,y), # kernel minus singularity
-            1.0, # strength of singularity, corresponding to 1/|x-y|
-            1/(4π), # scaling of singularity
-            true, #self-adjoint
-            k #wavenumber
-            )
-        end
-    else
-        error("Haven't coded single layer SIO for this many dimensions")
-    end
+# function SingleLayer(Γ::SelfSimilarFractal{V,M}, k::Number=0.0) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+#     if Γ.spatial_dimension == 1
+#         if k==0.0 #2D Laplace case
+#             K = SIO{V,M}(Γ, #fractal domain
+#             (x,y)->Φₜ(0.0,x,y), # log kernel
+#             (x,y)->zero_kernel(x,y), # kernel minus singularity
+#             0.0, # strength of singularity, corresponding to log singularity
+#             -1/(2π), # scaling of singularity
+#             true, #self-adjoint
+#             k #wavenumber
+#             )
+#         else #2D Helmholtz case        
+#             K = SIO{V,M}(Γ, #fractal domain
+#             (x,y)->HelhmoltzGreen2D(k,x,y), # Hankel function
+#             (x,y)->HelhmoltzGreen2D_Lipschitz_part(k,x,y), # kernel minus singularity
+#             0.0, # strength of singularity, corresponding to log singularity
+#             -1/(2π), # scaling of singularity
+#             true, #self-adjoint
+#             k #wavenumber
+#             )
+#         end
+#     elseif Γ.spatial_dimension == 2
+#         if k==0.0 #3D Laplace case
+#             K = SIO{V,M}(Γ, #fractal domain
+#             (x,y)-> Φₜ(1.0,x,y), # Green's function
+#             (x,y)-> zero_kernel(x,y), # kernel minus singularity
+#             1.0, # strength of singularity, corresponding to 1/|x-y|
+#             1/(4π), # scaling of singularity
+#             true, #self-adjoint
+#             k #wavenumber
+#             )
+#         else #3D Helmholtz case        
+#             K = SIO{V,M}(Γ, #fractal domain
+#             (x,y)->HelhmoltzGreen3D(k,x,y), # Green's function
+#             (x,y)->HelhmoltzGreen3D_Lipschitz_part(k,x,y), # kernel minus singularity
+#             1.0, # strength of singularity, corresponding to 1/|x-y|
+#             1/(4π), # scaling of singularity
+#             true, #self-adjoint
+#             k #wavenumber
+#             )
+#         end
+#     else
+#         error("Haven't coded single layer SIO for this many dimensions")
+#     end
+# end
+
+# function VolumePotential(Γ::SelfSimilarFractal{V,M}, k::Number) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+#     if Γ.spatial_dimension == 2       
+#         K = SIO{V,M}(Γ, #fractal domain
+#         (x,y)->HelhmoltzGreen2D(k,x,y), # Hankel function
+#         (x,y)->HelhmoltzGreen2D_Lipschitz_part(k,x,y), # kernel minus singularity
+#         0.0, # strength of singularity, corresponding to log singularity
+#         -1/(2π), # scaling of singularity
+#         true, #self-adjoint
+#         k #wavenumber
+#         )
+#     elseif Γ.spatial_dimension == 3    
+#         K = SIO{V,M}(Γ, #fractal domain
+#         (x,y)->HelhmoltzGreen3D(k,x,y), # Green's function
+#         (x,y)->HelhmoltzGreen3D_Lipschitz_part(k,x,y), # kernel minus singularity
+#         1.0, # strength of singularity, corresponding to 1/|x-y|
+#         1/(4π), # scaling of singularity
+#         true, #self-adjoint
+#         k #wavenumber
+#         )
+#     else
+#         error("Haven't coded single layer SIO for this many dimensions")
+#     end
+# end
+
+struct OperatorSum{V,M} <: DomainOperator{V,M} where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    domain::Vector{SelfSimilarFractal{V,M}}
+    operators::Vector{<:DomainOperator{V,M}}
 end
 
-function VolumePotential(Γ::SelfSimilarFractal{V,M}, k::Number) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    if Γ.spatial_dimension == 2       
-        K = SIO{V,M}(Γ, #fractal domain
-        (x,y)->HelhmoltzGreen2D(k,x,y), # Hankel function
-        (x,y)->HelhmoltzGreen2D_Lipschitz_part(k,x,y), # kernel minus singularity
-        0.0, # strength of singularity, corresponding to log singularity
-        -1/(2π), # scaling of singularity
-        true, #self-adjoint
-        k #wavenumber
-        )
-    elseif Γ.spatial_dimension == 3    
-        K = SIO{V,M}(Γ, #fractal domain
-        (x,y)->HelhmoltzGreen3D(k,x,y), # Green's function
-        (x,y)->HelhmoltzGreen3D_Lipschitz_part(k,x,y), # kernel minus singularity
-        1.0, # strength of singularity, corresponding to 1/|x-y|
-        1/(4π), # scaling of singularity
-        true, #self-adjoint
-        k #wavenumber
-        )
-    else
-        error("Haven't coded single layer SIO for this many dimensions")
-    end
-end
-
-function *(c::Number, K::SIO{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+function *(c::Number, K::SIO{V,M})# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     return SIO{V,M}(K.domain,
     (x,y) -> c*K.kernel(x,y),
     (x,y) -> c*K.Lipschitz_part_of_kernel(x,y),
@@ -311,10 +368,10 @@ function *(c::Number, K::SIO{V,M}) where {V<:Union{Real,AbstractVector},M<:Union
     )
 end
 
-struct OperatorSum{V,M} <: DomainOperator{V,M}# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    domain::SelfSimilarFractal{V,M}
-    operators::Vector{<:DomainOperator{V,M}}
-end
+*(K::SIO, c::Number) = c*K
+*(c::Number, K::OperatorSum) = OperatorSum(K.domain, [c*J for J∈K.operators])
+*(K::OperatorSum, c::Number) = c*K
+-(G::DomainOperator,F::DomainOperator) = G + (-1.0*F)
 
 function +(F::DomainOperator{V,M}, G::DomainOperator{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     F.domain == G.domain ? nothing : error("domains of operators must match")
@@ -333,41 +390,22 @@ end
 
 function DiscreteSIO(K::OperatorSum; h_mesh::Real=K.domain.diameter, kwargs...)
 
-    # if h_mesh <0
-    #     use_h_mesh_defualt = true
-    # else
-    #     use_h_mesh_defualt = false
-    # end
-
-    # if h_quad < 0        
-    #     use_h_quad_defualt = true
-    # else
-    #     use_h_quad_defualt = false
-    # end
-
-
     Γ = K.domain
-    Lₕ = subdivide_indices(Γ,h_mesh) # get vector indices for subcomponents
-    N = length(Lₕ)
-    mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
+
+    Lₕs  = [subdivide_indices(Γ,h_mesh) for Γ ∈ K.domain]# get vector indices for subcomponents
+    meshes = [[SubInvariantMeasure(Γ[j],Lₕs[j][n]) for n=1:N] for j=1:length(domain)]
+    # N = sum([length(Lₕ) for Lₕ ∈ Lₕs])
+
+    _, total_num_els, _ = get_multi_mesh_sizes(meshes)
 
     # construct stiffness_matrix by summing together matrices from different discrete IOs and mass matrices
-    stiffness_matrix = zeros(ComplexF64,N,N)
+    stiffness_matrix = zeros(ComplexF64,total_num_els,total_num_els)
 
     for J ∈ K.operators
-        if isa(J,SIO) # stiffness matrix
-            # if use_h_mesh_defualt
-            #     h_mesh = max(2π/(10.0*K.wavenumber),J.domain.diameter+eps())
-            # end
-            # if use_h_quad_defualt
-            #     h_quad = h_mesh
-            # end
-            stiffness_matrix += DiscreteSIO(J, mesh, Lₕ; kwargs...).Galerkin_matrix
-        elseif isa(J,IdentityOperator) # mass matrix
-            # if use_h_mesh_defualt
-            #     h_mesh = max(2π/(10.0*K.wavenumber))
-            # end
-            stiffness_matrix += get_mass_matrix(J, mesh)
+        if isa(J,SIO)
+            stiffness_matrix += DiscreteSIO(J, meshes, Lₕs; kwargs...).Galerkin_matrix
+        elseif isa(J,IdentityOperator)
+            stiffness_matrix += get_mass_matrix(J, meshes)
         end
     end
 
