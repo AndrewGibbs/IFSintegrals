@@ -21,7 +21,7 @@ h_energy = 0.1
     end
 
 
-    @testset "Notebook examples again" for file ∈ nb_files
+    @testset "Notebook examples again $file" for file ∈ nb_files
         @test_nowarn(@nbinclude("../examples/"*file))
     end
 
