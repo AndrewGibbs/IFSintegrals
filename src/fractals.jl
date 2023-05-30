@@ -258,3 +258,4 @@ function changeweights(Γ::SubInvariantMeasure, μ::Vector{Float64}; G::Vector{A
     return changeweights(Γ.parent_measure,μ,G=G)[Γ.index]
 end
 #SubInvariantMeasure(changeweights(Γ.parent_measure,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
+

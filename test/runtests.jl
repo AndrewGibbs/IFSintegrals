@@ -1,5 +1,6 @@
 using IFSintegrals, LinearAlgebra, Test, NBInclude, MAT
 
+include("nb_egs_test.jl")
 include("far_field_test.jl")
 include("operator_tests.jl")
 include("barycentre_rule_tests.jl")
@@ -19,12 +20,9 @@ h_energy = 0.1
         end
     end
 
-    @testset "Notebook examples" begin
-        @test_nowarn(@nbinclude("../examples/BEM 3D example.ipynb"))
-        @test_nowarn(@nbinclude("../examples/BEM Cantor set example.ipynb"))
-        @test_nowarn(@nbinclude("../examples/Quadrature example 1.ipynb"))
-        @test_nowarn(@nbinclude("../examples/Quadrature example 2.ipynb"))
-        @test_nowarn(@nbinclude("../examples/Imperial-UCL Numerics seminar.ipynb"))
+
+    @testset "Notebook examples again" for file ∈ nb_files
+        @test_nowarn(@nbinclude("../examples/"*file))
     end
 
     @testset "Lebesgue Far field comparison" begin
