@@ -1,7 +1,7 @@
 # -------------- functions for affine operators on fractals --------------- #
 
 # following function embeds similarity in equivalent one in higher/ambeint dimension
-function embed(s::Similarity{V,M}, v::Vector{Float64}
+function embed(s::Similarity{V,M}, v::Vector{<:Real}
             ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     if s.A == I
         A_ = I
@@ -18,7 +18,7 @@ function embed(s::Similarity{V,M}, v::Vector{Float64}
     return Similarity(s.r,vcat(s.δ,v),A_,rA_)
 end
 
-function embed(AM::AutomorphicMap{V,M}, v::Vector{Float64}
+function embed(AM::AutomorphicMap{V,M}, v::Vector{<:Real}
                 ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     n = length(s.δ)
     n_ = n + length(v)
@@ -27,7 +27,7 @@ function embed(AM::AutomorphicMap{V,M}, v::Vector{Float64}
     return AutomorphicMap(AM.r,vcat(AM.δ,v))
 end
 
-function embed(Γ::InvariantMeasure{V,M}, v::Vector{Float64}
+function embed(Γ::InvariantMeasure{V,M}, v::Vector{<:Real}
         ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     return InvariantMeasure{V,M}(
         [embed(sₘ,v) for sₘ ∈ Γ.IFS], # embedded IFS
@@ -35,7 +35,7 @@ function embed(Γ::InvariantMeasure{V,M}, v::Vector{Float64}
         Γ.Hausdorff_dimension,
         Γ.homogeneous,
         Γ.Hausdorff_weights,
-        vcat(Γ.barycentre,v),
+        SVector{Γ.spatial_dimension + length(v), Float64}(vcat(Γ.barycentre,v)),
         Γ.diameter,
         Γ.measure,
         Γ.weights,
@@ -48,7 +48,7 @@ end
 # ------------------- addition / translation of fractals ----------------------
 
 # following function translates fractal attractor
-function +(s::Similarity, v::Vector{Float64})# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function +(s::Similarity, v::Vector{<:Real})# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     # if length(s.δ)<length(v)
     #     s = embed(s,zeros(length(v)))
     # end
@@ -58,9 +58,9 @@ function +(s::Similarity, v::Vector{Float64})# where {V<:Union{Real,AbstractVect
                     s.rA) # scale*rotation/reflection (same)
 end
 
-+(AM::AutomorphicMap, v::Vector{Float64}) = AutomorphicMap(AM.A,AM.δ+v)
++(AM::AutomorphicMap, v::Vector{<:Real}) = AutomorphicMap(AM.A,AM.δ+v)
 
-function +(Γ::InvariantMeasure{V,M}, v::Vector{Float64}
+function +(Γ::InvariantMeasure{V,M}, v::Vector{<:Real}
             ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
             # make sure vector is right length, if not, mbed it in higher dimenson
             if Γ.spatial_dimension < length(v)
@@ -75,7 +75,7 @@ function +(Γ::InvariantMeasure{V,M}, v::Vector{Float64}
                 Γ.Hausdorff_dimension,
                 Γ.homogeneous,
                 Γ.Hausdorff_weights,
-                vcat(Γ.barycentre,v), # higher spatial dimension
+                SVector{length(v),Float64}(Γ.barycentre+v), # higher spatial dimension
                 Γ.diameter,
                 Γ.measure,
                 Γ.weights,
@@ -86,24 +86,28 @@ function +(Γ::InvariantMeasure{V,M}, v::Vector{Float64}
 end
 
 # sort out commutation & subtraction
-+(v::Vector{Float64},s::Union{Similarity,AutomorphicMap, InvariantMeasure}) = +(s, v)
--(s::Union{Similarity,AutomorphicMap, InvariantMeasure}, v::Vector{Float64}) = +(s, -v)
++(v::Vector{<:Real},s::Union{Similarity,AutomorphicMap, InvariantMeasure}) = +(s, v)
+-(s::Union{Similarity,AutomorphicMap, InvariantMeasure}, v::Vector{<:Real}) = +(s, -v)
 
 # ------------- streching fractals ------------ #
 
-function *(s::Similarity, ρ::Float64)# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function *(s::Similarity, ρ::Real)# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     return Similarity(s.r, # scale (same)
                     ρ*s.δ, # translation 
                     s.A, # rotation/reflection (same)
                     s.rA) # scale*rotation/reflection (same)
 end
 
-*(AM::AutomorphicMap, ρ::Float64) = AutomorphicMap(AM.A,AM.δ*ρ)
+*(AM::AutomorphicMap, ρ::Real) = AutomorphicMap(AM.A,AM.δ*ρ)
 
-function *(Γ::InvariantMeasure{V,M}, ρ::Float64,
+function *(Γ::InvariantMeasure{V,M}, ρ::Real,
     ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     # make sure vector is right length, if not, mbed it in higher dimenson
 
+    if ρ<=0
+        error("scaling factor must be positive")
+    end
+    
     return InvariantMeasure(
         [sₘ*ρ for sₘ ∈ Γ.IFS], # translated IFS
         Γ.spatial_dimension,
@@ -121,37 +125,41 @@ function *(Γ::InvariantMeasure{V,M}, ρ::Float64,
 end
 
 # communtes:
-*(ρ::Float64, Γ::InvariantMeasure{V,M}) = *(Γ, ρ)
+*(ρ::Real, Γ::InvariantMeasure) = *(Γ, ρ)
 
 # ------------- rotating / reflecting fractals ------------ #
 
-function *(T::Matrix{<:Real}, s::Similarity)
+function *(T::Matrix{<:Real}, s::Similarity{V,M}
+        ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     if det(T) ≈ 1
         return Similarity(s.r, # scale (same)
-            T*s.δ, # translation 
-            T*s.A*inv(T), # rotation/reflection (same)
-            T*s.rA*inv(T)) # scale*rotation/reflection (same)
-    else
-        error("rotation/reflection matrix needs to have determinant one")
-    end
-end
-
-function *(T::Matrix{<:Real}, AM::AutomorphicMap)
-    if det(T) ≈ 1
-        return AutomorphicMap(
-            T*AM.A*inv(T), # rotation/reflection (same)
-            T*AM.δ, # translation
+            V(T*s.δ), # translation 
+            M(T*s.A*inv(T)), # rotation/reflection
+            M(T*s.rA*inv(T)) # scale*rotation/reflection
         )
     else
         error("rotation/reflection matrix needs to have determinant one")
     end
 end
 
-function *(Γ::InvariantMeasure{V,M}, R::Matrix{<:Real},
+function *(T::Matrix{<:Real}, AM::AutomorphicMap{V,M}
+        ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    if det(T) ≈ 1
+        n = length(AM.δ)
+        return AutomorphicMap(
+            M(T*AM.A*inv(T)), # rotation/reflection (same)
+            V(T*AM.δ), # translation
+        )
+    else
+        error("rotation/reflection matrix needs to have determinant one")
+    end
+end
+
+function *(R::Matrix{<:Real}, Γ::InvariantMeasure{V,M},
     ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     # make sure vector is right length, if not, mbed it in higher dimenson
     if !(det(R) ≈ 1)
-        ρ = det(R)^(1/size(R)[1])
+        ρ = det(R)^(1/(size(R)[1]))
         Γ = ρ*Γ
         R = R/ρ
     end
