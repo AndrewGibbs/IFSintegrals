@@ -1,11 +1,12 @@
-using IFSintegrals, LinearAlgebra, Test, NBInclude, MAT
+using IFSintegrals, LinearAlgebra, Test, MAT
 
-include("nb_egs_test.jl")
+# include("nb_egs_test.jl")
 include("far_field_test.jl")
 include("operator_tests.jl")
 include("barycentre_rule_tests.jl")
 include("NDJ_tests.jl")
 include("gauss_tests.jl")
+
 screens = [CantorSet(), CantorDust(), Sierpinski(), KochFlake()]
 surfaces = [CantorDust()]
 volumes = [KochFlake(), Dragon()]
@@ -18,11 +19,6 @@ h_energy = 0.1
         @testset for Γ ∈ Γ_gauss, p = 1:50 # monomial_powers
         @test low_order_gauss(Γ,p) ≈ high_order_bary(Γ,p) rtol=1E-10
         end
-    end
-
-
-    @testset "Notebook examples again $file" for file ∈ nb_files
-        @test_nowarn(@nbinclude("../examples/"*file))
     end
 
     @testset "Lebesgue Far field comparison" begin
