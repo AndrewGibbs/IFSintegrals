@@ -259,3 +259,27 @@ function changeweights(Γ::SubInvariantMeasure, μ::Vector{Float64}; G::Vector{A
 end
 #SubInvariantMeasure(changeweights(Γ.parent_measure,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
 
+struct UnionInvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
+    invariant_measures::Vector{InvariantMeasure{V,M}}
+    spatial_dimension::Int64
+end
+
+function UnionInvariantMeasure(Γs::Vector{InvariantMeasure{V,M}}
+            ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    # first get max spatial dimension
+    max_spatial_dim = 0
+    for Γ ∈ Γs
+        max_spatial_dim = max(max_spatial_dim,Γ.spatial_dimension)
+    end
+
+    # now embed each fractal in the max spatial dimension,
+    # so everything lives in the same space
+    for (n,Γ) = enumerate(Γs)
+        if Γ.spatial_dimension<max_spatial_dim
+            Γs[n] = embed(Γs[n], zeros(max_spatial_dim-Γ.spatial_dimension))
+        end
+    end
+
+    # return the union, with consistent types
+    return UnionInvariantMeasure(Γs, max_spatial_dim)
+end

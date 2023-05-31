@@ -20,15 +20,16 @@ function HelhmoltzGreen3D_Lipschitz_part(k::Number, x::T, y::T) where T<:Union{R
     end
 end
 
+# get_spatial_dimension(Γ::SelfSimilarFractal)
 """
     SingleLayerOperatorLaplace(Γ::SelfSimilarFractal, wavenumber::Real=0.0)
 
 represents the single layer boundary integral operator for Laplace, Sϕ(x) = ∫_Γ Φ(x,y) ϕ(x) dHᵈ(y),
 where Φ is the fundamental solution for the underlying PDE.
 """
-function SingleLayerOperatorLaplace(Γ::SelfSimilarFractal{V,M}; ambient_dimension = Γ.spatial_dimension::Int64) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+function SingleLayerOperatorLaplace(Γ::SelfSimilarFractal; ambient_dimension = Γ.spatial_dimension::Int64)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     if ambient_dimension == 2
-        K = SIO{V,M}(Γ, #fractal domain
+        K = SIO(Γ, #fractal domain
         (x,y)->Φₜ(0.0,x,y), # log kernel
         (x,y)->zero_kernel(x,y), # kernel minus singularity
         0.0, # strength of singularity, corresponding to log singularity
@@ -37,7 +38,7 @@ function SingleLayerOperatorLaplace(Γ::SelfSimilarFractal{V,M}; ambient_dimensi
         0 #wavenumber
         )
     elseif ambient_dimension == 3
-        K = SIO{V,M}(Γ, #fractal domain
+        K = SIO(Γ, #fractal domain
         (x,y)-> Φₜ(0.0,x,y), # Green's function
         (x,y)-> zero_kernel(x,y), # kernel minus singularity
         1.0, # strength of singularity, corresponding to 1/|x-y|
@@ -56,9 +57,9 @@ end
 represents the single layer boundary integral operator for Helmholtz, Sϕ(x) = ∫_Γ Φ(x,y) ϕ(x) dHᵈ(y),
 where Φ is the fundamental solution for the underlying PDE.
 """
-function SingleLayerOperatorHelmholtz(Γ::SelfSimilarFractal{V,M}, k::Number; ambient_dimension = Γ.spatial_dimension::Int64) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+function SingleLayerOperatorHelmholtz(Γ::SelfSimilarFractal, k::Number; ambient_dimension = Γ.spatial_dimension::Int64)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     if ambient_dimension == 2      
-        K = SIO{V,M}(Γ, #fractal domain
+        K = SIO(Γ, #fractal domain
         (x,y)->HelhmoltzGreen2D(k,x,y), # Hankel function
         (x,y)->HelhmoltzGreen2D_Lipschitz_part(k,x,y), # kernel minus singularity
         0.0, # strength of singularity, corresponding to log singularity
@@ -68,7 +69,7 @@ function SingleLayerOperatorHelmholtz(Γ::SelfSimilarFractal{V,M}, k::Number; am
         )
     elseif ambient_dimension == 3
         #3D Helmholtz case        
-            K = SIO{V,M}(Γ, #fractal domain
+            K = SIO(Γ, #fractal domain
             (x,y)->HelhmoltzGreen3D(k,x,y), # Green's function
             (x,y)->HelhmoltzGreen3D_Lipschitz_part(k,x,y), # kernel minus singularity
             1.0, # strength of singularity, corresponding to 1/|x-y|
