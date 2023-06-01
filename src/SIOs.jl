@@ -43,9 +43,9 @@ struct SIO{Ω} <: DomainOperator{Ω}# where {V<:Union{Real,AbstractVector}, M<:U
     kernel::Function
     Lipschitz_part_of_kernel::Function
     singularity_strength::Float64
-    singularity_scale::Complex{<:Float64}
+    singularity_scale::ComplexF64
     self_adjoint::Bool
-    wavenumber::Number
+    wavenumber::Float64
 end
 
 struct OperatorSum{Ω} <: DomainOperator{Ω}# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
@@ -69,17 +69,17 @@ end
 *(K::OperatorSum, c::Number) = c*K
 -(G::DomainOperator,F::DomainOperator) = G + (-1.0*F)
 
-function +(F::DomainOperator{V,M}, G::DomainOperator{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+function +(F::DomainOperator, G::DomainOperator)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     F.domain == G.domain ? nothing : error("domains of operators must match")
     return OperatorSum(F.domain, [F,G])
 end
 
-function +(F::DomainOperator{V,M}, G::OperatorSum{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+function +(F::DomainOperator, G::OperatorSum)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     F.domain == G.domain ? nothing : error("domains of operators must match")
     return OperatorSum(F.domain, vcat([F],G.operators))
 end
 
-function +(G::OperatorSum{V,M},F::DomainOperator{V,M}) where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+function +(G::OperatorSum,F::DomainOperator)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     F.domain == G.domain ? nothing : error("domains of operators must match")
     return OperatorSum(F.domain, vcat(G.operators,[F]))
 end
@@ -141,26 +141,26 @@ end
 
 F_nomeasure(r::Real, k::Number, n::Int64) = (1+(abs(k)*r)^(n/2+1))/r^(n+1)
 
-function get_quad_scales(K::SIO,Lₕ::Vector{Vector{Int64}})
-    Γ = K.domain
+function get_quad_scales(k::Real, spat_dim::Int64, mesh::Vector{<:SubInvariantMeasure})
     # compute upper and lower bounds for the F in my notes, which is stated above.
-    F_upper = ones(Float64,length(Lₕ),length(Lₕ))
-    F_lower = ones(Float64,length(Lₕ),length(Lₕ))
-    for m_count = 1:length(Lₕ)
-        Γₘ = SubInvariantMeasure(Γ,Lₕ[m_count])
-        for n_count = m_count:length(Lₕ)
-            Γₙ = SubInvariantMeasure(Γ,Lₕ[n_count])
+    N = length(mesh)
+    F_upper = ones(Float64,N,N)
+    F_lower = ones(Float64,N,N)
+    for m_count = 1:N
+        Γₘ = mesh[m_count]
+        for n_count = m_count:N
+            Γₙ = mesh[n_count]
             if n_count!=m_count
                 dist_upper = norm(Γₙ.barycentre-Γₘ.barycentre)
                 dist_lower = max(dist_upper - Γₙ.diameter - Γₘ.diameter,0)
                 measure_weight = Γₙ.measure*Γₘ.measure
                 # noting that F_nomeasure is monotonic decreasing in r, can bound as follows:
                 if dist_lower>0
-                    F_upper[m_count,n_count] = measure_weight*F_nomeasure(dist_lower, K.wavenumber, K.domain.spatial_dimension)
+                    F_upper[m_count,n_count] = measure_weight*F_nomeasure(dist_lower, k, spat_dim)
                 else
                     F_upper[m_count,n_count]= Inf
                 end
-                 F_lower[m_count,n_count] = measure_weight*F_nomeasure(dist_upper, K.wavenumber, K.domain.spatial_dimension)
+                 F_lower[m_count,n_count] = measure_weight*F_nomeasure(dist_upper, k, spat_dim)
             else
                 F_upper[m_count,n_count] = Inf
             end

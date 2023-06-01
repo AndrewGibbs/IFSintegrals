@@ -11,17 +11,17 @@ struct DiscreteSIO{V,M,Ω<:SelfSimilarFractal{V,M}}# <: DomainOperator{Ω<:SelfS
     SIO::DomainOperator{Ω}
     h_mesh::Float64
     h_quad::Float64
-    mesh::Vector{Vector{SubInvariantMeasure{V,M}}} # one mesh per attractor
+    mesh::Vector{SubInvariantMeasure{V,M}} # one mesh per attractor
     Galerkin_matrix::Matrix{ComplexF64} # eventually this type should be generalised
     mesh_el_indices::Vector{UnitRange{Int64}}
 end
 
 #(K, h_mesh, h_quad, meshes, Galerkin_matrix, mesh_el_indices)
 
-function check_for_similar_singular_integrals(Γ::SelfSimilarMeasure,
-                                            prepared_singular_inds, 
-                                            n::Integer,
-                                            n_::Integer)
+function check_for_similar_singular_integrals(Γ::InvariantMeasure,
+                                            prepared_singular_inds::Vector{Tuple{Vector{Int64}, Vector{Int64}}}, 
+                                            n::Vector{Int64},
+                                            n_::Vector{Int64})
     symmetry_group = get_symmetry_group(Γ)
     if Γ.disjoint
         # then we can immediately decide if integral is singular
@@ -52,9 +52,10 @@ end
 
 # (single) singular operator over multiple obstacles
 function discretise_Galerkin_block(
-    K::SIO{V,M_,Ω},
+    K::SIO{Ω},
     mesh1::Vector{SubInvariantMeasure{V,M_}},
-    mesh2::Vector{SubInvariantMeasure{V,M_}}
+    mesh2::Vector{SubInvariantMeasure{V,M_}},
+    h_quad::Number
     ) where 
     {V<:Union{Real,AbstractVector},
     M_<:Union{Real,AbstractMatrix},
@@ -63,8 +64,8 @@ function discretise_Galerkin_block(
     # initialise Galerkin matrix
     Galerkin_matrix = zeros(ComplexF64,length(mesh1),length(mesh2))
     # construct Galerkin matrix
-    for (𝙈ₘ, m) ∈ enumerate(mesh1)
-        for (Mₙ, n) ∈ enumerate(mesh2)
+    for (m, 𝙈ₘ) ∈ enumerate(mesh1)
+        for (n, Mₙ) ∈ enumerate(mesh2)
             x,y,w = barycentre_rule(𝙈ₘ, Mₙ, h_quad) # get quadrature
             Galerkin_matrix[m, n] = w'*K.kernel.(x,y) # evaluate non-diagonal Galerkin integral
         end
@@ -74,13 +75,14 @@ end
 
 # sum of operators on a multiple scatterers
 function discretise_Galerkin_block(
-    K::OperatorSum{V,M_,Ω},
+    K::OperatorSum{Ω},
     mesh1::Vector{SubInvariantMeasure{V,M_}},
-    mesh2::Vector{SubInvariantMeasure{V,M_}}
+    mesh2::Vector{SubInvariantMeasure{V,M_}},
+    h_quad::Number
     ) where 
     {V<:Union{Real,AbstractVector},
     M_<:Union{Real,AbstractMatrix},
-    Ω<:UnionSelfSimilarMeasure{V,M_}}
+    Ω<:UnionInvariantMeasure{V,M_}}
 
     # initialise Galerkin matrix
     Galerkin_matrix = zeros(ComplexF64,length(mesh1),length(mesh2))
@@ -88,7 +90,8 @@ function discretise_Galerkin_block(
     # now sum up all relevant Galerkin matrices for each operator
     for A ∈ K.operators
         if typeof(A)!==IdentityOperator # identity operator will be zero
-            Galerkin_matrix .+= discretise_nondiag_Galerkin_block(K,mesh1,mesh2)
+            Galerkin_matrix .+= 
+                discretise_nondiag_Galerkin_block(K, mesh1, mesh2, h_quad,vargs...)
         end
     end
 
@@ -97,13 +100,14 @@ end
 
 # sum of operators on single scatterer
 function discretise_Galerkin_block(
-    K::OperatorSum{V,M_,Ω},
+    K::OperatorSum{Ω},
     mesh::Vector{SubInvariantMeasure{V,M_}},
+    h_quad::Number,
     vargs...
     ) where 
     {V<:Union{Real,AbstractVector},
     M_<:Union{Real,AbstractMatrix},
-    Ω<:SelfSimilarMeasure{V,M_}}
+    Ω<:InvariantMeasure{V,M_}}
 
     # initialise Galerkin matrix
     Galerkin_matrix = zeros(ComplexF64,length(mesh),length(mesh))
@@ -113,7 +117,7 @@ function discretise_Galerkin_block(
         if is(A,IdentityOperator) # identity operator will be zero
             Galerkin_matrix .+= get_mass_matrix(A,mesh)
         elseif isa(A,SIO)
-            Galerkin_matrix .+= discretise_Galerkin_block(A,mesh,vargs...)
+            Galerkin_matrix .+= discretise_Galerkin_block(A,mesh,h_quad,vargs...)
         end
     end
 
@@ -122,9 +126,9 @@ end
 
 # single singular operator on single scatterer
 function discretise_Galerkin_block(
-    K::SIO{V,M_,Ω},
+    K::SIO{Ω},
     mesh::Vector{SubInvariantMeasure{V,M_}},
-    h_quad::Real=h_mesh,
+    h_quad::Number;
     h_quad_diag::Real = h_quad,
     vary_quad::Bool = true,
     repeat_blocks::Bool =true,
@@ -132,13 +136,17 @@ function discretise_Galerkin_block(
     ) where 
     {V<:Union{Real,AbstractVector},
     M_<:Union{Real,AbstractMatrix},
-    Ω<:SelfSimilarMeasure{V,M_}}
+    Ω<:SelfSimilarFractal{V,M_}}
 
-    Γ = K.domain
+    # focus on the fractal where the mesh lives
+    Γ = mesh[1].parent_measure
     N = length(mesh)
     M = length(Γ.IFS)
     BEM_filled = zeros(Bool,N,N)
     m_count = 0
+
+    # reconstruct h_mesh
+    h_mesh = maximum([m.diameter for m ∈ mesh])
 
     # Josh's stuff. Check if adjacency_function has been provided, if so, use it:
     if adjacency_function !== nothing
@@ -150,13 +158,13 @@ function discretise_Galerkin_block(
 
     # now get matrix of how much we can adjust the h_quad parameter for far away elements
     if vary_quad
-        h_quad_adjust = get_quad_scales(K,mesh)
+        h_quad_adjust = get_quad_scales(K.wavenumber, Γ.spatial_dimension, mesh)
     else
         h_quad_adjust = ones(Float16, length(mesh),length(mesh))
     end
 
     if Γ.homogeneous && repeat_blocks && N>1
-        ℓ = length(mesh.index[1])
+        ℓ = length(mesh[1].index)
         # the sizes of the repeated sub-blocks will be as follows:
         diag_block_sizes = M.^(0:(ℓ-1))
     else
@@ -252,26 +260,27 @@ function discretise_Galerkin_block(
     return Galerkin_matrix
 end
 
-function mesh_fractal(Γ::SelfSimilarMeasure, h_mesh::Number)
+function mesh_fractal(Γ::InvariantMeasure, h_mesh::Number)
     Lₕ = subdivide_indices(Γ, h_mesh)
-    return [SubInvariantMeasure(K.domain,Lₕ[m]) for m ∈ Lₕ]
+    return [ Γ[m] for m ∈ Lₕ]
 end
 
 # multiple scattering
 function DiscreteSIO(
-    K::DomainOperator{V,M_,Ω},# meshes::Vector{Vector{SubInvariantMeasure{V,M_}}}, Lₕs::Vector{Vector{Vector{Int64}}};
-    h_mesh::Number,
+    K::DomainOperator{Ω};# meshes::Vector{Vector{SubInvariantMeasure{V,M_}}}, Lₕs::Vector{Vector{Vector{Int64}}};
+    h_mesh::Number=Inf,
+    h_quad = h_mesh,
     kwargs...
     ) where {V<:Union{Real,AbstractVector},
             M_<:Union{Real,AbstractMatrix},
             Ω<:SelfSimilarFractal{V,M_}}
     
-    if isa(K.domain,SelfSimilarMeasure) # one mesh in collection of meshes
+    if isa(K.domain,InvariantMeasure) # one mesh in collection of meshes
         meshes = [mesh_fractal(K.domain, h_mesh)]
-    elseif isa(K.domain,UnionSelfSimilarMeasure)
+    elseif isa(K.domain,UnionInvariantMeasure)
         meshes = [ mesh_fractal(Γ, h_mesh) for Γ ∈ K.domain.invariant_measures]
     else
-        error("domain type not supported, use SelfSimilarMeasure instead")
+        error("domain type not supported, use InvariantMeasure instead")
     end
     
     # get mesh indices and related numbers
@@ -283,15 +292,15 @@ function DiscreteSIO(
         for (j,mesh_j) ∈ enumerate(meshes)
             if i==j # diagonal entry
                 Galerkin_matrix[mesh_el_indices[i], mesh_el_indices[j]] = 
-                    discretise_Galerkin_block(K, mesh_j, vargs...)
+                    discretise_Galerkin_block(K, mesh_j, h_quad, kwargs...)
             elseif j<i && K.self_adjoint
                 Galerkin_matrix[mesh_el_indices[i], mesh_el_indices[j]] = 
-                    Galerkin_matrix[mesh_el_indices[j], mesh_el_indices[i]]
-            else j>i && K.self_adjoint# compute from scratch, simple quadrature
+                    transpose(Galerkin_matrix[mesh_el_indices[j], mesh_el_indices[i]])
+            else# j>i && K.self_adjoint# compute from scratch, simple quadrature
                 Galerkin_matrix[mesh_el_indices[i], mesh_el_indices[j]] = 
-                    discretise_Galerkin_block(K, mesh_i, mesh_j, vargs...)
+                    discretise_Galerkin_block(K, mesh_i, mesh_j, h_quad, kwargs...)
             end
         end
     end
-    DiscreteSIO(K, h_mesh, h_quad, meshes, Galerkin_matrix, mesh_el_indices)
+    DiscreteSIO(K, h_mesh, h_quad, vcat(meshes...), Galerkin_matrix, mesh_el_indices)
 end

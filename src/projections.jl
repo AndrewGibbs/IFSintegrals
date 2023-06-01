@@ -1,11 +1,11 @@
-struct Projection{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} # onto the coefficient space of piecewise constants on the fractal
-    domain::SelfSimilarFractal{V,M}
+struct Projection{V,M,Ω<:SelfSimilarFractal{V,M}} # onto the coefficient space of piecewise constants on the fractal
+    domain::Ω
     #Lₕ::Vector{Vector{Int64}} # subindices list
     mesh::Vector{SubInvariantMeasure{V,M}}
     coeffs::Vector{Complex{Float64}}
 end
 
-function project(mesh::Vector{SubInvariantMeasure{V,M}}, f::Function, h_quad::Float64) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function project(mesh::Vector{<:SubInvariantMeasure}, f::Function, h_quad::Float64)# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     F = zeros(Complex{Float64},length(mesh))
     n_count = 0
     for Γₙ in mesh
@@ -71,7 +71,7 @@ function embed(f::Projection,g::Projection)
     return Projection(f.domain,g.mesh,new_coeffs)
 end
 
-function embed(f::Projection,mesh::Vector{SubInvariantMeasure{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function embed(f::Projection,mesh::Vector{<:SubInvariantMeasure})# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     if length(mesh) == length(f.coeffs)
         return f
     elseif length(mesh) > length(f.coeffs)
@@ -108,14 +108,16 @@ function -(f::Projection,g::Projection)
     end
 end
 
-function get_H_minus_half_norm_function(Γ::SelfSimilarFractal; h_mesh::Real=1.0, h_quad::Real=h_mesh, h_quad_diag::Real = h_quad,  vary_quad::Bool = true)
+function get_H_minus_half_norm_function(Γ::SelfSimilarFractal;
+        h_mesh::Real=1.0, h_quad::Real=h_mesh,
+        h_quad_diag::Real = h_quad,  vary_quad::Bool = true)
     Sᵢ = SingleLayer(Γ,im)
     DSIO = DiscreteSIO(Sᵢ; h_mesh = h_mesh, h_quad = h_quad, h_quad_diag = h_quad_diag, vary_quad = vary_quad)
     norm(ϕ::Projection) = sqrt((2*abs(embed(ϕ,DSIO.mesh).coeffs'*DSIO.Galerkin_matrix*embed(ϕ,DSIO.mesh).coeffs)))
     return norm
 end
 
-function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64},mesh::Vector{SubInvariantMeasure{V,M}}) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64},mesh::Vector{<:SubInvariantMeasure})# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     #embed
     norm(ϕ::Projection) = sqrt((2*abs(embed(ϕ,mesh).coeffs'*Gᵢ*embed(ϕ,mesh).coeffs)))
     return norm
