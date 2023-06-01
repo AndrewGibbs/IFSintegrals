@@ -1,5 +1,5 @@
 # using NBInclude#, Test
-
+using IFSintegrals, LinearAlgebra, Test
 # macro no_error(ex)
 #     quote
 #         try
@@ -34,3 +34,8 @@ end
 #         @test@no_warn(@nbinclude("../examples/Quadrature example 2.ipynb"))
 #         @test@no_warn(@nbinclude("../examples/Imperial-UCL Numerics seminar.ipynb"))
 # end
+
+
+@testset "Notebook examples again $file" for file ∈ nb_files
+    @test_nowarn @nbinclude("../examples/"*file) skip=!running_localy
+end
