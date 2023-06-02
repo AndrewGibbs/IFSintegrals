@@ -39,8 +39,8 @@ function SingleLayerOperatorLaplace(Γ::Ω; ambient_dimension::Int64 = Γ.spatia
         0.0 #wavenumber
         )
     elseif ambient_dimension == 3
-        K = SIO{typeof(Γ)}(Γ, #fractal domain
-        (x,y)-> Φₜ(0.0,x,y), # Green's function
+        K = SIO{Ω}(Γ, #fractal domain
+        (x,y)-> Φₜ(1.0,x,y), # Green's function
         (x,y)-> zero_kernel(x,y), # kernel minus singularity
         1.0, # strength of singularity, corresponding to 1/|x-y|
         1/(4π), # scaling of singularity
@@ -71,7 +71,7 @@ function SingleLayerOperatorHelmholtz(Γ::Ω, k::Number; ambient_dimension::Int6
         )
     elseif ambient_dimension == 3
         #3D Helmholtz case        
-            K = SIO(Γ, #fractal domain
+            K = SIO{Ω}(Γ, #fractal domain
             (x,y)->HelhmoltzGreen3D(k,x,y), # Green's function
             (x,y)->HelhmoltzGreen3D_Lipschitz_part(k,x,y), # kernel minus singularity
             1.0, # strength of singularity, corresponding to 1/|x-y|

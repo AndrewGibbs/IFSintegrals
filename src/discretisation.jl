@@ -302,5 +302,5 @@ function DiscreteSIO(
             end
         end
     end
-    DiscreteSIO(K, h_mesh, h_quad, vcat(meshes...), Galerkin_matrix, mesh_el_indices)
+    DiscreteSIO{Ω}(K, h_mesh, h_quad, vcat(meshes...), Galerkin_matrix, mesh_el_indices)
 end
