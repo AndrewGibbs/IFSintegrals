@@ -14,10 +14,21 @@ function bary_bodge_singular_integral(Γ,f,h_quad)
     return W'*f.(X1,X2)
 end
 
-Γ = Sierpinski()
-Sₖ = SingleLayerOperatorLaplace(Γ,ambient_dimension=3)
-h_quad = 0.005
-Sₖₕ = DiscreteSIO(Sₖ, h_mesh=2.0, h_quad=h_quad)
-current_code_val = Sₖₕ.Galerkin_matrix[1,1]
-bodge_val = bary_bodge_singular_integral(Sₖₕ.mesh[1],Sₖₕ.SIO.kernel,h_quad)
+function get_first_matrix_entry(S,h_mesh,h_quad)
+    Γ = S.domain
+    Sₕ = DiscreteSIO(S, h_mesh=h_mesh, h_quad=h_quad)
+    return Sₕ.Galerkin_matrix[1,1]
+end
+
+function bodge_first_matrix_entry(S,h_mesh,h_quad)
+    Γ = S.domain
+    mesh = IFSintegrals.mesh_fractal(Γ::InvariantMeasure, h_mesh::Number)
+    return bary_bodge_singular_integral(mesh[1],S.kernel,h_quad)*S.singularity_scale
+end
+
+S₀ = SingleLayerOperatorLaplace(Sierpinski(),ambient_dimension=3)
+h_mesh = 2.0
+h_quad = h_mesh/25
+
+≈(get_first_matrix_entry(S₀,h_mesh,h_quad), bodge_first_matrix_entry(S₀,h_mesh,h_quad), rtol=1e-1)
 # heatmap(abs.(Sₖₕ.Galerkin_matrix),yflip=true)
