@@ -93,12 +93,14 @@ Provides a simple sketch of the parent_measure Γ, by repeatedly applying the IF
 
 See also: [`plot!`](@ref)
 """
-function plot(Γ::SelfSimilarFractal; mem_const = 100000, kwargs...)
-    # println(kwargs)
-    x,y = fractal_pre_plot(Γ,mem_const)
-    # scatter(x,y;kwargs...)
-    # kwargs = adjust_defaults(kwargs)
-    scatter(x,y;adjust_defaults(kwargs)...)
+function plot(Γ::FractalMeasure; kwargs...)#mem_const = 100000, kwargs...)
+    plot()
+    plot!(Γ::FractalMeasure; kwargs...)
+    # # println(kwargs)
+    # x,y = fractal_pre_plot(Γ,mem_const)
+    # # scatter(x,y;kwargs...)
+    # # kwargs = adjust_defaults(kwargs)
+    # scatter(x,y;adjust_defaults(kwargs)...)
 end
 
 """
@@ -108,6 +110,13 @@ Similar to [`draw`](@ref), except it will draw on the current image.
 function plot!(Γ::SelfSimilarFractal; mem_const = 100000, kwargs...)
     x,y = fractal_pre_plot(Γ,mem_const)
     scatter!(x,y;kwargs...)
+end
+
+function plot!(Γ::UnionInvariantMeasure; kwargs...)
+    # plot()
+    for γ ∈ Γ.invariant_measures
+        plot!(γ, kwargs...)
+    end
 end
 
 # the big boy plotting algorithm
