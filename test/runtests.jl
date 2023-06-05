@@ -8,9 +8,9 @@ include("NDJ_tests.jl")
 include("gauss_tests.jl")
 include("quad_bodge_test.jl")
 
-screens = [CantorSet(), CantorDust(), Sierpinski(), KochFlake()]
-surfaces = [CantorDust()]
-volumes = [KochFlake(), Dragon()]
+screens = [CantorSet(), CantorDust(), Sierpinski(), KochFlake(), UnionInvariantMeasure([Sierpinski()+[2,2], CantorDust()])]
+surfaces = [CantorDust(), UnionInvariantMeasure([CantorDust()+[2,2], CantorDust()])]
+volumes = [KochFlake(), Dragon(), UnionInvariantMeasure([KochFlake()+[2,2], Dragon()])]
 ss = rand(10)
 h_energy = 0.1
 operator_test_set = [SingleLayerOperatorLaplace(Sierpinski()),

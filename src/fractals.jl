@@ -46,8 +46,9 @@ function are_weights_Hausdorff(w::Vector{Float64},S::Vector{Similarity{V,M}},d::
 end
 
 
-abstract type SelfSimilarFractal{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-end
+abstract type FractalMeasure{V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}} end
+
+abstract type SelfSimilarFractal{V,M}<:FractalMeasure{V,M} end
 
 """
     struct InvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
@@ -259,7 +260,7 @@ function changeweights(Γ::SubInvariantMeasure, μ::Vector{Float64}; G::Vector{A
 end
 #SubInvariantMeasure(changeweights(Γ.parent_measure,μ), Γ.IFS, Γ.index, Γ.barycentre, Γ.diameter, Γ.measure)
 
-struct UnionInvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
+struct UnionInvariantMeasure{V,M} <: FractalMeasure{V,M}
     invariant_measures::Vector{InvariantMeasure{V,M}}
     spatial_dimension::Int64
 end

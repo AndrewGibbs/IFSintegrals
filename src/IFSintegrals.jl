@@ -11,9 +11,9 @@ import StaticArrays: SVector, SMatrix
 import LazySets: VPolygon, Singleton, LineSegment
 import PolygonInbounds: inpoly2
 import SpecialFunctions: besselh
-export Similarity, InvariantMeasure, SubInvariantMeasure, SelfSimilarFractal, sketch_attractor, CantorSet,
-        Sierpinski, SquareFlake, KochFlake, CantorN, Carpet, Vicsek, Dragon,
-        sim_map, full_map,
+export FractalMeasure, InvariantMeasure, SubInvariantMeasure, SelfSimilarFractal, UnionInvariantMeasure,
+        CantorSet, Sierpinski, SquareFlake, KochFlake, CantorN, Carpet, Vicsek, Dragon,
+        Similarity, sim_map, full_map,
         barycentre_rule, subdivide_indices, eval_green_double_integral,
         CantorDust, eval_green_single_integral_fixed_point, fixed_point,
         HelhmoltzGreen2D, dist, singular_elliptic_double_integral,

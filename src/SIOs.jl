@@ -1,35 +1,31 @@
-abstract type DomainOperator{Ω<:SelfSimilarFractal}# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+abstract type DomainOperator{Ω<:FractalMeasure}# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
 end
 # changing stuff
 """
 Define identity operator
 """
 struct IdentityOperator{Ω} <: DomainOperator{Ω}# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    domain::Ω#SelfSimilarFractal{V,M}
+    domain::Ω#FractalMeasure{V,M}
     λ::Number
+    self_adjoint::Bool
 end
 
 # scalar multiplication of identity
 function *(c::Number, K::IdentityOperator)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    return IdentityOperator(K.domain, c*K.λ)
+    return IdentityOperator(K.domain, c*K.λ, true)
 end
 
 # simplified constructor of identity operator
-function Id(Γ::SelfSimilarFractal)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    return IdentityOperator(Γ,1.0)
+function Id(Γ::FractalMeasure)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    return IdentityOperator(Γ,1.0, true)
 end
 
-function get_mass_matrix(I_Γ::IdentityOperator, meshes::Vector{<:SubInvariantMeasure})# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
-    # Γ = I_Γ.domain
-    # Lₕ = subdivide_indices(Γ,h_mesh) #get vector indices for subcomponents
-    N = sum([length(mesh) for mesh ∈ meshes])
-    cum_mesh_size, total_num_els, _ = get_multi_mesh_sizes(meshes)
+function get_mass_matrix(I_Γ::IdentityOperator, mesh::Vector{<:SubInvariantMeasure})# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+    N = length(mesh)
     # mesh = [SubInvariantMeasure(Γ,Lₕ[n]) for n=1:N] # partition Γ into subcomponents to make the mesh
-    mass_matrix = zeros(total_num_els,total_num_els)
-    for m=1:length(meshes)
-        for n=1:cum_mesh_size[m]
-            mass_matrix[cum_mesh_size[m]+n,cum_mesh_size[m]+n] = meshes[m][n].measure
-        end
+    mass_matrix = zeros(N,N)
+    for n=1:N
+        mass_matrix[n,n] = mesh[n].measure
     end
 
     return I_Γ.λ * mass_matrix
@@ -39,7 +35,7 @@ end
 SIO is the type for singular integral operators.
 """
 struct SIO{Ω} <: DomainOperator{Ω}# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    domain::Ω#Vector{SelfSimilarFractal{V,M}}
+    domain::Ω#Vector{FractalMeasure{V,M}}
     kernel::Function
     Lipschitz_part_of_kernel::Function
     singularity_strength::Float64
@@ -51,6 +47,7 @@ end
 struct OperatorSum{Ω} <: DomainOperator{Ω}# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     domain::Ω
     operators::Vector{<:DomainOperator{Ω}}
+    self_adjoint::Bool
 end
 
 function *(c::Number, K::SIO)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
@@ -65,23 +62,23 @@ function *(c::Number, K::SIO)# where {V<:Union{Real,AbstractVector},M<:Union{Rea
 end
 
 *(K::SIO, c::Number) = c*K
-*(c::Number, K::OperatorSum) = OperatorSum(K.domain, [c*J for J∈K.operators])
+*(c::Number, K::OperatorSum) = OperatorSum(K.domain, [c*J for J∈K.operators], K.self_adjoint)
 *(K::OperatorSum, c::Number) = c*K
 -(G::DomainOperator,F::DomainOperator) = G + (-1.0*F)
 
 function +(F::DomainOperator, G::DomainOperator)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     F.domain == G.domain ? nothing : error("domains of operators must match")
-    return OperatorSum(F.domain, [F,G])
+    return OperatorSum(F.domain, [F,G], prod([F.self_adjoint,G.self_adjoint]))
 end
 
 function +(F::DomainOperator, G::OperatorSum)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     F.domain == G.domain ? nothing : error("domains of operators must match")
-    return OperatorSum(F.domain, vcat([F],G.operators))
+    return OperatorSum(F.domain, vcat([F],G.operators), prod([F.self_adjoint,G.self_adjoint]))
 end
 
 function +(G::OperatorSum,F::DomainOperator)# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     F.domain == G.domain ? nothing : error("domains of operators must match")
-    return OperatorSum(F.domain, vcat(G.operators,[F]))
+    return OperatorSum(F.domain, vcat(G.operators,[F]), prod([F.self_adjoint,G.self_adjoint]))
 end
 
 function singular_elliptic_double_integral(K::SIO, h_quad::Real, index::Array{Int64}=[0]; Cosc = 2π)

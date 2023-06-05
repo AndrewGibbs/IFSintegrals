@@ -86,7 +86,7 @@ function Dragon(weights = [1/2, 1/2])
     IFS = [Similarity(1/sqrt(2), [0.0,0.0], pi/4),Similarity(1/sqrt(2),[1.0,0.0],3π/4)]
     d = 2.0
     # connectedness = Matrix(I(2))
-    @warn("Having double-checked adjacency matrix for Heighway Dragon yet, quadrature may be inaccurate")
+    @warn("Haven't double-checked adjacency matrix for Heighway Dragon yet, quadrature may be inaccurate")
     adjacency_matrix = Matrix(I(4))
     adjacency_matrix[3,2] = true
     adjacency_matrix[2,3] = true

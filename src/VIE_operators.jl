@@ -4,7 +4,7 @@ function volume_potential(density::Projection{V,M}, k::Real; h_quad::Float64=0.1
     vec_length = length(W)
 
     dims = density.domain.spatial_dimension
-    !(dims ≈  density.domain.Hausdorff_dimension) ? error("Hausdorff dimension must equal spatial dimension") : nothing
+    # !(dims ≈  density.domain.Hausdorff_dimension) ? error("Hausdorff dimension must equal spatial dimension") : nothing
     # if dims == 2
         ϕ2(R::Float64) = HelhmoltzGreen2D(k,R)
     # elseif dims == 3

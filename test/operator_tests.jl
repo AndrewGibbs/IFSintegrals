@@ -1,11 +1,11 @@
 # using IFSintegrals, LinearAlgebra, Test
 
-function surface_test(Γ::SelfSimilarFractal)
+function surface_test(Γ::FractalMeasure)
     k = 1 + rand()*10
     f(x) = sin(norm(x)^2) # Laplace data
 
     amb_dim = Γ.spatial_dimension
-    x = Vector{Float64}(Γ.barycentre) + Γ.diameter*(ones(amb_dim)+rand(amb_dim)) # random test point
+    x = 3*ones(amb_dim)+rand(amb_dim) # random test point
     d = rand(amb_dim) # random 
     d ./ norm(d) # incident direction, normalised
     if amb_dim == 2
@@ -34,19 +34,20 @@ function surface_test(Γ::SelfSimilarFractal)
     return true
 end
 
-function screen_test(Γ::SelfSimilarFractal)
+function screen_test(Γ::FractalMeasure)
     k = 1 + rand()*10
     f(x) = sin(norm(x)^2) # Laplace data
 
     amb_dim = Γ.spatial_dimension+1
     d = rand(amb_dim) # random 
     d ./ norm(d) # incident direction, normalised
+    x = 3*ones(amb_dim)+rand(amb_dim) # random test point
     if amb_dim == 2
         θ = rand()
-        x = [Γ.barycentre, 0] + Γ.diameter*(ones(amb_dim)+rand(amb_dim)) # random test point
+        # x = [Γ.barycentre, 0] + Γ.diameter*(ones(amb_dim)+rand(amb_dim)) # random test point
     elseif amb_dim == 3
         θ = rand(2)
-        x = [Vector{Float64}(Γ.barycentre); 0] + Γ.diameter*(ones(amb_dim)+rand(amb_dim)) # random test point
+        # x = [Vector{Float64}(Γ.barycentre); 0] + Γ.diameter*(ones(amb_dim)+rand(amb_dim)) # random test point
     end
 
     if amb_dim == 3
@@ -73,11 +74,12 @@ function screen_test(Γ::SelfSimilarFractal)
     return true
 end
 
-function VIE_test(Γ::SelfSimilarFractal)
+function VIE_test(Γ::FractalMeasure)
     k = 1 + rand()*10
 
     amb_dim = Γ.spatial_dimension
-    x = Vector{Float64}(Γ.barycentre) + Γ.diameter*(ones(amb_dim)+rand(amb_dim)) # random test point
+    # x = Vector{Float64}(Γ.barycentre) + Γ.diameter*(ones(amb_dim)+rand(amb_dim)) # random test point
+    x = 3*ones(amb_dim)+rand(amb_dim) # random test point
     d = rand(amb_dim) # random 
     d ./ norm(d) # incident direction, normalised
 

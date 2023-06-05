@@ -30,15 +30,15 @@ function HelhmoltzGreen3D_Lipschitz_part(k::Number, x::T, y::T) where T<:Union{R
     end
 end
 
-# get_spatial_dimension(Γ::SelfSimilarFractal)
+# get_spatial_dimension(Γ::FractalMeasure)
 """
-    SingleLayerOperatorLaplace(Γ::SelfSimilarFractal, wavenumber::Real=0.0)
+    SingleLayerOperatorLaplace(Γ::FractalMeasure, wavenumber::Real=0.0)
 
 represents the single layer boundary integral operator for Laplace, Sϕ(x) = ∫_Γ Φ(x,y) ϕ(x) dHᵈ(y),
 where Φ is the fundamental solution for the underlying PDE.
 """
 function SingleLayerOperatorLaplace(Γ::Ω; ambient_dimension::Int64 = Γ.spatial_dimension
-        ) where Ω <: SelfSimilarFractal# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+        ) where Ω <: FractalMeasure# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     if ambient_dimension == 2
         K = SIO{Ω}(Γ, #fractal domain
         (x,y)->-1/(2π)*Φₜ(0.0,x,y), # log kernel
@@ -63,13 +63,13 @@ function SingleLayerOperatorLaplace(Γ::Ω; ambient_dimension::Int64 = Γ.spatia
 end
 
 """
-    SingleLayerOperatorHelmholtz(Γ::SelfSimilarFractal, wavenumber::Real=0.0)
+    SingleLayerOperatorHelmholtz(Γ::FractalMeasure, wavenumber::Real=0.0)
 
 represents the single layer boundary integral operator for Helmholtz, Sϕ(x) = ∫_Γ Φ(x,y) ϕ(x) dHᵈ(y),
 where Φ is the fundamental solution for the underlying PDE.
 """
 function SingleLayerOperatorHelmholtz(Γ::Ω, k::Number; ambient_dimension::Int64 = Γ.spatial_dimension
-    ) where Ω <: SelfSimilarFractal
+    ) where Ω <: FractalMeasure
     if ambient_dimension == 2     
         K = SIO{Ω}(Γ, #fractal domain
         (x,y)->HelhmoltzGreen2D(k,x,y), # Hankel function
@@ -94,7 +94,7 @@ function SingleLayerOperatorHelmholtz(Γ::Ω, k::Number; ambient_dimension::Int6
     end
 end
 
-function VolumePotential(Γ::SelfSimilarFractal, k::Number)# where Ω <: SelfSimilarFractal
+function VolumePotential(Γ::FractalMeasure, k::Number)# where Ω <: FractalMeasure
     @warn("VolumePotential will soon be depracted. Use SingleLayerOperatorHelmholtz instead.")
     return SingleLayerOperatorHelmholtz(Γ, k)
 end

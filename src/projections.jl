@@ -1,4 +1,4 @@
-struct Projection{V,M,Ω<:SelfSimilarFractal{V,M}} # onto the coefficient space of piecewise constants on the fractal
+struct Projection{V,M,Ω<:FractalMeasure{V,M}} # onto the coefficient space of piecewise constants on the fractal
     domain::Ω
     #Lₕ::Vector{Vector{Int64}} # subindices list
     mesh::Vector{SubInvariantMeasure{V,M}}
@@ -108,7 +108,7 @@ function -(f::Projection,g::Projection)
     end
 end
 
-function get_H_minus_half_norm_function(Γ::SelfSimilarFractal;
+function get_H_minus_half_norm_function(Γ::FractalMeasure;
         h_mesh::Real=1.0, h_quad::Real=h_mesh,
         h_quad_diag::Real = h_quad,  vary_quad::Bool = true)
     Sᵢ = SingleLayer(Γ,im)

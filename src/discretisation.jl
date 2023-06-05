@@ -6,8 +6,8 @@ h_mesh is the meshwidth parameter for the discretisation of the underlying fract
 h_quad denotes the discretisation parameter for the integrals in the stiffness matrix.
 h_quad_diag is the parameter used to compute the diagonal elements of the matrix
 """
-struct DiscreteSIO{V,M,Ω<:SelfSimilarFractal{V,M}}# <: DomainOperator{Ω<:SelfSimilarFractal{V,M}}# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    #domain::SelfSimilarFractal{V,M}
+struct DiscreteSIO{V,M,Ω<:FractalMeasure{V,M}}# <: DomainOperator{Ω<:FractalMeasure{V,M}}# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    #domain::FractalMeasure{V,M}
     SIO::DomainOperator{Ω}
     h_mesh::Float64
     h_quad::Float64
@@ -50,7 +50,7 @@ function get_multi_mesh_sizes(meshes::Vector{Vector{SubInvariantMeasure{V,M_}}}
 end
 # cum_mesh_size, total_num_els, mesh_el_indices = get_multi_mesh_sizes(meshes)
 
-# (single) singular operator over multiple obstacles
+# (single) singular operator on two disjoint scatterers
 function discretise_Galerkin_block(
     K::SIO{Ω},
     mesh1::Vector{SubInvariantMeasure{V,M_}},
@@ -73,25 +73,26 @@ function discretise_Galerkin_block(
     return Galerkin_matrix
 end
 
-# sum of operators on a multiple scatterers
+# sum of operators on two disjoint scatterers
 function discretise_Galerkin_block(
     K::OperatorSum{Ω},
     mesh1::Vector{SubInvariantMeasure{V,M_}},
     mesh2::Vector{SubInvariantMeasure{V,M_}},
-    h_quad::Number
+    h_quad::Number,
+    kwargs...
     ) where 
     {V<:Union{Real,AbstractVector},
     M_<:Union{Real,AbstractMatrix},
-    Ω<:UnionInvariantMeasure{V,M_}}
+    Ω<:FractalMeasure{V,M_}}
 
     # initialise Galerkin matrix
     Galerkin_matrix = zeros(ComplexF64,length(mesh1),length(mesh2))
 
     # now sum up all relevant Galerkin matrices for each operator
     for A ∈ K.operators
-        if typeof(A)!==IdentityOperator # identity operator will be zero
+        if !(typeof(A)<:IdentityOperator) # identity operator will be zero
             Galerkin_matrix .+= 
-                discretise_nondiag_Galerkin_block(K, mesh1, mesh2, h_quad,vargs...)
+                discretise_Galerkin_block(A, mesh1, mesh2, h_quad, kwargs...)
         end
     end
 
@@ -102,12 +103,12 @@ end
 function discretise_Galerkin_block(
     K::OperatorSum{Ω},
     mesh::Vector{SubInvariantMeasure{V,M_}},
-    h_quad::Number,
-    vargs...
+    h_quad::Number;
+    kwargs...
     ) where 
     {V<:Union{Real,AbstractVector},
     M_<:Union{Real,AbstractMatrix},
-    Ω<:InvariantMeasure{V,M_}}
+    Ω<:FractalMeasure{V,M_}}
 
     # initialise Galerkin matrix
     Galerkin_matrix = zeros(ComplexF64,length(mesh),length(mesh))
@@ -117,7 +118,7 @@ function discretise_Galerkin_block(
         if isa(A,IdentityOperator) # identity operator will be zero
             Galerkin_matrix .+= get_mass_matrix(A,mesh)
         elseif isa(A,SIO)
-            Galerkin_matrix .+= discretise_Galerkin_block(A,mesh,h_quad,vargs...)
+            Galerkin_matrix .+= discretise_Galerkin_block(A,mesh,h_quad,kwargs...)
         end
     end
 
@@ -136,7 +137,7 @@ function discretise_Galerkin_block(
     ) where 
     {V<:Union{Real,AbstractVector},
     M_<:Union{Real,AbstractMatrix},
-    Ω<:SelfSimilarFractal{V,M_}}
+    Ω<:FractalMeasure{V,M_}}
 
     # focus on the fractal where the mesh lives
     Γ = mesh[1].parent_measure
@@ -273,7 +274,7 @@ function DiscreteSIO(
     kwargs...
     ) where {V<:Union{Real,AbstractVector},
             M_<:Union{Real,AbstractMatrix},
-            Ω<:SelfSimilarFractal{V,M_}}
+            Ω<:FractalMeasure{V,M_}}
     
     if isa(K.domain,InvariantMeasure) # one mesh in collection of meshes
         meshes = [mesh_fractal(K.domain, h_mesh)]
