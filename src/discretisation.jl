@@ -114,7 +114,7 @@ function discretise_Galerkin_block(
 
     # now sum up all relevant Galerkin matrices for each operator
     for A ∈ K.operators
-        if is(A,IdentityOperator) # identity operator will be zero
+        if isa(A,IdentityOperator) # identity operator will be zero
             Galerkin_matrix .+= get_mass_matrix(A,mesh)
         elseif isa(A,SIO)
             Galerkin_matrix .+= discretise_Galerkin_block(A,mesh,h_quad,vargs...)

@@ -19,7 +19,7 @@ function Id(Γ::SelfSimilarFractal)# where {V<:Union{Real,AbstractVector},M<:Uni
     return IdentityOperator(Γ,1.0)
 end
 
-function get_mass_matrix(I_Γ::IdentityOperator, meshes::Vector{Vector{SubInvariantMeasure}})# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
+function get_mass_matrix(I_Γ::IdentityOperator, meshes::Vector{<:SubInvariantMeasure})# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     # Γ = I_Γ.domain
     # Lₕ = subdivide_indices(Γ,h_mesh) #get vector indices for subcomponents
     N = sum([length(mesh) for mesh ∈ meshes])

@@ -1,5 +1,15 @@
 HelhmoltzGreen2D(k::Number,x::T, y::T) where T<:Union{Real,AbstractVector} = im/4*besselh(0,1,k*norm(x-y))
 HelhmoltzGreen2D(k::Number,r::Real) = im/4*besselh(0,1,k*r)
+function Φₜ(t::Real, x::T, y::T) where T<:Union{Real,AbstractVector}
+    if t==0
+        return log(norm(x-y))
+    else
+        return (norm(x-y))^(-t)
+    end
+end
+Φₜ(t::Real, x::Vector{Float64}, y::SVector{N,Float64}) where N = Φₜ(t, x, Vector{Float64}(y))
+
+zero_kernel(_, _) =  zero(Complex{Float64})
 
 function HelhmoltzGreen2D_Lipschitz_part(k::Number, x::T, y::T) where T<:Union{Real,AbstractVector}
     if x == y
@@ -31,7 +41,7 @@ function SingleLayerOperatorLaplace(Γ::Ω; ambient_dimension::Int64 = Γ.spatia
         ) where Ω <: SelfSimilarFractal# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}
     if ambient_dimension == 2
         K = SIO{Ω}(Γ, #fractal domain
-        (x,y)->Φₜ(0.0,x,y), # log kernel
+        (x,y)->-1/(2π)*Φₜ(0.0,x,y), # log kernel
         (x,y)->zero_kernel(x,y), # kernel minus singularity
         0.0, # strength of singularity, corresponding to log singularity
         -1/(2π), # scaling of singularity
@@ -40,7 +50,7 @@ function SingleLayerOperatorLaplace(Γ::Ω; ambient_dimension::Int64 = Γ.spatia
         )
     elseif ambient_dimension == 3
         K = SIO{Ω}(Γ, #fractal domain
-        (x,y)-> Φₜ(1.0,x,y), # Green's function
+        (x,y)-> 1/(4π)*Φₜ(1.0,x,y), # Green's function
         (x,y)-> zero_kernel(x,y), # kernel minus singularity
         1.0, # strength of singularity, corresponding to 1/|x-y|
         1/(4π), # scaling of singularity
@@ -84,7 +94,10 @@ function SingleLayerOperatorHelmholtz(Γ::Ω, k::Number; ambient_dimension::Int6
     end
 end
 
-
+function VolumePotential(Γ::SelfSimilarFractal, k::Number)# where Ω <: SelfSimilarFractal
+    @warn("VolumePotential will soon be depracted. Use SingleLayerOperatorHelmholtz instead.")
+    return SingleLayerOperatorHelmholtz(Γ, k)
+end
 """
     single_layer_potential(density::Projection, wavenumber::Real; h_quad::Float64=0.1/k)
 Returns a function which is the single layer potential in Rⁿ⁺¹, from a density on the screen Γ ∈ Rⁿ.

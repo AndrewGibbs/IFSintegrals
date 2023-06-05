@@ -1,4 +1,4 @@
-prob_weights = rand(2)
+prob_weights = [1/3, 2/3]#rand(2)
 prob_weights = prob_weights./sum(prob_weights) # random weights for Cantor set
 
 Γ_gauss = [CantorSet(), CantorSet(weights = prob_weights)]
@@ -14,7 +14,7 @@ prob_weights = prob_weights./sum(prob_weights) # random weights for Cantor set
 # end
 
 function high_order_bary(Γ::SelfSimilarFractal,p::Integer)
-    h = 10^-8
+    h = 10^-9
     x_b,w_b = barycentre_rule(Γ,h)
     return w_b'*(x_b.^p)
 end

@@ -10,6 +10,7 @@ import LinearAlgebra: norm, I, UniformScaling, eigvals, eigvecs, dot, det, cross
 import StaticArrays: SVector, SMatrix
 import LazySets: VPolygon, Singleton, LineSegment
 import PolygonInbounds: inpoly2
+import SpecialFunctions: besselh
 export Similarity, InvariantMeasure, SubInvariantMeasure, SelfSimilarFractal, sketch_attractor, CantorSet,
         Sierpinski, SquareFlake, KochFlake, CantorN, Carpet, Vicsek, Dragon,
         sim_map, full_map,
@@ -30,7 +31,6 @@ include("fractals.jl")
 include("fractal_manipulations.jl")
 include("partitioning.jl")
 include("quadrature.jl")
-include("green_kernels.jl")
 include("singular_homogenous_integrals.jl")
 include("nondisjoint_singularities.jl")
 include("SIOs.jl")

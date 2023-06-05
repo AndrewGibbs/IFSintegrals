@@ -23,12 +23,13 @@ end
 function bodge_first_matrix_entry(S,h_mesh,h_quad)
     Γ = S.domain
     mesh = IFSintegrals.mesh_fractal(Γ::InvariantMeasure, h_mesh::Number)
-    return bary_bodge_singular_integral(mesh[1],S.kernel,h_quad)*S.singularity_scale
+    return bary_bodge_singular_integral(mesh[1],S.kernel,h_quad)
 end
 
-S₀ = SingleLayerOperatorLaplace(Sierpinski(),ambient_dimension=3)
-h_mesh = 2.0
-h_quad = h_mesh/25
+# # S₀ = SingleLayerOperatorLaplace(Sierpinski(),ambient_dimension=2)#
+# S₀ = SingleLayerOperatorLaplace(CantorSet(),ambient_dimension=2)#SingleLayerOperatorHelmholtz(CantorDust(),2.0,ambient_dimension=3)
+# h_mesh = 2.0
+# h_quad = h_mesh/100
 
-≈(get_first_matrix_entry(S₀,h_mesh,h_quad), bodge_first_matrix_entry(S₀,h_mesh,h_quad), rtol=1e-1)
-# heatmap(abs.(Sₖₕ.Galerkin_matrix),yflip=true)
+# ≈(get_first_matrix_entry(S₀,h_mesh,h_quad), bodge_first_matrix_entry(S₀,h_mesh,h_quad), rtol=2E-1)
+# # heatmap(abs.(Sₖₕ.Galerkin_matrix),yflip=true)

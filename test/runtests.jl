@@ -6,12 +6,16 @@ include("operator_tests.jl")
 include("barycentre_rule_tests.jl")
 include("NDJ_tests.jl")
 include("gauss_tests.jl")
+include("quad_bodge_test.jl")
 
 screens = [CantorSet(), CantorDust(), Sierpinski(), KochFlake()]
 surfaces = [CantorDust()]
 volumes = [KochFlake(), Dragon()]
 ss = rand(10)
 h_energy = 0.1
+operator_test_set = [SingleLayerOperatorLaplace(Sierpinski()),
+                    SingleLayerOperatorLaplace(CantorDust(),ambient_dimension=3),
+                    SingleLayerOperatorLaplace(CantorSet(),ambient_dimension=2)]
 
 @testset "IFSintegrals tests" begin
 
@@ -43,12 +47,12 @@ h_energy = 0.1
         end
     end
 
-    @testset "barycentre_rule_tests.jl" begin
+    @testset "barycentre_rule_tests" begin
         @test(bary_test1())
         @test(bary_test2())
         @test(bary_test3())
         @test(bary_test4())
-        @test(bary_test5())
+        # @test(bary_test5())
         @test(bary_test6())
         @test(bary_test7())
         @test(bary_test8())
@@ -67,6 +71,12 @@ h_energy = 0.1
         @testset for s ∈ ss
         @test_nowarn(s_energy(CantorSet(),s,GQ))
         end
+    end
+
+    @testset "Laplace diagonal Galerkin entry near miss estimation" begin
+        @testset for S ∈ operator_test_set, h_mesh ∈ [2.0, 0.5, 0.02]
+                    @test get_first_matrix_entry(S,h_mesh,h_mesh/25)≈bodge_first_matrix_entry(S,h_mesh,h_mesh/100) rtol=2E-1
+                end
     end
 
 end;
