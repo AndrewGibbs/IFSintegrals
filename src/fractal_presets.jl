@@ -317,6 +317,23 @@ function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     end
 end
 
+function KochCurve()
+
+    s₁ = Similarity(1/3,[0,0])
+    s₂ = Similarity(1/3,[1/3,0],π/3)
+    s₃ = Similarity(1/3,[1/2,sqrt(3)/6],-π/3)
+    s₄ = Similarity(1/3,[2/3,0])
+    IFS = [s₁,s₂,s₃,s₄]
+
+    touching_singularities = [true true false false;
+                            true true true false;
+                            false true true true;
+                            false false true true]
+
+    return InvariantMeasure(IFS, connectedness = touching_singularities);
+end
+
+
 function Carpet(;weights = ones(8)/8)
     ρ = 1/3
     IFS = [Similarity(ρ,[0,0]),

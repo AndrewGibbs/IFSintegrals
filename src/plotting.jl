@@ -80,6 +80,18 @@ function fractal_pre_plot(Γ::SelfSimilarFractal, mem_const)
     return x,y
 end
 
+function fractal_pre_plot(Γ::UnionInvariantMeasure, mem_const)
+    X = Vector{Float64}[]
+    Y = Vector{Float64}[]
+    # p = plot!()
+    for γ ∈ Γ.invariant_measures
+        x,y = fractal_pre_plot(γ,mem_const)
+        push!(X,x)
+        push!(Y,y)
+    end
+    return X,Y
+end
+
 function adjust_defaults(kwargs)
     kwargs_dict = Dict(kwargs)
     !haskey(kwargs,:markersize) ? merge(kwargs_dict,Dict("markersize"=>0.1)) : nothing
@@ -93,36 +105,45 @@ Provides a simple sketch of the parent_measure Γ, by repeatedly applying the IF
 
 See also: [`plot!`](@ref)
 """
-function plot(Γ::FractalMeasure; kwargs...)#mem_const = 100000, kwargs...)
-    plot()
-    plot!(Γ; kwargs...)
-    # # println(kwargs)
-    # x,y = fractal_pre_plot(Γ,mem_const)
-    # # scatter(x,y;kwargs...)
-    # # kwargs = adjust_defaults(kwargs)
-    # scatter(x,y;adjust_defaults(kwargs)...)
-end
+# function plot(Γ::FractalMeasure; kwargs...)#mem_const = 100000, kwargs...)
+#     # plot()
+#     p = plot!(Γ; kwargs...)
+#     # # println(kwargs)
+#     # x,y = fractal_pre_plot(Γ,mem_const)
+#     # # scatter(x,y;kwargs...)
+#     # # kwargs = adjust_defaults(kwargs)
+#     # scatter(x,y;adjust_defaults(kwargs)...)
+#     return p
+# end
 
 """
     plot!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
 Similar to [`draw`](@ref), except it will draw on the current image.
 """
-function plot!(Γ::SelfSimilarFractal; mem_const = 100000, kwargs...)
+function plot(Γ::UnionInvariantMeasure; mem_const = 100000, kwargs...)
     x,y = fractal_pre_plot(Γ,mem_const)
-    scatter!(x,y;kwargs...)
+    p = scatter(x,y;kwargs...)
+    return p
 end
 
 function plot!(Γ::UnionInvariantMeasure; mem_const = 100000, kwargs...)
-    X = Vector{Float64}[]
-    Y = Vector{Float64}[]
-    # p = plot!()
-    for γ ∈ Γ.invariant_measures
-        x,y = fractal_pre_plot(γ,mem_const)
-        push!(X,x)
-        push!(Y,y)
-    end
-    scatter!(X,Y;kwargs...)
+    x,y = fractal_pre_plot(Γ,mem_const)
+    p = scatter!(x,y;kwargs...)
+    return p
 end
+
+# function plot!(Γ::UnionInvariantMeasure; mem_const = 100000, kwargs...)
+#     X = Vector{Float64}[]
+#     Y = Vector{Float64}[]
+#     # p = plot!()
+#     for γ ∈ Γ.invariant_measures
+#         x,y = fractal_pre_plot(γ,mem_const)
+#         push!(X,x)
+#         push!(Y,y)
+#     end
+#     p = scatter!(X,Y;kwargs...)
+#     return p
+# end
 
 # the big boy plotting algorithm
 

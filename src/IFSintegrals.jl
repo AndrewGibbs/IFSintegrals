@@ -12,7 +12,7 @@ import LazySets: VPolygon, Singleton, LineSegment
 import PolygonInbounds: inpoly2
 import SpecialFunctions: besselh
 export FractalMeasure, InvariantMeasure, SubInvariantMeasure, SelfSimilarFractal, UnionInvariantMeasure,
-        CantorSet, Sierpinski, SquareFlake, KochFlake, CantorN, Carpet, Vicsek, Dragon,
+        CantorSet, Sierpinski, SquareFlake, KochFlake, CantorN, Carpet, Vicsek, Dragon, KochCurve,
         Similarity, sim_map, full_map,
         barycentre_rule, subdivide_indices, eval_green_double_integral,
         CantorDust, eval_green_single_integral_fixed_point, fixed_point,
