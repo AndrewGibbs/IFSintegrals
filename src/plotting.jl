@@ -95,7 +95,7 @@ See also: [`plot!`](@ref)
 """
 function plot(Γ::FractalMeasure; kwargs...)#mem_const = 100000, kwargs...)
     plot()
-    plot!(Γ::FractalMeasure; kwargs...)
+    plot!(Γ; kwargs...)
     # # println(kwargs)
     # x,y = fractal_pre_plot(Γ,mem_const)
     # # scatter(x,y;kwargs...)
@@ -112,11 +112,16 @@ function plot!(Γ::SelfSimilarFractal; mem_const = 100000, kwargs...)
     scatter!(x,y;kwargs...)
 end
 
-function plot!(Γ::UnionInvariantMeasure; kwargs...)
-    # plot()
+function plot!(Γ::UnionInvariantMeasure; mem_const = 100000, kwargs...)
+    X = Vector{Float64}[]
+    Y = Vector{Float64}[]
+    # p = plot!()
     for γ ∈ Γ.invariant_measures
-        plot!(γ, kwargs...)
+        x,y = fractal_pre_plot(γ,mem_const)
+        push!(X,x)
+        push!(Y,y)
     end
+    scatter!(X,Y;kwargs...)
 end
 
 # the big boy plotting algorithm

@@ -9,29 +9,51 @@ function embed(s::Similarity{V,M}, v::Vector{<:Real}
     else
         n = length(s.δ)
         n_ = n + length(v)
-        A_ = I[1:n_,1:n_]
-        A_[1:n,1:n] = s.A
+        A_ = Matrix{Float64}(I[1:n_,1:n_])
+        A_[1:n,1:n] .= s.A
         rA_ = s.r*I[1:n_,1:n_]
-        rA_[1:n,1:n] = s.rA
+        rA_[1:n,1:n] .= s.rA
 
     end
     return Similarity(s.r,vcat(s.δ,v),A_,rA_)
 end
 
-function embed(AM::AutomorphicMap{V,M}, v::Vector{<:Real}
-                ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    n = length(s.δ)
-    n_ = n + length(v)
-    A_ = I[1:n_,1:n_]
-    A_[1:n,1:n] = AM.A
-    return AutomorphicMap(AM.r,vcat(AM.δ,v))
+function embed(s::Similarity{V,M}, v::Vector{<:Real}
+    ) where {V<:Real, M<:Real}
+    if s.A == I
+        A_ = I
+        # rA_ = s.r*I
+    else
+        n = length(s.δ)
+        n_ = n + length(v)
+        A_ = Matrix{Float64}(I[1:n_,1:n_])
+        A_[1:n,1:n] .= s.A
+        # rA_ = s.r*I[1:n_,1:n_]
+        # rA_[1:n,1:n] .= s.rA
+    end
+    # using Similarity constructor will make everything StaticArrays
+    return Similarity(s.r,vcat(s.δ,v),A_)
 end
 
-function embed(Γ::InvariantMeasure{V,M}, v::Vector{<:Real}
-        ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    return InvariantMeasure{V,M}(
+function embed(AM::AutomorphicMap{V,M}, v::Vector{<:Real}
+                ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    n = length(AM.δ)
+    n_ = n + length(v)
+    A_ = Matrix{Float64}(I[1:n_,1:n_])
+    A_[1:n,1:n] .= AM.A
+    v_ = SVector{n_,Float64}(vcat(AM.δ,v))
+    return AutomorphicMap(SMatrix{n_,n_,Float64,n_^2}(A_),v_)
+end
+
+function embed(Γ::InvariantMeasure, v::Vector{<:Real}
+        )# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+
+    # get size of new vectors
+    new_spat_dim = Γ.spatial_dimension + length(v)
+
+    return InvariantMeasure{SVector{new_spat_dim,Float64},SMatrix{new_spat_dim,new_spat_dim,Float64,new_spat_dim^2}}(
         [embed(sₘ,v) for sₘ ∈ Γ.IFS], # embedded IFS
-        Γ.spatial_dimension + length(v),
+        new_spat_dim,
         Γ.Hausdorff_dimension,
         Γ.homogeneous,
         Γ.Hausdorff_weights,
@@ -44,6 +66,7 @@ function embed(Γ::InvariantMeasure{V,M}, v::Vector{<:Real}
         [embed(T,v) for T ∈ Γ.symmetry_group]
     )
 end
+embed(Γ::InvariantMeasure, v::Real) = embed(Γ, [v])
 
 # ------------------- addition / translation of fractals ----------------------
 
@@ -64,7 +87,7 @@ function +(Γ::InvariantMeasure{V,M}, v::Vector{<:Real}
             ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
             # make sure vector is right length, if not, mbed it in higher dimenson
             if Γ.spatial_dimension < length(v)
-                Γ = embed(Γ,zeros(length(v)))
+                Γ = embed(Γ,zeros(length(v)-Γ.spatial_dimension))
             elseif Γ.spatial_dimension > length(v)
                 error("Spatial dimension of translation is lower than that of fractal.")
             end
