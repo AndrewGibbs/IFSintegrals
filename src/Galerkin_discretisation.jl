@@ -63,10 +63,16 @@ function discretise_Galerkin_block(
 
     # initialise Galerkin matrix
     Galerkin_matrix = zeros(ComplexF64,length(mesh1),length(mesh2))
+
+    # get quad scales
+    quad_scales = get_quad_scales(K.wavenumber,
+                    K.domain.spatial_dimension,
+                    mesh1, mesh2)
+
     # construct Galerkin matrix
-    for (m, 𝙈ₘ) ∈ enumerate(mesh1)
+    @showprogress 1 "Constructing off-diagonal Galerkin block" for (m, 𝙈ₘ) ∈ enumerate(mesh1)
         for (n, Mₙ) ∈ enumerate(mesh2)
-            x,y,w = barycentre_rule(𝙈ₘ, Mₙ, h_quad) # get quadrature
+            x,y,w = barycentre_rule(𝙈ₘ, Mₙ, h_quad*quad_scales[m,n]) # get quadrature
             Galerkin_matrix[m, n] = w'*K.kernel.(x,y) # evaluate non-diagonal Galerkin integral
         end
     end
@@ -203,7 +209,7 @@ function discretise_Galerkin_block(
         return ρ^(-s)*pₘ*pₘ_/pₙ/pₙ_
     end
 
-    @showprogress 1 "Constructing discrete system " for m_count=1:N#m in Lₕ
+    @showprogress 1 "Constructing Galerkin block " for m_count=1:N#m in Lₕ
         m = mesh[m_count].index
         Γₘ = mesh[m_count]
 
@@ -278,8 +284,10 @@ function DiscreteSIO(
     
     if isa(K.domain,InvariantMeasure) # one mesh in collection of meshes
         meshes = [mesh_fractal(K.domain, h_mesh)]
+        # block_message = "blocks completed"
     elseif isa(K.domain,UnionInvariantMeasure)
         meshes = [ mesh_fractal(Γ, h_mesh) for Γ ∈ K.domain.invariant_measures]
+        # block_message = ""
     else
         error("domain type not supported, use InvariantMeasure instead")
     end
