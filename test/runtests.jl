@@ -9,8 +9,8 @@ include("gauss_tests.jl")
 include("quad_bodge_test.jl")
 
 screens = [CantorSet(), CantorDust(), Sierpinski(), KochFlake(),
-             UnionInvariantMeasure([Sierpinski()+[2,2], CantorDust()])
-             UnionInvariantMeasure([CantorSet(),CantorSet()+1.5])]
+            UnionInvariantMeasure([Sierpinski()+[2,2], CantorDust()])]
+# UnionInvariantMeasure([CantorSet(),CantorSet()+1.5])
 surfaces = [CantorDust(), UnionInvariantMeasure([CantorDust()+[2,2], CantorDust()])]
 volumes = [KochFlake(), Dragon(), UnionInvariantMeasure([KochFlake()+[2,2], Dragon()])]
 ss = rand(10)

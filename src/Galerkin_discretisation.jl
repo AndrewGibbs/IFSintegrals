@@ -15,6 +15,7 @@ struct DiscreteSIO{V,M,Ω<:FractalMeasure{V,M}}# <: DomainOperator{Ω<:FractalMe
     Galerkin_matrix::Matrix{ComplexF64} # eventually this type should be generalised
     mesh_el_indices::Vector{UnitRange{Int64}}
 end
+# eventually the Galerkin_matrix type should be generalised, to <Union{AbstractMatrix,AbstractLinearOperator}
 
 #(K, h_mesh, h_quad, meshes, Galerkin_matrix, mesh_el_indices)
 
