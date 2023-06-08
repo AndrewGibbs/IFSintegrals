@@ -32,7 +32,7 @@ S(x) # applies the map S to the point x
 ```
 This is the IFS for the Cantor Set, and this can be converted into an ```InvariantMeasure``` with the command
 ```@REPL tutorial
-InvariantMeasure(S)
+ Γ = InvariantMeasure(S)
 ```
 
  The outer constructor for ```InvariantMeasure``` constructs other properties, such as diameter and Hausdorff dimension, which describe this fractal measure.
@@ -46,32 +46,43 @@ IFS = [
     Similarity(ρ,[(1-ρ)/2,sqrt(3)*(1-ρ)/2])
     Similarity(ρ,[(1-ρ)/2,(1-ρ)/(2*sqrt(3))])
     ]
- Γ = InvariantMeasure(IFS);
+ Γ = InvariantMeasure(IFS)
+ nothing #hide
 ```
-We can plot an approximation to attractors in $\mathbb{R}$ or $\mathbb{R}^2$, as follows:
-```@example
+We can plot an approximation attractors in $\mathbb{R}$ or $\mathbb{R}^2$, as follows:
+```@example tutorial
 using Plots
-plot(Γ,color = "black", markersize=0.5,legend="My attractor")
+plot(Γ,color = "black", markersize=0.75,label="My fractal")
 ```
 
-Fractals, and fractal measures, can be described using the following type.
-
-```@docs
-SelfSimilarMeasure
-```
+## Preset fractals
 Several preset fractals are available. These may be called with:
-```jldoctest
-julia> CantorSet()
-julia> CantorDust()
-julia> Sierpinski() # triangle/gasket
-julia> KochCurve() # Koch curve
-julia> KochFlake() # Koch snowflake
-julia> Vicsek() # Vicsek fractal
-julia> SquareFlake() # Minkowski snowflake
-julia> Carpet() # Sierpinski carpet
-julia> Dragon() # Heighway Dragon
+```@REPL tutorial
+CantorSet()
+CantorDust()
+Sierpinski() # triangle/gasket
+KochCurve() # Koch curve
+KochFlake() # Koch snowflake
+Vicsek() # Vicsek fractal
+SquareFlake() # Minkowski snowflake
+Carpet() # Sierpinski carpet
+Dragon() # Heighway Dragon
 ```
-Some of these presets have optional arguments, for example `CantorSet` and `CantorDust` have the default `contraction=1/3`, but this can be set to any value in $(0,1/2]$. 
+Some of these presets have optional arguments, for example `CantorSet` and `CantorDust` have the default `contraction=1/3`, but this can be set to any value in $(0,1/2]$.
+
+## Manipulating fractals
+
+Fractals can be translated, stretched and rotated very easily, using simple arithmetic syntax. For example,
+```@example tutorial
+Γ = Sierpinski()
+plot(Γ,color = "blue", markersize=0.75,
+label="Sierpinski Triangle (default)")
+
+Γ_shift = 1.5*Γ + [-1,2.5]
+plot!(Γ_shift,color = "red", markersize=0.75, 
+label="Sierpinski Triangle (translated and stretched)",aspect_ratio=1.0)
+
+```
 
 The following type also describes a measure whose support is an IFS attractor. It is used when meshing a fractal, with self-similar copies of its self.
 ```@docs

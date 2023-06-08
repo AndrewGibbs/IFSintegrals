@@ -120,15 +120,19 @@ See also: [`plot!`](@ref)
     plot!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
 Similar to [`draw`](@ref), except it will draw on the current image.
 """
-function plot(Γ::FractalMeasure; mem_const = 100000, kwargs...)
+function plot(Γ::FractalMeasure; mem_const = 100000, mswidth=0, kwargs...)
     x,y = fractal_pre_plot(Γ,mem_const)
-    p = scatter(x,y;kwargs...)
+    p = scatter(x,y;
+                markerstrokewidth=mswidth,
+                kwargs...)
     return p
 end
 
-function plot!(Γ::FractalMeasure; mem_const = 100000, kwargs...)
+function plot!(Γ::FractalMeasure; mem_const = 100000, mswidth=0, kwargs...)
     x,y = fractal_pre_plot(Γ,mem_const)
-    p = scatter!(x,y;kwargs...)
+    p = scatter!(x,y;
+                markerstrokewidth=mswidth,
+                kwargs...)
     return p
 end
 
