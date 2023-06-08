@@ -4,22 +4,26 @@ using Plots
 ```
 
 # Constructing Fractals and Fractal measures
-An iterated function system is a set of $M$ affine contraction maps, or _similarities_.
+An iterated function system is a set of ``M`` affine contraction maps, or _similarities_.
 
-### Similarities
+## Similarities
 Each similarity is of the form:
 
-$s_m(x)=r_mA_mx + \delta_m,\quad x\in\mathbb{R}^n,$
+```math
+s_m(x)=r_mA_mx + \delta_m,\quad x\in\mathbb{R}^n,
+```
 
-where $r_m\in(0,1)$ is the contraction factor, $A_m\in\R^{n\times n}$ is a rotation matrix, and $\delta\in\R^{n}$ is a translation vector.
+where ``r_m\in(0,1)`` is the contraction factor, ``A_m\in\R^{n\times n}`` is a rotation matrix, and ``\delta\in\R^{n}`` is a translation vector.
 
 ```@docs
 Similarity
 ```
-### Attractors of IFSs, as fractal measures
-The iterated function system may be interpreted as a set of these maps, $\{s_m\}_{m=1}^M$. The _attractor_ $\Gamma$ is the unique non-empty compact set which satisfies
+## InvariantMeasure
+The iterated function system may be interpreted as a set of these maps, ``\{s_m\}_{m=1}^M``. The _attractor_ ``\Gamma`` is the unique non-empty compact set which satisfies
 
-$$\Gamma = S(\Gamma):=\bigcup_{m=1}^M s_m(\Gamma).$$
+```math
+\Gamma = S(\Gamma):=\bigcup_{m=1}^M s_m(\Gamma).
+```
 
 We can construct the map $S$ defined above as follows.
 ```@REPL tutorial
@@ -49,7 +53,7 @@ IFS = [
  Γ = InvariantMeasure(IFS)
  nothing #hide
 ```
-We can plot an approximation attractors in $\mathbb{R}$ or $\mathbb{R}^2$, as follows:
+We can plot an approximation attractors in ``\mathbb{R}`` or ``\mathbb{R}^2``, as follows:
 ```@example tutorial
 using Plots
 plot(Γ,color = "black", markersize=0.75,label="My fractal")
@@ -76,15 +80,40 @@ Fractals can be translated, stretched and rotated very easily, using simple arit
 ```@example tutorial
 Γ = Sierpinski()
 plot(Γ, markersize=0.75,
-label="Sierpinski Triangle (default)")
+    label="Sierpinski Triangle (default)")
 
 Γ_shift = 1.5*Γ + [-2,0.5]
 plot!(Γ_shift, markersize=0.75, 
-label="Sierpinski Triangle (translated and stretched)",aspect_ratio=1.0)
+    label="Sierpinski Triangle (translated and stretched)",aspect_ratio=1.0)
 
 ```
+## SubInvariantMeasure
 
-The following type also describes a measure whose support is an IFS attractor. It is used when meshing a fractal, with self-similar copies of its self.
+Consider an IFS with ``M\in\mathbb{N}`` components. For a vector
+
+```math
+\mathbf{m}=[m_1,\ldots,m_N]\in\{1,\ldots,M\}^N,
+```
+it is standard to denote a _sub-component_ of the fractal by
+
+```math
+\Gamma_{\mathbf{m}} := s_{m_1}\circ\ldots \circ s_{m_N}(\Gamma)
+```
+
+The following type also describes a measure whose support is a sub-component, in the above sense.
+
 ```@docs
-SelfSimilarSubMeasure
+SubInvariantMeasure
+```
+Using standard vector index syntax, a `SubInvariantMeasure` can be easily constructed:
+
+```@example tutorial
+Γ = Sierpinski()
+m = [1,3,2] # vector index
+Γₘ = Γ[m] # construct SubInvariantMeasure
+
+plot(Γ, markersize=0.75,
+    label="Sierpinski Triangle (default)")
+plot!(Γₘ, markersize=0.75,
+    label="Subcomponent",aspect_ratio=1.0)
 ```

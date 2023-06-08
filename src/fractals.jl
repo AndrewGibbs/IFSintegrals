@@ -67,14 +67,28 @@ abstract type SelfSimilarFractal{V,M}<:FractalMeasure{V,M} end
     end
     
 Representation of a invariant measure, whose support is an iterated function system (IFS).
-Constructor requires only an IFS, which is of type Array{Similarity}, and diameter.
-All other essential properties can be deduced from this, including barycentre
+Constructor requires only an IFS, which is of type Array{Similarity}.
+All other essential properties can be deduced from this, including barycentre, diameter
 and dimension, which are approximated numerically.
 
-Has the outer constructor, which only requires IFS (a vector of Similarity type) as an input.
+Has the outer constructor, which only requires IFS (a vector of ['Similarity'](@ref)) as an input.
 
-    InvariantMeasure(sims::Vector{Similarity}; measure::Real=1.0) = InvariantMeasure(sims, get_diameter(sims); measure=measure)
+    InvariantMeasure(sims::Vector{Similarity}; measure::Real=1.0) = 
+        InvariantMeasure(sims, get_diameter(sims); measure=measure)
     
+# Fields
+- IFS: The iterated function system, a vector of [`Similarity`](@ref), describing the fractal
+- spatial_dimension: The integer dimension of the smallest open set containing the fractal
+- Hausdorff_dimension: The Hausdorff dimenson of the fractal
+- homogeneous: A flag, true if all the contractions are of the same size
+- Hausdorff_weights: A flag, true if this is a Hausdorff measure
+- barycentre: The barycentre of the measure
+- diameter: The diemater of the fractal support
+- measure: The measure of the whole fractal, usually set to one
+- weights: The probability weights describing the invariant measure
+- disjoint: Flag for if the fractal support is disjoint
+- connectedness: Matrix describing which subcomponents are connected
+- symmetry_group: Vector of [`AutomorphicMap`](@ref), describing symmetries of the measure
 """
 struct InvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
     IFS::Vector{Similarity{V,M}}
@@ -159,7 +173,26 @@ function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, me
 
 end
 
-# subcomponent of parent_measure, as a subclass of fractal
+"""
+    struct SubInvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
+        parent_measure::InvariantMeasure
+        IFS::Vector{Similarity{V,M}} # could be removed ?
+        index::Vector{Int64}
+        barycentre::V
+        diameter::Float64
+        measure::Float64
+    end
+
+Represents a fractal measure which has been derived from an `InvariantMeasure`.
+
+# Fields
+- parent_measure: This measure is supported on a subet of the support of parent_measure
+- IFS: The vector of similarities describing the fractal support of this measure
+- index: The vector index corresponding to the contractions applied to parent_measure
+- barycentre: The barycentre of this measure
+- diameter: The diameter of the fractal support
+- measure: The measure of the support
+"""
 struct SubInvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
     parent_measure::InvariantMeasure
     IFS::Vector{Similarity{V,M}} # could be removed ?

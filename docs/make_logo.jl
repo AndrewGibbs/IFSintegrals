@@ -19,3 +19,9 @@ p = plot(𝙈,x,levels=4,c=:Dark2_7,
 savefig(p,"src/assets/"*file_name*".png")
 #:buda10, :viridis, Dark2_7,PRGn
 end
+
+# include("make_logo.jl")
+# for light backgrounds
+make_logo("logo";line_colour="black")
+# for dark backgrounds
+make_logo("logo-dark";line_colour="white")
