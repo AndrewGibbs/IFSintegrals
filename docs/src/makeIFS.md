@@ -1,6 +1,7 @@
 ```@setup tutorial
 using IFSintegrals
-using Plots
+using Plots; gr()
+Plots.reset_defaults()
 ```
 
 # Constructing Fractals and Fractal measures
