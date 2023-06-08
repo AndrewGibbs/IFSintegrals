@@ -22,17 +22,17 @@ The iterated function system may be interpreted as a set of these maps, $\{s_m\}
 $$\Gamma = S(\Gamma):=\bigcup_{m=1}^M s_m(\Gamma).$$
 
 We can construct the map $S$ defined above as follows.
-```jldoctest
-julia> Using IFSintegrals
-julia> s₁ = Similarity(1/3,2/3)
-julia> s₂ = Similarity(1/3,2/3)
-julia> S = [s₁,s₂]
-julia> x = rand()
-julia> S(x) # applies the map S to the point x
+```@REPL tutorial
+using IFSintegrals
+s₁ = Similarity(1/3,2/3)
+s₂ = Similarity(1/3,2/3)
+S = [s₁,s₂]
+x = rand()
+S(x) # applies the map S to the point x
 ```
 This is the IFS for the Cantor Set, and this can be converted into an ```InvariantMeasure``` with the command
-```jldoctest
-julia> InvariantMeasure(S)
+```@REPL tutorial
+InvariantMeasure(S)
 ```
 
  The outer constructor for ```InvariantMeasure``` constructs other properties, such as diameter and Hausdorff dimension, which describe this fractal measure.
@@ -50,7 +50,7 @@ IFS = [
 ```
 We can plot an approximation to attractors in $\mathbb{R}$ or $\mathbb{R}^2$, as follows:
 ```@example
-Using Plots
+using Plots
 plot(Γ,color = "black", markersize=0.5,legend="My attractor")
 ```
 
