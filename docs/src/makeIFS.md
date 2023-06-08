@@ -75,11 +75,11 @@ Some of these presets have optional arguments, for example `CantorSet` and `Cant
 Fractals can be translated, stretched and rotated very easily, using simple arithmetic syntax. For example,
 ```@example tutorial
 Γ = Sierpinski()
-plot(Γ,color = "blue", markersize=0.75,
+plot(Γ, markersize=0.75,
 label="Sierpinski Triangle (default)")
 
-Γ_shift = 1.5*Γ + [-1,2.5]
-plot!(Γ_shift,color = "red", markersize=0.75, 
+Γ_shift = 1.5*Γ + [-2,0.5]
+plot!(Γ_shift, markersize=0.75, 
 label="Sierpinski Triangle (translated and stretched)",aspect_ratio=1.0)
 
 ```
