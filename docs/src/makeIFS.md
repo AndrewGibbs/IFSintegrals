@@ -27,7 +27,7 @@ The iterated function system may be interpreted as a set of these maps, ``\{s_m\
 ```
 
 We can construct the map $S$ defined above as follows.
-```@REPL tutorial
+```@example tutorial
 using IFSintegrals
 s₁ = Similarity(1/3,2/3)
 s₂ = Similarity(1/3,2/3)
@@ -36,7 +36,7 @@ x = rand()
 S(x) # applies the map S to the point x
 ```
 This is the IFS for the Cantor Set, and this can be converted into an ```InvariantMeasure``` with the command
-```@REPL tutorial
+```@example tutorial
  Γ = InvariantMeasure(S)
 ```
 
