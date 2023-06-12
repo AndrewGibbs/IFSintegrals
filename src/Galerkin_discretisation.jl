@@ -6,13 +6,13 @@ h_mesh is the meshwidth parameter for the discretisation of the underlying fract
 h_quad denotes the discretisation parameter for the integrals in the stiffness matrix.
 h_quad_diag is the parameter used to compute the diagonal elements of the matrix
 """
-struct DiscreteSIO{V,M,Ω<:FractalMeasure{V,M}}# <: DomainOperator{Ω<:FractalMeasure{V,M}}# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+struct DiscreteSIO{V,M,Ω<:FractalMeasure{V,M},T<:Union{AbstractMatrix,AbstractLinearOperator}}# <: DomainOperator{Ω<:FractalMeasure{V,M}}# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     #domain::FractalMeasure{V,M}
     SIO::DomainOperator{Ω}
     h_mesh::Float64
     h_quad::Float64
     mesh::Vector{SubInvariantMeasure{V,M}} # one mesh per attractor
-    Galerkin_matrix::Matrix{ComplexF64} # eventually this type should be generalised
+    Galerkin_matrix::T # eventually this type should be generalised
     mesh_el_indices::Vector{UnitRange{Int64}}
 end
 # eventually the Galerkin_matrix type should be generalised, to <Union{AbstractMatrix,AbstractLinearOperator}
@@ -312,5 +312,5 @@ function DiscreteSIO(
             end
         end
     end
-    DiscreteSIO{V,M_,Ω}(K, h_mesh, h_quad, vcat(meshes...), Galerkin_matrix, mesh_el_indices)
+    DiscreteSIO{V,M_,Ω,Matrix{ComplexF64}}(K, h_mesh, h_quad, vcat(meshes...), Galerkin_matrix, mesh_el_indices)
 end

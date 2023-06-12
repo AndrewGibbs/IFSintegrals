@@ -22,7 +22,7 @@ function \(K::DiscreteSIO, f::Function)
     return Projection(K.SIO.domain, K.mesh, coeffs)
 end
 
-function \(K::DiscreteSIO, fₕ::Projection)
+function \(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:AbstractMatrix}
     thresh = 1E-8
     if length(fₕ.coeffs)>1000 #use iterative method
         # if K.SIO.self_adjoint && K.SIO.coercive
@@ -35,6 +35,16 @@ function \(K::DiscreteSIO, fₕ::Projection)
         end
     else
         coeffs = K.Galerkin_matrix \ fₕ.coeffs
+    end
+    return Projection(K.SIO.domain, K.mesh, coeffs)
+end
+
+function \(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:AbstractLinearOperator}
+    thresh = 1E-8
+    if K.SIO.self_adjoint
+        coeffs = minres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
+    else
+        coeffs = bicgstabl(K.Galerkin_matrix,fₕ.coeffs,1,reltol=thresh)
     end
     return Projection(K.SIO.domain, K.mesh, coeffs)
 end
