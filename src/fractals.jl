@@ -149,7 +149,7 @@ function InvariantMeasure(sims::Vector{Similarity{V,M_}}; diameter::Real=0.0, me
     if weights == [0]
         weights = zeros(Float64,M)
         for m=1:M
-            weights[m] = measure*sims[m].r^Hdim
+            weights[m] = sims[m].r^Hdim
         end
     end
     # Sweights = SVector{M,Float64}(weights)
