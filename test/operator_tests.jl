@@ -65,7 +65,7 @@ function screen_test(Γ::FractalMeasure)
     Sₖ_ = SingleLayerOperatorHelmholtz(Γ, k; ambient_dimension=amb_dim)
     Sₖₕ_ = DiscreteSIO(Sₖ_; h_mesh=0.1, h_quad=0.05)
     ϕₖₕ_ = Sₖₕ_\g_
-    𝙁ₖϕₕ = far_field_pattern(ϕₖₕ_,k; h_quad = 0.05)
+    𝙁ₖϕₕ = far_field_pattern(ϕₖₕ_,k; h_quad = 0.05, ambient_dimension=amb_dim)
     𝙁ₖϕₕ(θ)
 
     S₀_ = SingleLayerOperatorLaplace(Γ; ambient_dimension=amb_dim)

@@ -94,10 +94,6 @@ function SingleLayerOperatorHelmholtz(Γ::Ω, k::Number; ambient_dimension::Int6
     end
 end
 
-function VolumePotential(Γ::FractalMeasure, k::Number)# where Ω <: FractalMeasure
-    @warn("VolumePotential will soon be depracted. Use SingleLayerOperatorHelmholtz instead.")
-    return SingleLayerOperatorHelmholtz(Γ, k)
-end
 """
     single_layer_potential(density::Projection, wavenumber::Real; h_quad::Float64=0.1/k)
 Returns a function which is the single layer potential in Rⁿ⁺¹, from a density on the screen Γ ∈ Rⁿ.
@@ -125,20 +121,3 @@ function get_layer_potential(density::Projection, Φᵣ::Function, h_quad)# wher
     return Sϕ
 end
 
-function SingleLayerPotentialHelmholtz(density::Projection,
-                            k::T; ambient_dimension::Int64 = density.domain.spatial_dimension,
-                            h_quad::Float64 = 0.1/abs(k)
-                            ) where T<:Number# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}, T<:Number}
-
-    # choose appropriate Green's kernel
-    if ambient_dimension == 2
-        K = (r::Float64)-> HelhmoltzGreen2D(k::T,r)
-    elseif ambient_dimension == 3
-        K = (r::Float64)-> HelhmoltzGreen3D(k::T,r)
-    else
-        error("Cannot compute single layer potential for this number of spatial dimensions")
-    end
-    # return the potential function
-    return get_layer_potential(density, K, h_quad)
-
-end

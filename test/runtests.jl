@@ -21,15 +21,15 @@ operator_test_set = [SingleLayerOperatorLaplace(Sierpinski()),
 
 @testset "IFSintegrals tests" begin
 
+    @testset "Lebesgue Far field comparison" begin
+        @test get_cantor_far_field_err(8) ≈ 0 atol=1E-3
+        @test get_cantor_far_field_err(11) ≈ 0 atol=1E-3
+    end
+
     @testset "Monomial tests for gauss quad" begin
         @testset for Γ ∈ Γ_gauss, p = 1:50 # monomial_powers
         @test low_order_gauss(Γ,p) ≈ high_order_bary(Γ,p) rtol=1E-10
         end
-    end
-
-    @testset "Lebesgue Far field comparison" begin
-        @test get_cantor_far_field_err(8) ≈ 0 atol=1E-3
-        @test get_cantor_far_field_err(11) ≈ 0 atol=1E-3
     end
 
     @testset "surface BEMs" begin

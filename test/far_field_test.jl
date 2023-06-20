@@ -20,7 +20,7 @@ function get_cantor_far_field_err(ℓ::Integer)
     h_quad = h_BEM*α^2
     Sₖₕ = DiscreteSIO(Sₖ; h_mesh = h_BEM, h_quad = h_quad);
     ϕₕ = Sₖₕ\f
-    Fϕₕ = far_field_pattern(ϕₕ,k; h_quad = h_quad)
+    Fϕₕ = far_field_pattern(ϕₕ,k; h_quad = h_quad, ambient_dimension = 2)
     FF_const = -sqrt(1im/(8*π*k))
     FF_Hausdorff = FF_const*Fϕₕ.(θ)
 
