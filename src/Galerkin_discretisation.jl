@@ -6,7 +6,7 @@ h_mesh is the meshwidth parameter for the discretisation of the underlying fract
 h_quad denotes the discretisation parameter for the integrals in the stiffness matrix.
 h_quad_diag is the parameter used to compute the diagonal elements of the matrix
 """
-struct DiscreteSIO{V,M,Ω<:FractalMeasure{V,M},T<:Union{AbstractMatrix,AbstractLinearOperator}}# <: DomainOperator{Ω<:FractalMeasure{V,M}}# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+struct DiscreteSIO{V,M,Ω<:FractalMeasure{V,M},T<:Union{AbstractMatrix,LinearMap}}# <: DomainOperator{Ω<:FractalMeasure{V,M}}# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     #domain::FractalMeasure{V,M}
     SIO::DomainOperator{Ω}
     h_mesh::Float64
@@ -241,6 +241,7 @@ function discretise_Galerkin_block(
                         m  != [0] ? pₘ = prod(Γ.weights[m]) : pₘ = 1.0
                         n  != [0] ? pₙ = prod(Γ.weights[n]) : pₙ = 1.0
                         Galerkin_matrix[m_count,n_count] += K.singularity_scale*Γ.measure^2*log(1/ρ)*pₙ*pₘ # log constant adjustment
+                        # println(Γ.measure^2*log(1/ρ)*pₙ*pₘ)
                    end
                 else
                     x,y,w = barycentre_rule(Γₘ,Γₙ,h_quad*h_quad_adjust[m_count,n_count]) # get quadrature

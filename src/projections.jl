@@ -39,7 +39,7 @@ function \(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:Abstract
     return Projection(K.SIO.domain, K.mesh, coeffs)
 end
 
-function \(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:AbstractLinearOperator}
+function \(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:LinearMap}
     thresh = 1E-8
     if K.SIO.self_adjoint
         coeffs = minres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
