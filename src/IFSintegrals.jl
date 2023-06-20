@@ -5,6 +5,7 @@ using Base: Float64
 using ProgressMeter
 #import LinearOperators: AbstractLinearOperator, LinearOperator
 import LinearMaps: LinearMap
+import IterativeSolvers: gmres
 import Plots: scatter!, scatter, plot, plot!, cgrad, Shape, current
 import Base: -, \, *, +, getindex, isapprox
 import Roots: find_zero, Bisection

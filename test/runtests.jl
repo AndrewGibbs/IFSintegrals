@@ -28,7 +28,8 @@ operator_test_set = [SingleLayerOperatorLaplace(Sierpinski()),
     end
 
     @testset "Lebesgue Far field comparison" begin
-        @test get_cantor_far_field_err(10) ≈ 0 atol=1E-3
+        @test get_cantor_far_field_err(8) ≈ 0 atol=1E-3
+        @test get_cantor_far_field_err(11) ≈ 0 atol=1E-3
     end
 
     @testset "surface BEMs" begin

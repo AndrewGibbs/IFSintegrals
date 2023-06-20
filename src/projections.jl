@@ -16,23 +16,10 @@ function project(mesh::Vector{<:SubInvariantMeasure}, f::Function, h_quad::Float
     return Projection(mesh[1].parent_measure,mesh,F)
 end
 
-function \(K::DiscreteSIO, f::Function)
-    fₕ = project(K.mesh, f, K.h_quad)
-    coeffs = K.Galerkin_matrix \ fₕ.coeffs
-    return Projection(K.SIO.domain, K.mesh, coeffs)
-end
-
 function \(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:AbstractMatrix}
     thresh = 1E-8
     if length(fₕ.coeffs)>1000 #use iterative method
-        # if K.SIO.self_adjoint && K.SIO.coercive
-        #     coeffs = cg(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
-        # else
-        if K.SIO.self_adjoint
-            coeffs = minres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
-        else
-            coeffs = bicgstabl(K.Galerkin_matrix,fₕ.coeffs,1,reltol=thresh)
-        end
+        coeffs = gmres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
     else
         coeffs = K.Galerkin_matrix \ fₕ.coeffs
     end
@@ -41,12 +28,15 @@ end
 
 function \(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:LinearMap}
     thresh = 1E-8
-    if K.SIO.self_adjoint
-        coeffs = minres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
-    else
-        coeffs = bicgstabl(K.Galerkin_matrix,fₕ.coeffs,1,reltol=thresh)
-    end
+    
+    coeffs = gmres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
+    
     return Projection(K.SIO.domain, K.mesh, coeffs)
+end
+
+function \(K::DiscreteSIO, f::Function)
+    fₕ = project(K.mesh, f, K.h_quad)
+    return K \ fₕ
 end
 
 # now some functions related to projections, and embeddings
