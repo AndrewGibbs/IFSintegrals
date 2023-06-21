@@ -19,7 +19,8 @@ end
 function \(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:AbstractMatrix}
     thresh = 1E-8
     if length(fₕ.coeffs)>1000 #use iterative method
-        coeffs = gmres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
+        coeffs,log_deets = gmres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh,log=true)
+        println(log_deets)
     else
         coeffs = K.Galerkin_matrix \ fₕ.coeffs
     end
@@ -29,7 +30,8 @@ end
 function \(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:LinearMap}
     thresh = 1E-8
     
-    coeffs = gmres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh)
+    coeffs, log_deets = gmres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh,log=true)
+    println(log_deets)
     
     return Projection(K.SIO.domain, K.mesh, coeffs)
 end
