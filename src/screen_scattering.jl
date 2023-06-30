@@ -63,11 +63,16 @@ Returns a function which is the single layer potential in Rⁿ⁺¹, from a dens
 # end
 
 # far-field kernel 2D:
-FF2D_kernel(θ::Float64, x::Float64,k::Number) = exp(-im*k*(cos(θ)*x))
-FF2D_kernel(θ::Float64, x::Vector{Float64},k::Number) = exp(-im*k*(cos(θ)*x[1]+sin(θ)*x[2]))
+FF2D_kernel_screen(θ::Float64, x::Float64,k::Number) = 
+    -sqrt(1im/(8*π*k))*exp(-im*k*(cos(θ)*x))
+FF2D_kernel(θ::Float64, x::Vector{Float64},k::Number) = 
+    -sqrt(1im/(8*π*k))*exp(-im*k*(cos(θ)*x[1]+sin(θ)*x[2]))
 
 # far-field kernel 3D:
-FF3D_kernel(θ::Float64, ψ::Float64, x::Vector{Float64}, k::Number) = exp(-im*k*(sin(θ)*cos(ψ)*x[1]+sin(θ)*sin(ψ)*x[2]))
+FF3D_kernel_screen(θ::Float64, ψ::Float64, x::Vector{Float64}, k::Number) = 
+    -(1/(4π))*exp(-im*k*(sin(θ)*cos(ψ)*x[1] + sin(θ)*sin(ψ)*x[2]))
+FF3D_kernel(θ::Float64, ψ::Float64, x::Vector{Float64}, k::Number) = 
+    -(1/(4π))*exp(-im*k*(sin(θ)*cos(ψ)*x[1] + sin(θ)*sin(ψ)*x[2] + cos(θ)*x[3]))
 
 function VolumePotential(Γ::FractalMeasure, k::Number)# where Ω <: FractalMeasure
     @warn("VolumePotential will soon be depracted. Use SingleLayerOperatorHelmholtz instead.")
@@ -89,7 +94,6 @@ function SingleLayerPotentialHelmholtz(density::Projection,
     end
     # return the potential function
     return get_layer_potential(density, K, h_quad)
-
 end
 
 function far_field_pattern(density::Projection,
@@ -105,9 +109,17 @@ function far_field_pattern(density::Projection,
     
     # choose appropriate Green's kernel
     if ambient_dimension == 2
-        Fϕ = (θ::Float64) -> transpose(W::Vector{Complex{Float64}})*FF2D_kernel.(θ,Y,k)
+        if density.domain.spatial_dimension == 1
+            Fϕ = (θ::Float64) -> transpose(W::Vector{Complex{Float64}})*FF2D_kernel_screen.(θ,Y,k)
+        else
+            Fϕ = (θ::Float64) -> transpose(W::Vector{Complex{Float64}})*FF2D_kernel.(θ,Y,k)
+        end
     elseif ambient_dimension == 3
-        Fϕ = (θ::Vector{Float64}) -> transpose(W::Vector{Complex{Float64}})*FF3D_kernel.(θ[1],θ[2],Y,k)
+        if density.domain.spatial_dimension == 2
+            Fϕ = (θ::Vector{Float64}) -> transpose(W::Vector{Complex{Float64}})*FF3D_kernel_screen.(θ[1],θ[2],Y,k)
+        else
+            Fϕ = (θ::Vector{Float64}) -> transpose(W::Vector{Complex{Float64}})*FF3D_kernel.(θ[1],θ[2],Y,k)
+        end
     else
         error("Cannot compute single layer potential for this number of spatial dimensions")
     end

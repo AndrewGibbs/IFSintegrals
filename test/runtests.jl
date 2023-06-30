@@ -7,6 +7,7 @@ include("barycentre_rule_tests.jl")
 include("NDJ_tests.jl")
 include("gauss_tests.jl")
 include("quad_bodge_test.jl")
+include("ff_nf_agreement.jl")
 
 screens = [CantorSet(), CantorDust(), Sierpinski(), KochFlake(),
             UnionInvariantMeasure([Sierpinski()+[2,2], CantorDust()])]
@@ -20,6 +21,12 @@ operator_test_set = [SingleLayerOperatorLaplace(Sierpinski()),
                     SingleLayerOperatorLaplace(CantorSet(),ambient_dimension=2)]
 
 @testset "IFSintegrals tests" begin
+
+    @testset "Near/far-field agreement" begin
+        @test ff_nf_agreement_R2_screen(CantorSet(),1000,[0,-1],10.0)
+        @test ff_nf_agreement_R2(CantorDust(),1000,[0,-1],10.0)
+        @test ff_nf_agreement_R3_screen(CantorDust(),100000,[0,-1,0],10.0)
+    end
 
     @testset "Lebesgue Far field comparison" begin
         @test get_cantor_far_field_err(8) ≈ 0 atol=1E-3

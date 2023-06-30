@@ -21,7 +21,7 @@ function get_cantor_far_field_err(ℓ::Integer)
     Sₖₕ = DiscreteSIO(Sₖ; h_mesh = h_BEM, h_quad = h_quad);
     ϕₕ = Sₖₕ\f
     Fϕₕ = far_field_pattern(ϕₕ,k; h_quad = h_quad, ambient_dimension = 2)
-    FF_const = -sqrt(1im/(8*π*k))
+    FF_const = 1.0#-sqrt(1im/(8*π*k))
     FF_Hausdorff = FF_const*Fϕₕ.(θ)
 
     AM2 = matread("Lebesgue_FF_vals.mat")
