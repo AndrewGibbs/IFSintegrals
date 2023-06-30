@@ -71,7 +71,7 @@ embed(Γ::InvariantMeasure, v::Real) = embed(Γ, [v])
 # ------------------- addition / translation of fractals ----------------------
 
 # following function translates fractal attractor
-function +(s::Similarity, v::Vector{<:Real})# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function +(s::Similarity, v::AbstractVector{<:Real})# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
     # if length(s.δ)<length(v)
     #     s = embed(s,zeros(length(v)))
     # end
@@ -81,9 +81,9 @@ function +(s::Similarity, v::Vector{<:Real})# where {V<:Union{Real,AbstractVecto
                     s.rA) # scale*rotation/reflection (same)
 end
 
-+(AM::AutomorphicMap, v::Vector{<:Real}) = AutomorphicMap(AM.A,AM.δ+v)
++(AM::AutomorphicMap, v::AbstractVector{<:Real}) = AutomorphicMap(AM.A,AM.δ+v)
 
-function +(Γ::InvariantMeasure{V,M}, v::Vector{<:Real}
+function +(Γ::InvariantMeasure{V,M}, v::AbstractVector{<:Real}
             ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
             # make sure vector is right length, if not, mbed it in higher dimenson
             if Γ.spatial_dimension < length(v)
@@ -109,8 +109,8 @@ function +(Γ::InvariantMeasure{V,M}, v::Vector{<:Real}
 end
 
 # sort out commutation & subtraction
-+(v::Vector{<:Real},s::Union{Similarity,AutomorphicMap, InvariantMeasure}) = +(s, v)
--(s::Union{Similarity,AutomorphicMap, InvariantMeasure}, v::Vector{<:Real}) = +(s, -v)
++(v::AbstractVector{<:Real},s::Union{Similarity,AutomorphicMap, InvariantMeasure}) = +(s, v)
+-(s::Union{Similarity,AutomorphicMap, InvariantMeasure}, v::AbstractVector{<:Real}) = +(s, -v)
 
 # ------------- streching fractals ------------ #
 
