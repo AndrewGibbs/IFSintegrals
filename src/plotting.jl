@@ -68,16 +68,24 @@ function fractal_pre_plot(Γ::SelfSimilarFractal, mem_const)
         n = Γ.parent_measure.spatial_dimension
     end
     X = sketch_attractor(Γ,mem_const=mem_const)
+    z = Float64[]
     if n == 2
         x = [X[j][1] for j=1:length(X)]
         y = [X[j][2] for j=1:length(X)]
+        xyz = (x,y)
+    elseif n==3 
+        x = [X[j][1] for j=1:length(X)]
+        y = [X[j][2] for j=1:length(X)]
+        z = [X[j][3] for j=1:length(X)]
+        xyz = (x,y,z)
     elseif n == 1
         x = X
         y = zeros(length(X))
+        xyz = (x,y)
     else
         error("Can only plot in one and two spatial dimensions")
     end
-    return x,y
+    return xyz
 end
 
 function fractal_pre_plot(Γ::UnionInvariantMeasure, mem_const)
@@ -121,16 +129,16 @@ See also: [`plot!`](@ref)
 Similar to [`draw`](@ref), except it will draw on the current image.
 """
 function plot(Γ::FractalMeasure; mem_const = 100000, mswidth=0, kwargs...)
-    x,y = fractal_pre_plot(Γ,mem_const)
-    p = scatter(x,y;
+    xyz = fractal_pre_plot(Γ,mem_const)
+    p = scatter(xyz;
                 markerstrokewidth=mswidth,
                 kwargs...)
     return p
 end
 
 function plot!(Γ::FractalMeasure; mem_const = 100000, mswidth=0, kwargs...)
-    x,y = fractal_pre_plot(Γ,mem_const)
-    p = scatter!(x,y;
+    xyz = fractal_pre_plot(Γ,mem_const)
+    p = scatter!(xyz;
                 markerstrokewidth=mswidth,
                 kwargs...)
     return p
