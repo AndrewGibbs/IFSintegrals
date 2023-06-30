@@ -207,14 +207,15 @@ end
     KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
 Returns the Koch Snowflake as an InvariantMeasure (type) of an iterated function system.
 """
-function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
-    IFS = [Similarity(sqrt(1/3),[0, 0], pi/6),
-            Similarity(1/3,[0,2/3]),
-            Similarity(1/3,[-1/sqrt(3),1/3]),
-            Similarity(1/3,[-1/sqrt(3),-1/3]),
-            Similarity(1/3,[0,-2/3]),
-            Similarity(1/3,[1/sqrt(3),-1/3]),
-            Similarity(1/3,[1/sqrt(3),1/3])
+function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9],rescale = sqrt(3)/3 )
+    
+    IFS = [Similarity(sqrt(1/3),rescale*[0, 0], pi/6),
+            Similarity(1/3,rescale*[0,2/3]),
+            Similarity(1/3,rescale*[-1/sqrt(3),1/3]),
+            Similarity(1/3,rescale*[-1/sqrt(3),-1/3]),
+            Similarity(1/3,rescale*[0,-2/3]),
+            Similarity(1/3,rescale*[1/sqrt(3),-1/3]),
+            Similarity(1/3,rescale*[1/sqrt(3),1/3])
             ]
     bary = default_bary(IFS,2.0,weights,[0.0,0.0])
     # now create connectedness matrix for Γ_singularities
@@ -284,36 +285,14 @@ function KochFlake(;weights = [1/3, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9])
     ([7,1],[1,7])]#
     
     for (m,m_) ∈ Λ
-        # mentry = 0
-        # m_entry = 0
-        # for ℓ_=1:2
-        #     mentry += M^(2-ℓ_)*m[ℓ_]
-        #     m_entry += M^(2-ℓ_)*m_[ℓ_]
-        # end
         connectedness[(m[1]-1)*M+m[2], (m_[1]-1)*M+m_[2]] = true
         connectedness[(m_[1]-1)*M+m_[2], (m[1]-1)*M+m[2]] = true
     end
-    # all the tiny guys touching [1,1]]
-
-    # for m=1:M
-    #     for m_=1:M
-    #         if m==1 || m_==1
-    #             connectedness[m,m_] = true
-    #         end
-    #         if abs(m-m_)==1 || abs(m-m_)==5
-    #             connectedness[m,m_] = true
-    #         end
-    #         if m == m_
-    #             connectedness[m,m_] = true
-    #         end
-    #     end
-    # end
-    # more traditional diameter: 2*sqrt(3)/3
-    Koch_area =  2*3*sqrt(3)/5
+    Koch_area =  2*3*sqrt(3)/5 * rescale^2
     if are_weights_Hausdorff(weights,IFS,2)
-        return InvariantMeasure(IFS, 2, 2.0, false, true, bary, 2.0, Koch_area, weights, false, connectedness, DihedralGroup(6))
+        return InvariantMeasure(IFS, 2, 2.0, false, true, bary, rescale*2.0, Koch_area, weights, false, connectedness, DihedralGroup(6))
     else
-        return InvariantMeasure(IFS, 2, 2.0, false, false, bary, 2.0, Koch_area, weights, false, connectedness, TrivialGroup(2))
+        return InvariantMeasure(IFS, 2, 2.0, false, false, bary, rescale*2.0, Koch_area, weights, false, connectedness, TrivialGroup(2))
     end
 end
 
