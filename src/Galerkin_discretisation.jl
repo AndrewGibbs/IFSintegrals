@@ -56,7 +56,8 @@ function discretise_Galerkin_block(
     K::SIO{Ω},
     mesh1::Vector{SubInvariantMeasure{V,M_}},
     mesh2::Vector{SubInvariantMeasure{V,M_}},
-    h_quad::Number
+    h_quad::Number,
+    kwargs...
     ) where 
     {V<:Union{Real,AbstractVector},
     M_<:Union{Real,AbstractMatrix},
@@ -140,7 +141,8 @@ function discretise_Galerkin_block(
     h_quad_diag::Real = h_quad,
     vary_quad::Bool = true,
     repeat_blocks::Bool =true,
-    adjacency_function::Union{Function,Nothing}=nothing
+    adjacency_function::Union{Function,Nothing}=nothing,
+    kwargs...
     ) where 
     {V<:Union{Real,AbstractVector},
     M_<:Union{Real,AbstractMatrix},
@@ -303,13 +305,13 @@ function DiscreteSIO(
         for (j,mesh_j) ∈ enumerate(meshes)
             if i==j # diagonal entry
                 Galerkin_matrix[mesh_el_indices[i], mesh_el_indices[j]] = 
-                    discretise_Galerkin_block(K, mesh_j, h_quad, kwargs...)
+                    discretise_Galerkin_block(K, mesh_j, h_quad; kwargs...)
             elseif j<i && K.self_adjoint
                 Galerkin_matrix[mesh_el_indices[i], mesh_el_indices[j]] = 
                     transpose(Galerkin_matrix[mesh_el_indices[j], mesh_el_indices[i]])
             else# j>i && K.self_adjoint# compute from scratch, simple quadrature
                 Galerkin_matrix[mesh_el_indices[i], mesh_el_indices[j]] = 
-                    discretise_Galerkin_block(K, mesh_i, mesh_j, h_quad, kwargs...)
+                    discretise_Galerkin_block(K, mesh_i, mesh_j, h_quad; kwargs...)
             end
         end
     end
