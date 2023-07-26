@@ -9,28 +9,34 @@ include("gauss_tests.jl")
 include("quad_bodge_test.jl")
 include("ff_nf_agreement.jl")
 
-screens = [CantorSet(), CantorDust(), Sierpinski(), KochFlake(),
-            UnionInvariantMeasure([Sierpinski()+[2,2], CantorDust()])]
+screens = [CantorSet()+[0.,0.], CantorDust()+[0.,0.,0.], Sierpinski()+[0.,0.,0.], KochFlake()+[0.,0.,0.],
+            UnionInvariantMeasure([Sierpinski()+[2.0,2.0,0.0], CantorDust()+[0.,0.,0.]])]
 # UnionInvariantMeasure([CantorSet(),CantorSet()+1.5])
 surfaces = [CantorDust(), UnionInvariantMeasure([CantorDust()+[2,2], CantorDust()])]
 volumes = [KochFlake(), Dragon(), UnionInvariantMeasure([KochFlake()+[2,2], Dragon()])]
 ss = rand(10)
 h_energy = 0.1
 operator_test_set = [SingleLayerOperatorLaplace(Sierpinski()),
-                    SingleLayerOperatorLaplace(CantorDust(),ambient_dimension=3),
-                    SingleLayerOperatorLaplace(CantorSet(),ambient_dimension=2)]
+                    SingleLayerOperatorLaplace(CantorDust()+[0.,0.,0.]),
+                    SingleLayerOperatorLaplace(CantorSet()+[0.,0.])]
 
 @testset "IFSintegrals tests" begin
 
+    @testset "screen BEMs" begin
+        @testset  for Γ ∈ screens
+            @test(screen_test(Γ))
+        end
+    end
+
     @testset "Near/far-field agreement" begin
-        @test ff_nf_agreement_R2_screen(CantorSet(),1000,[0,-1],10.0)
-        @test ff_nf_agreement_R2(CantorDust(),1000,[0,-1],10.0)
-        @test ff_nf_agreement_R3_screen(CantorDust(),100000,[0,-1,0],10.0)
+        @test ff_nf_agreement_R2_screen(CantorSet()+[0.,0.],1000,[0,-1],10.0)
+        @test ff_nf_agreement_R2(CantorDust()+[0.,0.],1000,[0,-1],10.0)
+        @test ff_nf_agreement_R3_screen(CantorDust()+[0.,0.,0.],100000,[0,-1,0],10.0)
     end
 
     @testset "Lebesgue Far field comparison" begin
         @test get_cantor_far_field_err(8) ≈ 0 atol=1E-3
-        @test get_cantor_far_field_err(11) ≈ 0 atol=1E-3
+        @test get_cantor_far_field_err(11) ≈ 0 atol=1E-4
     end
 
     @testset "Monomial tests for gauss quad" begin
@@ -42,12 +48,6 @@ operator_test_set = [SingleLayerOperatorLaplace(Sierpinski()),
     @testset "surface BEMs" begin
         @testset for Γ ∈ surfaces
             @test(surface_test(Γ))
-        end
-    end
-
-    @testset "screen BEMs" begin
-        @testset  for Γ ∈ screens
-            @test(screen_test(Γ))
         end
     end
 

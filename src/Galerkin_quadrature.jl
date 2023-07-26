@@ -1,7 +1,7 @@
 # The next couple of functions are designed to use less quadrature points in the BEM elements
 # where this won't affect the accuracy.
 
-F_nomeasure(r::Real, k::Number, n::Int64) = (1+(abs(k)*r)^(n/2+1))/r^(n+1)
+F_nomeasure(r::Real, k::Number, n::Int64) = (1+(abs(k)*r)^((n-1)/2+1))/r^(n)
 
 function get_quad_scales(k::Real, spat_dim::Int64,mesh::Vector{<:SubInvariantMeasure})
     # compute upper and lower bounds for the F in my notes, which is stated above.

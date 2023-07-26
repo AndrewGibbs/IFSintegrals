@@ -2,21 +2,34 @@
 
 # following function embeds similarity in equivalent one in higher/ambeint dimension
 function embed(s::Similarity{V,M}, v::Vector{<:Real}
-            ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    if s.A == I
-        A_ = I
-        rA_ = s.r*I
-    else
-        n = length(s.δ)
-        n_ = n + length(v)
-        A_ = Matrix{Float64}(I[1:n_,1:n_])
+            ) where {V<:Union{AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    
+    n = length(s.δ)
+    n_ = n + length(v)
+    A_ = Matrix{Float64}(I[1:n_,1:n_])
+    if s.A != I
         A_[1:n,1:n] .= s.A
-        rA_ = s.r*I[1:n_,1:n_]
-        rA_[1:n,1:n] .= s.rA
-
     end
-    return Similarity(s.r,vcat(s.δ,v),A_,rA_)
+    # return Similarity(s.r,vcat(s.δ,v),A_,rA_)
+    return Similarity(s.r,vcat(s.δ,v),A_)
 end
+
+# function embed(s::Similarity{V,M}, v::Vector{<:Real}
+#     ) where {V<:Union{AbstractVector}, M<:Union{Real,AbstractMatrix}}
+    
+#     n = length(s.δ)
+#     n_ = n + length(v)
+#     A_ = Matrix{Float64}(I[1:n_,1:n_])
+#     rA_ = s.r*I[1:n_,1:n_]
+#     if s.A != I
+#     #     A_ = I
+#     #     rA_ = s.r*I
+#     # else
+#         A_[1:n,1:n] .= s.A
+#         rA_[1:n,1:n] .= s.rA
+#     end
+#     return Similarity(s.r,vcat(s.δ,v),A_,rA_)
+# end
 
 function embed(s::Similarity{V,M}, v::Vector{<:Real}
     ) where {V<:Real, M<:Real}

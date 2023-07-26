@@ -34,11 +34,16 @@ function surface_test(Γ::FractalMeasure)
     return true
 end
 
-function screen_test(Γ::FractalMeasure)
+function screen_test(Γ::FractalMeasure; amb_flag = false)
     k = 1 + rand()*10
     f(x) = sin(norm(x)^2) # Laplace data
 
-    amb_dim = Γ.spatial_dimension+1
+    if amb_flag
+        amb_dim = Γ.spatial_dimension+1
+    else
+        amb_dim = Γ.spatial_dimension
+    end
+    
     d = rand(amb_dim) # random 
     d ./ norm(d) # incident direction, normalised
     x = 3*ones(amb_dim)+rand(amb_dim) # random test point
@@ -50,10 +55,14 @@ function screen_test(Γ::FractalMeasure)
         # x = [Vector{Float64}(Γ.barycentre); 0] + Γ.diameter*(ones(amb_dim)+rand(amb_dim)) # random test point
     end
 
-    if amb_dim == 3
-        g_ = (x::Vector{Float64}) -> exp(im*k*(d[1:(amb_dim-1)]'*x)) # screen pw data
-    elseif amb_dim == 2
-        g_ = (x::Float64) -> exp(im*k*d[1]*x) # screen pw data
+    if amb_flag
+        if amb_dim == 3
+            g_ = (x::Vector{Float64}) -> exp(im*k*(d[1:(amb_dim-1)]'*x)) # screen pw data
+        elseif amb_dim == 2
+            g_ = (x::Float64) -> exp(im*k*d[1]*x) # screen pw data
+        end
+    else
+        g_ = (x::Vector{Float64}) -> exp(im*k*(d'*x)) # screen pw data
     end
 
     Sₖ_ = SingleLayerOperatorHelmholtz(Γ, k; ambient_dimension=amb_dim)
