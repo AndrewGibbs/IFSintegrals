@@ -207,7 +207,7 @@ function *(R::Matrix{<:Real}, Γ::InvariantMeasure{V,M},
         Γ.Hausdorff_dimension,
         Γ.homogeneous,
         Γ.Hausdorff_weights,
-        R*Γ.barycentre, #get_barycentre(new_IFS,Γ.weights), # barycentre will change
+        SVector{length(Γ.barycentre),Float64}(R*Γ.barycentre), #get_barycentre(new_IFS,Γ.weights), # barycentre will change
         Γ.diameter,
         Γ.measure, # CONTENTIOUS ISSUE - leaving this unchanged
         Γ.weights,
