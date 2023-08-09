@@ -199,14 +199,15 @@ function *(R::Matrix{<:Real}, Γ::InvariantMeasure{V,M},
         Γ = ρ*Γ
         R = R/ρ
     end
-    # up to here
+    
+    new_IFS = [R*sₘ for sₘ ∈ Γ.IFS] # translated IFS
     return InvariantMeasure(
-        [R*sₘ for sₘ ∈ Γ.IFS], # translated IFS
+        new_IFS,
         Γ.spatial_dimension,
         Γ.Hausdorff_dimension,
         Γ.homogeneous,
         Γ.Hausdorff_weights,
-        Γ.barycentre,
+        R*Γ.barycentre, #get_barycentre(new_IFS,Γ.weights), # barycentre will change
         Γ.diameter,
         Γ.measure, # CONTENTIOUS ISSUE - leaving this unchanged
         Γ.weights,
