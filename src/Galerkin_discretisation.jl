@@ -14,6 +14,7 @@ struct DiscreteSIO{V,M,Ω<:FractalMeasure{V,M},T<:Union{AbstractMatrix,LinearMap
     mesh::Vector{SubInvariantMeasure{V,M}} # one mesh per attractor
     Galerkin_matrix::T # eventually this type should be generalised
     mesh_el_indices::Vector{UnitRange{Int64}}
+    use_gmres::Bool
 end
 # eventually the Galerkin_matrix type should be generalised, to <Union{AbstractMatrix,AbstractLinearOperator}
 
@@ -276,11 +277,12 @@ function mesh_fractal(Γ::InvariantMeasure, h_mesh::Number)
     return [ Γ[m] for m ∈ Lₕ]
 end
 
-# multiple scattering
+# main entrance
 function DiscreteSIO(
     K::DomainOperator{Ω};# meshes::Vector{Vector{SubInvariantMeasure{V,M_}}}, Lₕs::Vector{Vector{Vector{Int64}}};
     h_mesh::Number=Inf,
     h_quad = h_mesh,
+    use_gmres = false,
     kwargs...
     ) where {V<:Union{Real,AbstractVector},
             M_<:Union{Real,AbstractMatrix},
@@ -315,5 +317,5 @@ function DiscreteSIO(
             end
         end
     end
-    DiscreteSIO{V,M_,Ω,Matrix{ComplexF64}}(K, h_mesh, h_quad, vcat(meshes...), Galerkin_matrix, mesh_el_indices)
+    DiscreteSIO{V,M_,Ω,Matrix{ComplexF64}}(K, h_mesh, h_quad, vcat(meshes...), Galerkin_matrix, mesh_el_indices, use_gmres)
 end

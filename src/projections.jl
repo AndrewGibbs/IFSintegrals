@@ -18,7 +18,7 @@ end
 
 function \(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:AbstractMatrix}
     thresh = 1E-8
-    if length(fₕ.coeffs)>1000 #use iterative method
+    if K.use_gmres #use iterative method #length(fₕ.coeffs)>1000 
         coeffs,log_deets = gmres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh,log=true)
         println(log_deets)
     else
