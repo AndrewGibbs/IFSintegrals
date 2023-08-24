@@ -309,7 +309,10 @@ function KochCurve()
                             false true true true;
                             false false true true]
 
-    return InvariantMeasure(IFS, connectedness = touching_singularities);
+    G = get_group_operations2D(GroupGenerator2D(1,[π/2],[0.5,0]))
+    return InvariantMeasure(IFS, 
+                            connectedness = touching_singularities,
+                            symmetry_group = G);
 end
 
 
