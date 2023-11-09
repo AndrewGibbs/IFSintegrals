@@ -94,7 +94,7 @@ function +(s::Similarity, v::AbstractVector{<:Real})# where {V<:Union{Real,Abstr
                     s.rA) # scale*rotation/reflection (same)
 end
 
-+(AM::AutomorphicMap, v::AbstractVector{<:Real}) = AutomorphicMap(AM.A,AM.δ+v)
++(AM::AutomorphicMap, v::AbstractVector{<:Real}) = AutomorphicMap(AM.A,-AM.A*v+AM.δ+v)
 
 function +(Γ::InvariantMeasure{V,M}, v::AbstractVector{<:Real}
             ) where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
