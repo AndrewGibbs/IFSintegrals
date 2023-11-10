@@ -446,11 +446,18 @@ function sketch_attractor_boundary(Γ::SelfSimilarFractal, levels::Int64; mem_co
     Γ.spatial_dimension != 2 ? error("plotting only defined for fractals with two spatial dimensions") : nothing
 
     unit_square = [[-1/2,-1/2],[-1/2,1/2],[1/2,1/2],[1/2,-1/2]]
-    stretched_square = (1.1)*Γ.diameter.*unit_square
-    K = [x + Γ.barycentre for x∈ stretched_square]
+    # stretched_square = (1.0+0.1*rand())*Γ.diameter.*unit_square
+    rand_vals = rand(length(Γ.IFS))
+    # K = [x + Γ.barycentre for x∈ stretched_square]
+    K = [[x + Γ.barycentre for x∈ ((1.0+0.1*rand_vals[m])*Γ.diameter.*unit_square)] for m=1:length(Γ.IFS)]
 
     for ℓ_=1:levels
-        S□ = [Vector{Vector{Float64}}([sim_map(s,x) for x∈K ]) for s∈Γ.IFS]
+        # S□ = [Vector{Vector{Float64}}([sim_map(s,x) for x∈K ]) for s∈Γ.IFS]
+        if ℓ_==1
+            S□ = [Vector{Vector{Float64}}([sim_map(Γ.IFS[m],x) for x∈K[m] ]) for m=1:length(Γ.IFS)]
+        else
+            S□ = [Vector{Vector{Float64}}([sim_map(s,x) for x∈K ]) for s∈Γ.IFS]
+        end
         # println(ℓ_)
         count = 1
         while length(S□) > 1
