@@ -80,15 +80,31 @@ function VolumePotential(Γ::FractalMeasure, k::Number)# where Ω <: FractalMeas
 end
 
 function SingleLayerPotentialHelmholtz(density::Projection,
-    k::T; ambient_dimension::Int64 = density.domain.spatial_dimension,
+    k::Number; ambient_dimension::Int64 = density.domain.spatial_dimension,
     h_quad::Float64 = 0.1/abs(k)
-    ) where T<:Number# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}, T<:Number}
+    )# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}, T<:Number}
 
     # choose appropriate Green's kernel
     if ambient_dimension == 2
-        K = (r::Float64)-> HelhmoltzGreen2D(k::T,r)
+        K = (r::Float64)-> HelhmoltzGreen2D(k,r)
     elseif ambient_dimension == 3
-        K = (r::Float64)-> HelhmoltzGreen3D(k::T,r)
+        K = (r::Float64)-> HelhmoltzGreen3D(k,r)
+    else
+        error("Cannot compute single layer potential for this number of spatial dimensions")
+    end
+    # return the potential function
+    return get_layer_potential(density, K, h_quad)
+end
+
+function SingleLayerPotentialLaplace(density::Projection;
+    ambient_dimension::Int64 = density.domain.spatial_dimension,
+    h_quad::Number = 0.1
+    )
+    # choose appropriate Green's kernel
+    if ambient_dimension == 2
+        K = (r::Float64)-> Φₜ(0.0, r)#HelhmoltzGreen2D(k::T,r)
+    elseif ambient_dimension == 3
+        K = (r::Float64)-> Φₜ(1.0, r)#HelhmoltzGreen3D(k::T,r)
     else
         error("Cannot compute single layer potential for this number of spatial dimensions")
     end
