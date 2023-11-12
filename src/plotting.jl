@@ -107,26 +107,15 @@ function adjust_defaults(kwargs)
     return kwargs_dict
 end
 
+
 """
     plot(Γ::SelfSimilarFractal; markersize=0.1, color="black")
-Provides a simple sketch of the parent_measure Γ, by repeatedly applying the IFS.
+Overload of Plot.jl method 'plot'.
+The input is now a SelfSimilarFractal; 
+the image is approximated by repeatedly applying the IFS to the barycentre. 
+Most of the standard formatting commands can still be applied.
 
 See also: [`plot!`](@ref)
-"""
-# function plot(Γ::FractalMeasure; kwargs...)#mem_const = 100000, kwargs...)
-#     # plot()
-#     p = plot!(Γ; kwargs...)
-#     # # println(kwargs)
-#     # x,y = fractal_pre_plot(Γ,mem_const)
-#     # # scatter(x,y;kwargs...)
-#     # # kwargs = adjust_defaults(kwargs)
-#     # scatter(x,y;adjust_defaults(kwargs)...)
-#     return p
-# end
-
-"""
-    plot!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
-Similar to [`draw`](@ref), except it will draw on the current image.
 """
 function plot(Γ::FractalMeasure; mem_const = 100000, mswidth=0, kwargs...)
     xyz = fractal_pre_plot(Γ,mem_const)
@@ -136,6 +125,10 @@ function plot(Γ::FractalMeasure; mem_const = 100000, mswidth=0, kwargs...)
     return p
 end
 
+"""
+    plot!(Γ::SelfSimilarFractal; markersize=0.1, color="black")
+Similar to [`plot`](@ref), except it will draw on the current image.
+"""
 function plot!(Γ::FractalMeasure; mem_const = 100000, mswidth=0, kwargs...)
     xyz = fractal_pre_plot(Γ,mem_const)
     p = scatter!(xyz;
@@ -143,6 +136,7 @@ function plot!(Γ::FractalMeasure; mem_const = 100000, mswidth=0, kwargs...)
                 kwargs...)
     return p
 end
+
 
 # function plot!(Γ::UnionInvariantMeasure; mem_const = 100000, kwargs...)
 #     X = Vector{Float64}[]

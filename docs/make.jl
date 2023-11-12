@@ -5,6 +5,7 @@ using Documenter
 makedocs(
          sitename = "IFSintegrals.jl",
          modules  = [IFSintegrals],
+         checkdocs=:none,
          pages=[
                 "Home" => "index.md",
                 "Constructing fractals" => "makeIFS.md",
