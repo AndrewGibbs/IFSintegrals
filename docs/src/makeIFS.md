@@ -43,7 +43,7 @@ This is the IFS for the Cantor Set, and this can be converted into an ```Invaria
  The outer constructor for ```InvariantMeasure``` constructs other properties, such as diameter and Hausdorff dimension, which describe this fractal measure.
 
  The full type is described below:
- ```@docs
+```@docs
 InvariantMeasure
 ```
  

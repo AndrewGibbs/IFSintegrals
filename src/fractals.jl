@@ -67,11 +67,11 @@ abstract type SelfSimilarFractal{V,M}<:FractalMeasure{V,M} end
     end
     
 Representation of a invariant measure, whose support is an iterated function system (IFS).
-Constructor requires only an IFS, which is of type Array{Similarity}.
+Constructor requires only an IFS, which is of type ```Array{Similarity}```.
 All other essential properties can be deduced from this, including barycentre, diameter
 and dimension, which are approximated numerically.
 
-Has the outer constructor, which only requires IFS (a vector of [`Similarity``](@ref)) as an input.
+Has the outer constructor, which only requires IFS (a vector of [`Similarity`](@ref)) as an input.
 
     InvariantMeasure(sims::Vector{Similarity}; measure::Real=1.0) = 
         InvariantMeasure(sims, get_diameter(sims); measure=measure)
@@ -88,7 +88,7 @@ Has the outer constructor, which only requires IFS (a vector of [`Similarity``](
 - weights: The probability weights describing the invariant measure
 - disjoint: Flag for if the fractal support is disjoint
 - connectedness: Matrix describing which subcomponents are connected
-- symmetry_group: Vector of [`AutomorphicMap`](@ref), describing symmetries of the measure
+- symmetry_group: Vector of ```AutomorphicMap```, describing symmetries of the measure
 """
 struct InvariantMeasure{V,M} <: SelfSimilarFractal{V,M}
     IFS::Vector{Similarity{V,M}}
