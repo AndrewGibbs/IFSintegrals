@@ -71,7 +71,7 @@ Constructor requires only an IFS, which is of type Array{Similarity}.
 All other essential properties can be deduced from this, including barycentre, diameter
 and dimension, which are approximated numerically.
 
-Has the outer constructor, which only requires IFS (a vector of ['Similarity'](@ref)) as an input.
+Has the outer constructor, which only requires IFS (a vector of [`Similarity``](@ref)) as an input.
 
     InvariantMeasure(sims::Vector{Similarity}; measure::Real=1.0) = 
         InvariantMeasure(sims, get_diameter(sims); measure=measure)
