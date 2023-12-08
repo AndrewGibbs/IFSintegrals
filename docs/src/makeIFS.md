@@ -41,6 +41,11 @@ This is the IFS for the Cantor Set, and this can be converted into an ```Invaria
 ```
 
  The outer constructor for ```InvariantMeasure``` constructs other properties, such as diameter and Hausdorff dimension, which describe this fractal measure.
+
+ The full type is described below:
+ ```@docs
+InvariantMeasure
+```
  
  Now let's try a more complicated example. The second (translation) argument of `Similarity` can also be a vector. For example:
 ```@example tutorial
