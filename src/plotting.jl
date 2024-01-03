@@ -361,13 +361,17 @@ function unify_polygons(P₁::Vector{Vector{Float64}},P₂::Vector{Vector{Float6
         P1_points_in_P2_shape = inpoly2(P₁,P₂)[:,1]
         if P1_points_in_P2_shape == zeros(Bool,length(P₁))
             P2_points_in_P1_shape = inpoly2(P₂,P₁)[:,1]
+            P2_points_in_P2hull_not_in_P1 = [j for j=1:length(P₂) if (P₂[j] ∈ convex_hull(P₂) && !P2_points_in_P1_shape[j])]
             if P2_points_in_P1_shape == zeros(Bool,length(P₁))
                 error("Both polygons are inside of each other :/")
             else
-                start_node_index = findfirst(P2_points_in_P1_shape .== 0) + length(P₁)
+                # start_node_index = findfirst(P2_points_in_P1_shape .== 0) + length(P₁)
+                start_node_index = P2_points_in_P2hull_not_in_P1[1] + length(P₁)
             end
         else
-            start_node_index = findfirst(P1_points_in_P2_shape .== 0)
+            P1_points_in_P1hull_not_in_P2 = [j for j=1:length(P₁) if (P₁[j] ∈ convex_hull(P₁) && !P1_points_in_P2_shape[j])]
+            # start_node_index = findfirst(P1_points_in_P2_shape .== 0)
+            start_node_index = P1_points_in_P1hull_not_in_P2[1]
         end
 
         # set things up for while loop
@@ -443,7 +447,7 @@ function sketch_attractor_boundary(Γ::SelfSimilarFractal, levels::Int64; mem_co
     # stretched_square = (1.0+0.1*rand())*Γ.diameter.*unit_square
     rand_vals = rand(length(Γ.IFS))
     # K = [x + Γ.barycentre for x∈ stretched_square]
-    K = [[x + Γ.barycentre for x∈ ((1.0+0.1*rand_vals[m])*Γ.diameter.*unit_square)] for m=1:length(Γ.IFS)]
+    K = [[x + Γ.barycentre for x∈ (Γ.diameter*(1.0.+0.25*rand(4)).*unit_square)] for m=1:length(Γ.IFS)]
 
     for ℓ_=1:levels
         # S□ = [Vector{Vector{Float64}}([sim_map(s,x) for x∈K ]) for s∈Γ.IFS]
@@ -453,7 +457,8 @@ function sketch_attractor_boundary(Γ::SelfSimilarFractal, levels::Int64; mem_co
             S□ = [Vector{Vector{Float64}}([sim_map(s,x) for x∈K ]) for s∈Γ.IFS]
         end
         # println(ℓ_)
-        count = 1
+        count = 0
+        max_while_count = length(S□)^2
         while length(S□) > 1
             count +=1
             # println("\t",count)
@@ -464,6 +469,9 @@ function sketch_attractor_boundary(Γ::SelfSimilarFractal, levels::Int64; mem_co
                     deleteat!(S□,n)
                     break
                 end
+            end
+            if count>max_while_count
+                error("Failed to unify polygons for mesh plot, stuck in infinite loop :(")
             end
         end
         K = S□[1]
