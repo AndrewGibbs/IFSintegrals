@@ -57,7 +57,7 @@ function discretise_Galerkin_block(
     K::SIO{Ω},
     mesh1::Vector{SubInvariantMeasure{V,M_}},
     mesh2::Vector{SubInvariantMeasure{V,M_}},
-    h_quad::Number,
+    h_quad::Number;
     kwargs...
     ) where 
     {V<:Union{Real,AbstractVector},
@@ -87,7 +87,7 @@ function discretise_Galerkin_block(
     K::OperatorSum{Ω},
     mesh1::Vector{SubInvariantMeasure{V,M_}},
     mesh2::Vector{SubInvariantMeasure{V,M_}},
-    h_quad::Number,
+    h_quad::Number;
     kwargs...
     ) where 
     {V<:Union{Real,AbstractVector},
@@ -101,7 +101,7 @@ function discretise_Galerkin_block(
     for A ∈ K.operators
         if !(typeof(A)<:IdentityOperator) # identity operator will be zero
             Galerkin_matrix .+= 
-                discretise_Galerkin_block(A, mesh1, mesh2, h_quad, kwargs...)
+                discretise_Galerkin_block(A, mesh1, mesh2, h_quad; kwargs...)
         end
     end
 
@@ -127,7 +127,7 @@ function discretise_Galerkin_block(
         if isa(A,IdentityOperator) # identity operator will be zero
             Galerkin_matrix .+= get_mass_matrix(A,mesh)
         elseif isa(A,SIO)
-            Galerkin_matrix .+= discretise_Galerkin_block(A,mesh,h_quad,kwargs...)
+            Galerkin_matrix .+= discretise_Galerkin_block(A,mesh,h_quad;kwargs...)
         end
     end
 
@@ -142,8 +142,8 @@ function discretise_Galerkin_block(
     h_quad_diag::Real = h_quad,
     vary_quad::Bool = true,
     repeat_blocks::Bool =true,
-    adjacency_function::Union{Function,Nothing}=nothing,
-    kwargs...
+    adjacency_function::Union{Function,Nothing}=nothing#,
+    # kwargs...
     ) where 
     {V<:Union{Real,AbstractVector},
     M_<:Union{Real,AbstractMatrix},
