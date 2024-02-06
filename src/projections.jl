@@ -41,6 +41,18 @@ function \(K::DiscreteSIO, f::Function)
     return K \ fₕ
 end
 
+# New versions of backslash - so we can solve and get iteration details easily
+function solve_with_it_count(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection) where {V,M,Ω,T<:LinearMap}
+    thresh = 1E-8
+    coeffs, log_deets = gmres(K.Galerkin_matrix,fₕ.coeffs,reltol=thresh, log=true)
+    return Projection(K.SIO.domain, K.mesh, coeffs), log_deets
+end
+
+function solve_with_it_count(K::DiscreteSIO{V,M,Ω,T}, f::Function) where {V,M,Ω,T<:LinearMap}
+    fₕ = project(K.mesh, f, K.h_quad)
+    return solve_with_it_count(K::DiscreteSIO{V,M,Ω,T}, fₕ::Projection)
+end
+
 # now some functions related to projections, and embeddings
 
 function embed(f::Projection,g::Projection)
