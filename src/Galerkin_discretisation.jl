@@ -68,7 +68,7 @@ function discretise_Galerkin_block(
     Galerkin_matrix = zeros(ComplexF64,length(mesh1),length(mesh2))
 
     # get quad scales
-    quad_scales = get_quad_scales(K.wavenumber,
+    quad_scales = get_quad_scales(abs(K.wavenumber),
                     K.domain.spatial_dimension,
                     mesh1, mesh2)
 
