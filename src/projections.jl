@@ -131,14 +131,14 @@ function get_H_minus_half_norm_function(Γ::FractalMeasure;
     return norm
 end
 
-function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64},mesh::Vector{<:SubInvariantMeasure})# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
+function get_H_minus_half_norm_function_from_matrix(Gᵢ::M, mesh::Vector{<:SubInvariantMeasure}) where M <:Union{AbstractMatrix, LinearMap}
     #embed
-    norm(ϕ::Projection) = sqrt((2*abs(embed(ϕ,mesh).coeffs'*Gᵢ*embed(ϕ,mesh).coeffs)))
+    norm(ϕ::Projection) = sqrt((2*abs(embed(ϕ,mesh).coeffs'*(Gᵢ*embed(ϕ,mesh).coeffs))))
     return norm
 end
 
-function get_H_minus_half_norm_function_from_matrix(Gᵢ::Matrix{ComplexF64})
+function get_H_minus_half_norm_function_from_matrix(Gᵢ::M) where M <:Union{AbstractMatrix, LinearMap}
     #embed
-    norm(ϕ::Projection) = sqrt((2*abs(ϕ.coeffs'*Gᵢ*ϕ.coeffs)))
+    norm(ϕ::Projection) = sqrt((2*abs(ϕ.coeffs'*(Gᵢ*ϕ.coeffs))))
     return norm
 end

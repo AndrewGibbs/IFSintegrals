@@ -34,14 +34,14 @@ end
 """
 SIO is the type for singular integral operators.
 """
-struct SIO{Ω} <: DomainOperator{Ω}# where {V<:Union{Real,AbstractVector}, M<:Union{Real,AbstractMatrix}}
-    domain::Ω#Vector{FractalMeasure{V,M}}
+struct SIO{Ω} <: DomainOperator{Ω}
+    domain::Ω
     kernel::Function
     Lipschitz_part_of_kernel::Function
     singularity_strength::Float64
     singularity_scale::ComplexF64
     self_adjoint::Bool
-    wavenumber::Float64
+    wavenumber::ComplexF64
 end
 
 struct OperatorSum{Ω} <: DomainOperator{Ω}# where {V<:Union{Real,AbstractVector},M<:Union{Real,AbstractMatrix}}

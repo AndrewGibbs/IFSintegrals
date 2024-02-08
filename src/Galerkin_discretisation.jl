@@ -169,7 +169,7 @@ function discretise_Galerkin_block(
 
     # now get matrix of how much we can adjust the h_quad parameter for far away elements
     if vary_quad
-        h_quad_adjust = get_quad_scales(K.wavenumber, Γ.spatial_dimension, mesh)
+        h_quad_adjust = get_quad_scales(abs(K.wavenumber), Γ.spatial_dimension, mesh)
     else
         h_quad_adjust = ones(Float16, length(mesh),length(mesh))
     end
