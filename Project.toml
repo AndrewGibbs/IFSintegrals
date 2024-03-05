@@ -24,7 +24,6 @@ Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Traceur = "37b6cedf-1f77-55f8-9503-c64b63398394"
 
 [compat]
 julia = "1.3"
