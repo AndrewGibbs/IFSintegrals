@@ -46,7 +46,7 @@ function get_quad_scales(k::Real, spat_dim::Int64,
     M = length(mesh1)
     F_upper = ones(Float16,M,N)
     # F_lower = ones(Float16,N,N)
-    F_lower = zeros(Float16,N,N)
+    F_lower = zeros(Float16,M,N)
 
     for m = 1:M
         Γₘ = mesh1[m]
