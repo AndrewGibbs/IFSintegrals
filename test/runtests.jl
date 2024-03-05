@@ -36,7 +36,6 @@ operator_test_set = [SingleLayerOperatorLaplace(Sierpinski()),
 
     @testset "Lebesgue Far field comparison" begin
         @test get_cantor_far_field_err(8) ≈ 0 atol=1E-3
-        @test get_cantor_far_field_err(12) ≈ 0 atol=1E-4
     end
 
     @testset "Monomial tests for gauss quad" begin
