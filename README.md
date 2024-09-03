@@ -2,6 +2,7 @@
 [![Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://andrewgibbs.github.io/IFSintegrals/dev/)
 [![CI](https://github.com/AndrewGibbs/IFSintegrals/actions/workflows/CI.yml/badge.svg)](https://github.com/AndrewGibbs/IFSintegrals/actions/workflows/CI.yml)
 [![codecov](https://codecov.io/gh/AndrewGibbs/IFSintegrals/branch/master/graph/badge.svg?token=H4ZHZU4TMH)](https://codecov.io/gh/AndrewGibbs/IFSintegrals)
+[![DOI](https://zenodo.org/badge/397262754.svg)](https://zenodo.org/doi/10.5281/zenodo.13642679)
 
 # IFSintegrals
 
