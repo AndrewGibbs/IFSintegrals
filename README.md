@@ -4,6 +4,8 @@
 [![codecov](https://codecov.io/gh/AndrewGibbs/IFSintegrals/branch/master/graph/badge.svg?token=H4ZHZU4TMH)](https://codecov.io/gh/AndrewGibbs/IFSintegrals)
 [![DOI](https://zenodo.org/badge/397262754.svg)](https://zenodo.org/doi/10.5281/zenodo.13642679)
 
+This toolbox is no longer maintained, and has been replaced by [FractalIntegrals.jl](https://github.com/AndrewGibbs/FractalIntegrals.jl).
+
 # IFSintegrals
 
 A toolbox for solving problems defined on attractors of iterated function systems (IFSs). This project is an implementation of multiple research projects, with Andrea Moiola, David Hewett, Simon Chandler-Wilde, António Caetano, Joshua Bannister, Botond Major and Jeevon Greewal. In particular, the following project students have contributed to the development of the code: Joshua Bannister, Jeevon Greewal.
